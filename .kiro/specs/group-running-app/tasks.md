@@ -16,40 +16,60 @@
   - Initialize Git repository with .gitignore
   - _Requirements: 12.1, 12.2_
 
-- [ ] 2. Implement database schema and connection
-  - [ ] 2.1 Create PostgreSQL database schema
+- [x] 2. Implement database schema and connection
+
+
+
+
+  - [x] 2.1 Create PostgreSQL database schema
+
+
     - Write SQL migration files for all tables (users, activities, activity_participants, social_connections, routes, chat_rooms, chat_messages, notifications, activity_ratings)
     - Add indexes for performance optimization
     - Set up foreign key constraints and check constraints
     - _Requirements: 1.1, 2.1, 6.1, 11.4_
-  - [ ] 2.2 Set up database connection and ORM
+  - [x] 2.2 Set up database connection and ORM
+
+
     - Configure database connection pool with pg library
     - Create database client wrapper with error handling
     - Implement migration runner script
     - _Requirements: 10.3_
 
-- [ ] 3. Build authentication system
-  - [ ] 3.1 Implement user registration
+- [x] 3. Build authentication system
+
+
+
+
+  - [x] 3.1 Implement user registration
+
+
     - Create user registration API endpoint (POST /api/auth/register)
     - Implement age validation (18-65 years)
     - Hash passwords using bcrypt before storage
     - Validate email format and uniqueness
     - Store user data in database
     - _Requirements: 1.1, 1.2, 11.1_
-  - [ ] 3.2 Implement user login and JWT authentication
+  - [x] 3.2 Implement user login and JWT authentication
+
+
     - Create login API endpoint (POST /api/auth/login)
     - Verify credentials against database
     - Generate JWT access token (24-hour expiration)
     - Generate refresh token (7-day expiration)
     - Return tokens and user data
     - _Requirements: 1.3, 1.4, 1.5_
-  - [ ] 3.3 Create authentication middleware
+  - [x] 3.3 Create authentication middleware
+
+
     - Implement JWT verification middleware
     - Extract user information from token
     - Handle token expiration and invalid tokens
     - Protect routes requiring authentication
     - _Requirements: 1.4_
-  - [ ] 3.4 Write authentication tests
+  - [x] 3.4 Write authentication tests
+
+
     - Test registration with valid and invalid data
     - Test age restriction validation
     - Test login with correct and incorrect credentials
@@ -57,6 +77,7 @@
     - _Requirements: 1.1, 1.2, 1.4, 1.5_
 
 - [ ] 4. Create user profile and social features backend
+
   - [ ] 4.1 Implement user profile endpoints
     - Create GET /api/users/:id endpoint to fetch user profile
     - Create PUT /api/users/:id endpoint to update profile
