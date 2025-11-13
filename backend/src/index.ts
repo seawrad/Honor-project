@@ -32,6 +32,7 @@ app.get('/health', (_req, res) => {
 
 // Import routes
 import authRoutes from './routes/auth.routes.js'
+import userRoutes from './routes/user.routes.js'
 
 // API routes
 app.get('/api', (_req, res) => {
@@ -40,6 +41,9 @@ app.get('/api', (_req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes)
+
+// User routes
+app.use('/api/users', userRoutes)
 
 // Socket.io connection handling
 io.on('connection', (socket) => {

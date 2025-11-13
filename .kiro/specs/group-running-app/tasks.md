@@ -76,27 +76,35 @@
     - Test JWT token generation and verification
     - _Requirements: 1.1, 1.2, 1.4, 1.5_
 
-- [ ] 4. Create user profile and social features backend
+- [x] 4. Create user profile and social features backend
 
-  - [ ] 4.1 Implement user profile endpoints
+
+
+  - [x] 4.1 Implement user profile endpoints
+
+
     - Create GET /api/users/:id endpoint to fetch user profile
     - Create PUT /api/users/:id endpoint to update profile
     - Create DELETE /api/users/:id endpoint for account deletion
     - Calculate and return user statistics (total runs, distance, ratings)
     - _Requirements: 6.2, 11.3, 11.4_
-  - [ ] 4.2 Implement follow/unfollow functionality
+  - [x] 4.2 Implement follow/unfollow functionality
+
     - Create POST /api/users/:id/follow endpoint
     - Create DELETE /api/users/:id/follow endpoint
     - Create GET /api/users/:id/followers endpoint
     - Create GET /api/users/:id/following endpoint
     - Prevent self-following
     - _Requirements: 6.1_
-  - [ ] 4.3 Implement user search
+  - [x] 4.3 Implement user search
+
     - Create GET /api/users/search endpoint with query parameter
     - Implement case-insensitive search by display name
     - Return paginated results
     - _Requirements: 6.4_
-  - [ ] 4.4 Write user service tests
+  - [x] 4.4 Write user service tests
+
+
     - Test profile retrieval and updates
     - Test follow/unfollow operations
     - Test user search functionality
