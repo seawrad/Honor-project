@@ -1,6 +1,7 @@
 import { db } from '../database/db.js'
 import { ValidationError } from '../utils/validation.js'
 import { UserProfile, UpdateProfileRequest, UserStats, UserSearchResult } from '../types/user.types.js'
+import { notificationService } from './notification.service.js'
 
 class UserService {
   /**
@@ -235,6 +236,19 @@ class UserService {
       await db.query(
         'INSERT INTO social_connections (follower_id, following_id) VALUES ($1, $2)',
         [followerId, followingId]
+      )
+
+      // Get follower display name for notification
+      const followerResult = await db.query(
+        'SELECT display_name FROM users WHERE id = $1',
+        [followerId]
+      )
+
+      // Send notification to the followed user
+      await notificationService.notifyNewFollower(
+        followingId,
+        followerResult.rows[0].display_name,
+        followerId
       )
     } catch (error) {
       if (error instanceof ValidationError) {

@@ -110,8 +110,14 @@
     - Test user search functionality
     - _Requirements: 6.1, 6.2, 6.4_
 
-- [ ] 5. Build activity management backend
-  - [ ] 5.1 Implement activity CRUD operations
+- [x] 5. Build activity management backend
+
+
+
+
+  - [x] 5.1 Implement activity CRUD operations
+
+
     - Create POST /api/activities endpoint for activity creation
     - Create GET /api/activities/:id endpoint for activity details
     - Create PUT /api/activities/:id endpoint for activity updates
@@ -119,146 +125,214 @@
     - Validate activity data (date, location, distance, max participants)
     - Enforce 1-hour edit deadline before scheduled start time
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
-  - [ ] 5.2 Implement activity participation
+  - [x] 5.2 Implement activity participation
+
     - Create POST /api/activities/:id/join endpoint
     - Create DELETE /api/activities/:id/leave endpoint
     - Check maximum capacity before allowing join
     - Enforce 1-hour leave deadline before scheduled start time
     - Update participant count
     - _Requirements: 4.1, 4.2, 4.3, 4.4_
-  - [ ] 5.3 Implement activity search and filtering
+  - [x] 5.3 Implement activity search and filtering
+
     - Create GET /api/activities endpoint with filters
     - Implement nearby activities search using latitude/longitude
     - Add filters for date range, distance, and location radius
     - Sort results by proximity to user location
     - Return paginated results
     - _Requirements: 3.1, 3.2, 3.3_
-  - [ ] 5.4 Create chat room on activity creation
+  - [x] 5.4 Create chat room on activity creation
+
+
     - Automatically create chat room when activity is created
     - Link chat room to activity ID
     - Grant access to creator and participants
     - _Requirements: 7.1, 7.2_
-  - [ ] 5.5 Write activity service tests
+  - [x] 5.5 Write activity service tests
+
+
     - Test activity creation and validation
     - Test join/leave operations with capacity checks
     - Test activity search and filtering
     - Test edit deadline enforcement
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 4.1, 4.2, 4.3_
 
-- [ ] 6. Implement GPS tracking and route recording backend
-  - [ ] 6.1 Create route recording endpoints
+- [x] 6. Implement GPS tracking and route recording backend
+
+
+
+  - [x] 6.1 Create route recording endpoints
+
+
     - Create POST /api/routes endpoint to start route recording
     - Create POST /api/routes/:id/positions endpoint to save GPS positions
     - Store GPS position arrays in AWS S3 as JSON
     - Store route metadata in database (distance, speed, duration)
     - _Requirements: 5.1, 5.3_
-  - [ ] 6.2 Implement performance metrics calculation
+  - [x] 6.2 Implement performance metrics calculation
+
+
     - Calculate total distance from GPS positions
     - Calculate average speed from distance and duration
     - Calculate elapsed time from start and end timestamps
     - Create GET /api/routes/:id/metrics endpoint
     - _Requirements: 5.2, 5.3_
-  - [ ] 6.3 Create route history endpoints
+  - [x] 6.3 Create route history endpoints
+
+
     - Create GET /api/routes/user/:userId endpoint
     - Return paginated list of user's routes
     - Include activity information with each route
     - _Requirements: 5.5_
-  - [ ] 6.4 Write GPS service tests
+  - [x] 6.4 Write GPS service tests
+
+
     - Test route creation and position storage
     - Test metrics calculation accuracy
     - Test route history retrieval
     - _Requirements: 5.1, 5.2, 5.3, 5.5_
 
-- [ ] 7. Build real-time chat system
-  - [ ] 7.1 Set up Socket.io server
+- [x] 7. Build real-time chat system
+
+
+
+
+  - [x] 7.1 Set up Socket.io server
+
+
     - Initialize Socket.io with Express server
     - Configure CORS for WebSocket connections
     - Implement JWT authentication for WebSocket connections
     - _Requirements: 7.1_
-  - [ ] 7.2 Implement chat room WebSocket events
+  - [x] 7.2 Implement chat room WebSocket events
+
+
     - Handle join_room event with access control
     - Handle leave_room event
     - Handle send_message event with message validation
     - Broadcast messages to all room participants
     - Store messages in database
     - _Requirements: 7.2, 7.3, 7.4_
-  - [ ] 7.3 Create chat message history endpoints
+  - [x] 7.3 Create chat message history endpoints
+
+
     - Create GET /api/chat/rooms/:activityId endpoint
     - Create GET /api/chat/rooms/:roomId/messages endpoint
     - Return paginated message history
     - Implement 7-day message retention
     - _Requirements: 7.5_
-  - [ ] 7.4 Write chat service tests
+
+
+  - [x] 7.4 Write chat service tests
+
+
+
     - Test WebSocket connection and authentication
     - Test message sending and broadcasting
     - Test room access control
     - Test message history retrieval
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 8. Implement notification system backend
-  - [ ] 8.1 Create notification service
+- [x] 8. Implement notification system backend
+
+
+
+
+  - [x] 8.1 Create notification service
+
+
     - Implement notification creation function
     - Create POST /api/notifications endpoint (internal use)
     - Store notifications in database
     - _Requirements: 8.1_
-  - [ ] 8.2 Implement notification triggers
+  - [x] 8.2 Implement notification triggers
+
+
     - Send notification when user joins activity
     - Send notification when activity is cancelled
     - Send notification when new chat message arrives
     - Send notification when user gains a follower
     - _Requirements: 8.1, 8.4, 8.5, 2.5_
-  - [ ] 8.3 Create scheduled notification tasks
+  - [x] 8.3 Create scheduled notification tasks
+
+
     - Set up AWS Lambda function for scheduled tasks
     - Send 24-hour reminder before activity start
     - Send 1-hour reminder before activity start
     - Query activities and send notifications to participants
     - _Requirements: 8.2, 8.3_
-  - [ ] 8.4 Create notification management endpoints
+  - [x] 8.4 Create notification management endpoints
+
+
     - Create GET /api/notifications endpoint
     - Create PUT /api/notifications/:id/read endpoint
     - Create PUT /api/notifications/read-all endpoint
     - Create DELETE /api/notifications/:id endpoint
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
-  - [ ] 8.5 Write notification service tests
+  - [x] 8.5 Write notification service tests
+
+
     - Test notification creation
     - Test notification triggers
     - Test notification retrieval and updates
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 9. Implement activity rating system
-  - [ ] 9.1 Create rating endpoints
+- [x] 9. Implement activity rating system
+
+
+
+
+
+
+  - [x] 9.1 Create rating endpoints
+
     - Create POST /api/activities/:id/ratings endpoint
     - Validate rating value (1-5 stars)
     - Store rating and optional feedback
     - Prevent duplicate ratings from same user
     - _Requirements: 9.1, 9.2_
-  - [ ] 9.2 Calculate and display average ratings
+  - [x] 9.2 Calculate and display average ratings
+
+
     - Calculate average rating for each activity
     - Include rating count
     - Display ratings on activity creator's profile
     - Create GET /api/activities/:id/ratings endpoint
     - _Requirements: 9.3, 9.4, 9.5_
-  - [ ] 9.3 Write rating service tests
+
+  - [x] 9.3 Write rating service tests
+
     - Test rating submission and validation
     - Test average rating calculation
     - Test duplicate rating prevention
     - _Requirements: 9.1, 9.2, 9.3_
 
-- [ ] 10. Build frontend authentication UI
-  - [ ] 10.1 Create authentication context and hooks
+- [x] 10. Build frontend authentication UI
+
+
+
+
+
+
+  - [x] 10.1 Create authentication context and hooks
+
     - Implement AuthContext with React Context API
     - Create useAuth hook for accessing auth state
     - Store JWT tokens in localStorage
     - Implement automatic token refresh
     - _Requirements: 1.3, 1.4_
-  - [ ] 10.2 Build registration page
+  - [x] 10.2 Build registration page
+
+
     - Create registration form with Material-UI components
     - Add form validation (email, password, age, terms acceptance)
     - Display age restriction error for invalid ages
     - Call registration API endpoint
     - Redirect to login on success
     - _Requirements: 1.1, 1.2_
-  - [ ] 10.3 Build login page
+  - [x] 10.3 Build login page
+
+
     - Create login form with email and password fields
     - Add form validation
     - Call login API endpoint
@@ -266,95 +340,134 @@
     - Redirect to home page on success
     - Display error messages for failed login
     - _Requirements: 1.4, 1.5_
-  - [ ] 10.4 Implement protected routes
+  - [x] 10.4 Implement protected routes
+
+
     - Create ProtectedRoute component
     - Check authentication status
     - Redirect to login if not authenticated
     - Wrap authenticated pages with ProtectedRoute
     - _Requirements: 1.4_
-  - [ ] 10.5 Write authentication UI tests
+  - [x] 10.5 Write authentication UI tests
+
+
     - Test registration form validation
     - Test login form validation
     - Test protected route behavior
     - _Requirements: 1.1, 1.2, 1.4, 1.5_
 
-- [ ] 11. Create activity management UI
-  - [ ] 11.1 Build activity list page
+- [x] 11. Create activity management UI
+
+
+
+
+
+  - [x] 11.1 Build activity list page
+
+
     - Create ActivityList component with Material-UI cards
     - Display activity cards with key information
     - Implement infinite scroll or pagination
     - Show loading states
     - _Requirements: 3.1, 3.3_
-  - [ ] 11.2 Implement activity search and filters
+  - [x] 11.2 Implement activity search and filters
+
+
     - Create search bar and filter controls
     - Add date range picker
     - Add distance range slider
     - Add location radius filter
     - Update activity list based on filters
     - _Requirements: 3.2_
-  - [ ] 11.3 Build activity detail page
+  - [x] 11.3 Build activity detail page
+
+
     - Display full activity information
     - Show activity location on Leaflet map
     - Display participant list
     - Show join/leave button based on participation status
     - Display "full" indicator when at capacity
     - _Requirements: 3.5, 4.1, 4.2_
-  - [ ] 11.4 Create activity creation form
+  - [x] 11.4 Create activity creation form
+
+
     - Build form with all activity fields
     - Integrate Leaflet map for location selection
     - Add date/time picker
     - Validate form inputs
     - Call activity creation API
     - _Requirements: 2.1, 2.2_
-  - [ ] 11.5 Create activity edit form
+  - [x] 11.5 Create activity edit form
+
+
     - Reuse creation form components
     - Pre-fill with existing activity data
     - Disable editing within 1 hour of start time
     - Call activity update API
     - _Requirements: 2.3_
-  - [ ] 11.6 Implement activity cancellation
+  - [x] 11.6 Implement activity cancellation
+
+
     - Add cancel button for activity creators
     - Show confirmation dialog
     - Call activity cancellation API
     - Redirect to activity list
     - _Requirements: 2.4, 2.5_
-  - [ ] 11.7 Write activity UI tests
+  - [x] 11.7 Write activity UI tests
+
+
     - Test activity list rendering
     - Test search and filter functionality
     - Test activity creation and editing
     - _Requirements: 2.1, 2.2, 2.3, 3.1, 3.2_
 
-- [ ] 12. Build GPS tracking UI
-  - [ ] 12.1 Create GPS tracker component
+- [x] 12. Build GPS tracking UI
+
+
+
+
+  - [x] 12.1 Create GPS tracker component
+
+
     - Request geolocation permissions
     - Start GPS tracking on activity start
     - Collect GPS positions at 1-second intervals
     - Display real-time position on map
     - _Requirements: 5.1, 12.3_
-  - [ ] 12.2 Build performance metrics display
+  - [x] 12.2 Build performance metrics display
+
+
     - Show real-time distance calculation
     - Display current and average speed
     - Show elapsed time counter
     - Update metrics every second
     - _Requirements: 5.2_
-  - [ ] 12.3 Implement route recording controls
+  - [x] 12.3 Implement route recording controls
+
+
     - Add start/stop tracking buttons
     - Save route data to backend on completion
     - Show confirmation on successful save
     - _Requirements: 5.1, 5.3_
-  - [ ] 12.4 Create route visualization
+  - [x] 12.4 Create route visualization
+
+
     - Display recorded route on Leaflet map
     - Draw route polyline from GPS positions
     - Show start and end markers
     - Display route statistics
     - _Requirements: 5.4_
-  - [ ] 12.5 Build route history page
+  - [x] 12.5 Build route history page
+
+
     - Display list of user's past routes
     - Show route preview on map
     - Display route metrics
     - Link to associated activity
     - _Requirements: 5.5_
-  - [ ] 12.6 Write GPS UI tests
+  - [x] 12.6 Write GPS UI tests
+
+
     - Test GPS permission handling
     - Test metrics calculation display
     - Test route visualization
