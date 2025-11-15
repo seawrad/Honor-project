@@ -473,32 +473,47 @@
     - Test route visualization
     - _Requirements: 5.1, 5.2, 5.4, 5.5_
 
-- [ ] 13. Implement social features UI
-  - [ ] 13.1 Build user profile page
+- [x] 13. Implement social features UI
+
+
+
+
+
+  - [x] 13.1 Build user profile page
+
+
     - Display user information and statistics
     - Show total runs, distance, and average rating
     - Display recent activities
     - Show followers and following counts
     - Add follow/unfollow button
     - _Requirements: 6.2, 6.3_
-  - [ ] 13.2 Create user search interface
+  - [x] 13.2 Create user search interface
+
+
     - Build search bar component
     - Display search results as user cards
     - Link to user profiles
     - Show follow status for each user
     - _Requirements: 6.4_
-  - [ ] 13.3 Build followers/following lists
+  - [x] 13.3 Build followers/following lists
+
+
     - Create list components for followers and following
     - Display user cards with follow/unfollow buttons
     - Link to user profiles
     - _Requirements: 6.1_
-  - [ ] 13.4 Create activity feed
+  - [x] 13.4 Create activity feed
+
+
     - Display activities from followed users
     - Show activity cards with creator information
     - Link to activity details
     - Implement infinite scroll
     - _Requirements: 6.5_
-  - [ ] 13.5 Write social features UI tests
+  - [x] 13.5 Write social features UI tests
+
+
     - Test profile display
     - Test user search
     - Test follow/unfollow functionality

@@ -12,6 +12,10 @@ import { EditActivityPage } from './pages/EditActivityPage'
 import { CancelActivityPage } from './pages/CancelActivityPage'
 import { GPSTrackingPage } from './pages/GPSTrackingPage'
 import { RouteHistoryPage } from './pages/RouteHistoryPage'
+import { UserProfilePage } from './pages/UserProfilePage'
+import { UserSearchPage } from './pages/UserSearchPage'
+import { FollowersPage } from './pages/FollowersPage'
+import { ActivityFeedPage } from './pages/ActivityFeedPage'
 
 const theme = createTheme({
   palette: {
@@ -95,6 +99,46 @@ function App() {
               element={
                 <ProtectedRoute>
                   <RouteHistoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/:userId"
+              element={
+                <ProtectedRoute>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/search"
+              element={
+                <ProtectedRoute>
+                  <UserSearchPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/:userId/followers"
+              element={
+                <ProtectedRoute>
+                  <FollowersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users/:userId/following"
+              element={
+                <ProtectedRoute>
+                  <FollowersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/feed"
+              element={
+                <ProtectedRoute>
+                  <ActivityFeedPage />
                 </ProtectedRoute>
               }
             />

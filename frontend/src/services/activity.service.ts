@@ -109,4 +109,16 @@ export const activityService = {
       }
     );
   },
+
+  async getFollowingActivities(page = 1, limit = 20): Promise<ActivityListResponse> {
+    const response = await axios.get<ActivityListResponse>(
+      `${API_BASE_URL}/activities/feed?page=${page}&limit=${limit}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+        },
+      }
+    );
+    return response.data;
+  },
 };
