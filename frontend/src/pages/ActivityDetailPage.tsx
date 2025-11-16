@@ -24,6 +24,7 @@ import {
   ArrowBack,
   Edit,
   Cancel,
+  Chat,
 } from '@mui/icons-material';
 import { ActivityMap } from '../components/ActivityMap';
 import { activityService } from '../services/activity.service';
@@ -323,6 +324,19 @@ export const ActivityDetailPage = () => {
                 {actionLoading ? <CircularProgress size={24} /> : isFull ? '活動已滿' : '加入活動'}
               </Button>
             )}
+          </Box>
+        )}
+
+        {(isCreator || isParticipant) && activity.status === 'upcoming' && (
+          <Box sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<Chat />}
+              onClick={() => navigate(`/activities/${id}/chat`)}
+            >
+              開啟聊天室
+            </Button>
           </Box>
         )}
       </Paper>

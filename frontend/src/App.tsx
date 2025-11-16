@@ -16,6 +16,7 @@ import { UserProfilePage } from './pages/UserProfilePage'
 import { UserSearchPage } from './pages/UserSearchPage'
 import { FollowersPage } from './pages/FollowersPage'
 import { ActivityFeedPage } from './pages/ActivityFeedPage'
+import { ChatPage } from './pages/ChatPage'
 
 const theme = createTheme({
   palette: {
@@ -139,6 +140,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ActivityFeedPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/activities/:activityId/chat"
+              element={
+                <ProtectedRoute>
+                  <ChatPage />
                 </ProtectedRoute>
               }
             />
