@@ -7,8 +7,8 @@ import {
   validateAge,
   validatePassword,
   validateRequiredFields,
-  ValidationError,
 } from '../utils/validation.js'
+import { Errors } from '../utils/errors.js'
 
 const SALT_ROUNDS = 10
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
@@ -32,10 +32,7 @@ export class AuthService {
 
     // Check if terms are agreed
     if (!data.agreedToTerms) {
-      throw new ValidationError(
-        'You must agree to the terms of service',
-        'VALIDATION_REQUIRED_FIELD'
-      )
+      throw Errors.requiredField('agreedToTerms')
     }
 
     // Check if email already exists
@@ -45,10 +42,7 @@ export class AuthService {
     )
 
     if (existingUser.rows.length > 0) {
-      throw new ValidationError(
-        'Email already registered',
-        'VALIDATION_DUPLICATE_EMAIL'
-      )
+      throw Errors.duplicateEmail()
     }
 
     // Hash password
@@ -68,10 +62,7 @@ export class AuthService {
   async login(email: string, password: string): Promise<{ user: User; accessToken: string; refreshToken: string }> {
     // Validate required fields
     if (!email || !password) {
-      throw new ValidationError(
-        'Email and password are required',
-        'VALIDATION_REQUIRED_FIELD'
-      )
+      throw Errors.requiredField('email and password')
     }
 
     // Find user by email
@@ -83,10 +74,7 @@ export class AuthService {
     )
 
     if (result.rows.length === 0) {
-      throw new ValidationError(
-        'Invalid email or password',
-        'AUTH_INVALID_CREDENTIALS'
-      )
+      throw Errors.invalidCredentials()
     }
 
     const user = result.rows[0]
@@ -95,10 +83,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(password, user.password_hash)
 
     if (!isPasswordValid) {
-      throw new ValidationError(
-        'Invalid email or password',
-        'AUTH_INVALID_CREDENTIALS'
-      )
+      throw Errors.invalidCredentials()
     }
 
     // Generate tokens
@@ -129,9 +114,9 @@ export class AuthService {
       return decoded
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new ValidationError('Token expired', 'AUTH_TOKEN_EXPIRED')
+        throw Errors.tokenExpired()
       }
-      throw new ValidationError('Invalid token', 'AUTH_TOKEN_INVALID')
+      throw Errors.tokenInvalid()
     }
   }
 
@@ -141,9 +126,9 @@ export class AuthService {
       return decoded
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
-        throw new ValidationError('Refresh token expired', 'AUTH_TOKEN_EXPIRED')
+        throw Errors.tokenExpired()
       }
-      throw new ValidationError('Invalid refresh token', 'AUTH_TOKEN_INVALID')
+      throw Errors.tokenInvalid()
     }
   }
 

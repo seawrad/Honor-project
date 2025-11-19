@@ -4,7 +4,6 @@ import {
   Grid,
   Typography,
   Box,
-  CircularProgress,
   Alert,
   Button,
   Pagination,
@@ -13,6 +12,7 @@ import { Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { ActivityCard } from '../components/ActivityCard';
 import { ActivityFilters as ActivityFiltersComponent } from '../components/ActivityFilters';
+import { LoadingState } from '../components/LoadingState';
 import { activityService } from '../services/activity.service';
 import { Activity, ActivityFilters } from '../types/activity.types';
 
@@ -79,9 +79,7 @@ export const ActivityListPage = () => {
       )}
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
+        <LoadingState type="skeleton" count={6} />
       ) : activities.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>

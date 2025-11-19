@@ -42,4 +42,11 @@ export const userService = {
     });
     return response.data;
   },
+
+  async getUserRatings(userId: string, page = 1, limit = 20): Promise<{ ratings: any[]; averageRating: number; totalRatings: number }> {
+    const response = await axios.get(`${API_BASE_URL}/users/${userId}/ratings`, {
+      params: { page, limit },
+    });
+    return response.data.data;
+  },
 };

@@ -14,6 +14,8 @@ describe('MessageInput', () => {
     vi.clearAllMocks()
     vi.mocked(socketService.isConnected).mockReturnValue(true)
     vi.mocked(socketService.sendMessage).mockImplementation(() => {})
+    vi.mocked(socketService.emitTyping).mockImplementation(() => {})
+    vi.mocked(socketService.emitStopTyping).mockImplementation(() => {})
   })
 
   it('should render message input field', () => {
@@ -90,8 +92,8 @@ describe('MessageInput', () => {
     await user.type(input, '   ')
 
     const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
-
+    // Button should be disabled for empty/whitespace-only messages
+    expect(sendButton).toBeDisabled()
     expect(socketService.sendMessage).not.toHaveBeenCalled()
   })
 
@@ -123,5 +125,47 @@ describe('MessageInput', () => {
     await user.click(sendButton)
 
     expect(socketService.sendMessage).toHaveBeenCalledWith(mockRoomId, 'Hello World')
+  })
+
+  it('should emit typing event when user starts typing', async () => {
+    const user = userEvent.setup()
+    render(<MessageInput roomId={mockRoomId} />)
+
+    const input = screen.getByPlaceholderText('Type a message...')
+    await user.type(input, 'H')
+
+    await waitFor(() => {
+      expect(socketService.emitTyping).toHaveBeenCalledWith(mockRoomId)
+    })
+  })
+
+  it('should emit stop typing event after sending message', async () => {
+    const user = userEvent.setup()
+    render(<MessageInput roomId={mockRoomId} />)
+
+    const input = screen.getByPlaceholderText('Type a message...')
+    await user.type(input, 'Hello')
+
+    const sendButton = screen.getByRole('button')
+    await user.click(sendButton)
+
+    await waitFor(() => {
+      expect(socketService.emitStopTyping).toHaveBeenCalledWith(mockRoomId)
+    })
+  })
+
+  it('should not emit typing event when socket is not connected', async () => {
+    vi.mocked(socketService.isConnected).mockReturnValue(false)
+
+    const user = userEvent.setup()
+    render(<MessageInput roomId={mockRoomId} />)
+
+    const input = screen.getByPlaceholderText('Type a message...')
+    await user.type(input, 'H')
+
+    // Wait a bit to ensure no typing event is emitted
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    expect(socketService.emitTyping).not.toHaveBeenCalled()
   })
 })

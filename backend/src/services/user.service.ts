@@ -442,6 +442,65 @@ class UserService {
       throw new Error('Failed to search users')
     }
   }
+
+  /**
+   * Get ratings for activities created by user
+   */
+  async getUserRatings(userId: string, page: number = 1, limit: number = 20): Promise<{ ratings: any[], total: number, averageRating: number }> {
+    try {
+      const offset = (page - 1) * limit
+
+      // Get total count and average rating
+      const statsResult = await db.query(
+        `SELECT 
+          COUNT(*) as total,
+          COALESCE(AVG(rating), 0) as average_rating
+         FROM activity_ratings ar
+         JOIN activities a ON ar.activity_id = a.id
+         WHERE a.creator_id = $1`,
+        [userId]
+      )
+
+      const total = parseInt(statsResult.rows[0].total)
+      const averageRating = parseFloat(statsResult.rows[0].average_rating)
+
+      // Get ratings with user info
+      const ratingsResult = await db.query(
+        `SELECT 
+          ar.id,
+          ar.activity_id,
+          ar.user_id,
+          u.display_name as user_name,
+          ar.rating,
+          ar.feedback,
+          ar.created_at,
+          a.title as activity_title
+         FROM activity_ratings ar
+         JOIN activities a ON ar.activity_id = a.id
+         JOIN users u ON ar.user_id = u.id
+         WHERE a.creator_id = $1
+         ORDER BY ar.created_at DESC
+         LIMIT $2 OFFSET $3`,
+        [userId, limit, offset]
+      )
+
+      const ratings = ratingsResult.rows.map(row => ({
+        id: row.id,
+        activityId: row.activity_id,
+        activityTitle: row.activity_title,
+        userId: row.user_id,
+        userName: row.user_name,
+        rating: row.rating,
+        feedback: row.feedback,
+        createdAt: row.created_at.toISOString(),
+      }))
+
+      return { ratings, total, averageRating }
+    } catch (error) {
+      console.error('Error fetching user ratings:', error)
+      throw new Error('Failed to fetch user ratings')
+    }
+  }
 }
 
 export const userService = new UserService()

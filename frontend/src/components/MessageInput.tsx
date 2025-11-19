@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, TextField, IconButton, Alert } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import { socketService } from '../services/socket.service'
@@ -11,6 +11,42 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Handle typing indicator
+  useEffect(() => {
+    return () => {
+      // Cleanup: stop typing on unmount
+      if (isTyping) {
+        socketService.emitStopTyping(roomId)
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+    }
+  }, [roomId, isTyping])
+
+  const handleTyping = () => {
+    if (!socketService.isConnected()) return
+
+    // Emit typing event if not already typing
+    if (!isTyping) {
+      socketService.emitTyping(roomId)
+      setIsTyping(true)
+    }
+
+    // Clear existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current)
+    }
+
+    // Set timeout to stop typing after 3 seconds of inactivity
+    typingTimeoutRef.current = setTimeout(() => {
+      socketService.emitStopTyping(roomId)
+      setIsTyping(false)
+    }, 3000)
+  }
 
   const handleSendMessage = async () => {
     if (!message.trim()) {
@@ -25,6 +61,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
     try {
       setIsSending(true)
       setError(null)
+
+      // Stop typing indicator
+      if (isTyping) {
+        socketService.emitStopTyping(roomId)
+        setIsTyping(false)
+      }
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
 
       // Send message via WebSocket
       socketService.sendMessage(roomId, message.trim())
@@ -60,7 +105,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
           maxRows={3}
           placeholder="Type a message..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value)
+            handleTyping()
+          }}
           onKeyPress={handleKeyPress}
           disabled={isSending}
           size="small"

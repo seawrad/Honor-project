@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client'
-import { getAccessToken } from '../utils/tokenStorage'
+import { tokenStorage } from '../utils/tokenStorage'
 import {
   JoinRoomPayload,
   LeaveRoomPayload,
@@ -26,7 +26,7 @@ class SocketService {
       return this.socket
     }
 
-    const token = getAccessToken()
+    const token = tokenStorage.getAccessToken()
     if (!token) {
       throw new Error('No authentication token found')
     }
@@ -175,6 +175,38 @@ class SocketService {
   onLeftRoom(callback: (data: { roomId: string }) => void): void {
     if (!this.socket) return
     this.socket.on('left_room', callback)
+  }
+
+  /**
+   * Emit typing event
+   */
+  emitTyping(roomId: string): void {
+    if (!this.socket?.connected) return
+    this.socket.emit('typing', { roomId })
+  }
+
+  /**
+   * Emit stop typing event
+   */
+  emitStopTyping(roomId: string): void {
+    if (!this.socket?.connected) return
+    this.socket.emit('stop_typing', { roomId })
+  }
+
+  /**
+   * Listen for user typing events
+   */
+  onUserTyping(callback: (data: { userId: string; displayName: string }) => void): void {
+    if (!this.socket) return
+    this.socket.on('user_typing', callback)
+  }
+
+  /**
+   * Listen for user stop typing events
+   */
+  onUserStopTyping(callback: (data: { userId: string }) => void): void {
+    if (!this.socket) return
+    this.socket.on('user_stop_typing', callback)
   }
 
   /**

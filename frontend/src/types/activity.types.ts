@@ -48,3 +48,24 @@ export interface CreateActivityData {
 }
 
 export interface UpdateActivityData extends Partial<CreateActivityData> {}
+
+export interface ActivityRating {
+  id: string;
+  activityId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  feedback?: string;
+  createdAt: string;
+}
+
+export interface CreateRatingData {
+  rating: number;
+  feedback?: string;
+}
+
+export interface ActivityRatingSummary {
+  averageRating: number;
+  totalRatings: number;
+  ratings: ActivityRating[];
+}

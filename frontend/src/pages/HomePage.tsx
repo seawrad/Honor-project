@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Box, Typography, Button, Paper } from '@mui/material';
+import { Container, Box, Typography, Button, Paper, Stack } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,8 +14,8 @@ export const HomePage: React.FC = () => {
 
   return (
     <Container maxWidth="md">
-      <Box sx={{ mt: 8 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
+      <Box sx={{ mt: { xs: 2, sm: 4, md: 8 } }}>
+        <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
           <Typography variant="h3" gutterBottom>
             歡迎來到 Group Running App
           </Typography>
@@ -32,17 +32,36 @@ export const HomePage: React.FC = () => {
             年齡：{user?.age}
           </Typography>
 
-          <Box sx={{ mt: 4 }}>
-            <Button variant="contained" color="primary" sx={{ mr: 2 }}>
+          <Stack 
+            direction={{ xs: 'column', sm: 'row' }} 
+            spacing={2} 
+            sx={{ mt: 4 }}
+          >
+            <Button 
+              variant="contained" 
+              color="primary" 
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              onClick={() => navigate('/activities')}
+            >
               探索活動
             </Button>
-            <Button variant="outlined" color="primary" sx={{ mr: 2 }}>
+            <Button 
+              variant="outlined" 
+              color="primary" 
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              onClick={() => navigate('/activities/create')}
+            >
               建立活動
             </Button>
-            <Button variant="outlined" color="secondary" onClick={handleLogout}>
+            <Button 
+              variant="outlined" 
+              color="secondary" 
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              onClick={handleLogout}
+            >
               登出
             </Button>
-          </Box>
+          </Stack>
         </Paper>
       </Box>
     </Container>

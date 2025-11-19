@@ -12,6 +12,8 @@ import {
   Alert,
   Divider,
   Chip,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   DirectionsRun,
@@ -19,12 +21,14 @@ import {
   Star,
   People,
   CalendarToday,
+  RateReview,
 } from '@mui/icons-material';
 import { userService } from '../services/user.service';
 import { UserProfile } from '../types/user.types';
 import { FollowButton } from '../components/FollowButton';
 import { useAuth } from '../hooks/useAuth';
 import { ActivityCard } from '../components/ActivityCard';
+import { RatingsList } from '../components/RatingsList';
 
 export const UserProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -33,6 +37,11 @@ export const UserProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(0);
+  const [ratings, setRatings] = useState<any[]>([]);
+  const [ratingsLoading, setRatingsLoading] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
 
   const isOwnProfile = currentUser?.id === userId;
 
@@ -55,6 +64,27 @@ export const UserProfilePage: React.FC = () => {
 
     fetchProfile();
   }, [userId]);
+
+  useEffect(() => {
+    const fetchRatings = async () => {
+      if (!userId || activeTab !== 1) return;
+
+      setRatingsLoading(true);
+
+      try {
+        const data = await userService.getUserRatings(userId);
+        setRatings(data.ratings);
+        setAverageRating(data.averageRating);
+        setTotalRatings(data.totalRatings);
+      } catch (err: any) {
+        console.error('Failed to load ratings:', err);
+      } finally {
+        setRatingsLoading(false);
+      }
+    };
+
+    fetchRatings();
+  }, [userId, activeTab]);
 
   const handleFollowChange = (isFollowing: boolean) => {
     if (profile) {
@@ -177,62 +207,85 @@ export const UserProfilePage: React.FC = () => {
           </Grid>
         </Grid>
 
-        {/* Recent Activities */}
-        <Box>
-          <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <CalendarToday />
-            最近活動
-          </Typography>
-          {profile.recentActivities.length === 0 ? (
-            <Alert severity="info">尚無活動記錄</Alert>
-          ) : (
-            <Grid container spacing={2}>
-              {profile.recentActivities.map((activity) => (
-                <Grid item xs={12} sm={6} md={4} key={activity.id}>
-                  <Card
-                    sx={{ cursor: 'pointer', '&:hover': { boxShadow: 6 } }}
-                    onClick={() => navigate(`/activities/${activity.id}`)}
-                  >
-                    <CardContent>
-                      <Typography variant="h6" gutterBottom noWrap>
-                        {activity.title}
-                      </Typography>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          日期：{new Date(activity.scheduledDate).toLocaleDateString('zh-TW')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          距離：{activity.distance} km
-                        </Typography>
-                        <Chip
-                          label={
-                            activity.status === 'upcoming'
-                              ? '即將開始'
-                              : activity.status === 'completed'
-                              ? '已完成'
-                              : activity.status === 'in-progress'
-                              ? '進行中'
-                              : '已取消'
-                          }
-                          color={
-                            activity.status === 'upcoming'
-                              ? 'primary'
-                              : activity.status === 'completed'
-                              ? 'success'
-                              : activity.status === 'in-progress'
-                              ? 'info'
-                              : 'default'
-                          }
-                          size="small"
-                        />
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          )}
+        {/* Tabs for Activities and Ratings */}
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
+            <Tab icon={<CalendarToday />} label="最近活動" iconPosition="start" />
+            <Tab icon={<RateReview />} label="評價" iconPosition="start" />
+          </Tabs>
         </Box>
+
+        {/* Recent Activities Tab */}
+        {activeTab === 0 && (
+          <Box>
+            {profile.recentActivities.length === 0 ? (
+              <Alert severity="info">尚無活動記錄</Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {profile.recentActivities.map((activity) => (
+                  <Grid item xs={12} sm={6} md={4} key={activity.id}>
+                    <Card
+                      sx={{ cursor: 'pointer', '&:hover': { boxShadow: 6 } }}
+                      onClick={() => navigate(`/activities/${activity.id}`)}
+                    >
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom noWrap>
+                          {activity.title}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            日期：{new Date(activity.scheduledDate).toLocaleDateString('zh-TW')}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            距離：{activity.distance} km
+                          </Typography>
+                          <Chip
+                            label={
+                              activity.status === 'upcoming'
+                                ? '即將開始'
+                                : activity.status === 'completed'
+                                ? '已完成'
+                                : activity.status === 'in-progress'
+                                ? '進行中'
+                                : '已取消'
+                            }
+                            color={
+                              activity.status === 'upcoming'
+                                ? 'primary'
+                                : activity.status === 'completed'
+                                ? 'success'
+                                : activity.status === 'in-progress'
+                                ? 'info'
+                                : 'default'
+                            }
+                            size="small"
+                          />
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
+
+        {/* Ratings Tab */}
+        {activeTab === 1 && (
+          <Box>
+            {ratingsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <RatingsList
+                ratings={ratings}
+                averageRating={averageRating}
+                totalRatings={totalRatings}
+              />
+            )}
+          </Box>
+        )}
       </Paper>
     </Container>
   );

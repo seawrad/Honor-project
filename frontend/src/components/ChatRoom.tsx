@@ -5,7 +5,6 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
   Divider,
   CircularProgress,
   Alert,
@@ -27,7 +26,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [roomId, setRoomId] = useState<string | null>(null)
-  const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set())
+  const [typingUsers, setTypingUsers] = useState<Map<string, string>>(new Map())
   const [unreadCount, setUnreadCount] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
   const [hasMoreMessages, setHasMoreMessages] = useState(true)
@@ -38,7 +37,9 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
 
   // Auto-scroll to latest message
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (messagesEndRef.current && typeof messagesEndRef.current.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   useEffect(() => {
@@ -143,7 +144,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
 
     try {
       // Connect socket
-      const socket = socketService.connect()
+      socketService.connect()
 
       // Join room
       socketService.joinRoom(roomId)
@@ -195,9 +196,31 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
         // Could show a system message here
       }
 
+      // Listen for user typing
+      const handleUserTyping = (data: { userId: string; displayName: string }) => {
+        if (data.userId !== user?.id) {
+          setTypingUsers((prev) => {
+            const newMap = new Map(prev)
+            newMap.set(data.userId, data.displayName)
+            return newMap
+          })
+        }
+      }
+
+      // Listen for user stop typing
+      const handleUserStopTyping = (data: { userId: string }) => {
+        setTypingUsers((prev) => {
+          const newMap = new Map(prev)
+          newMap.delete(data.userId)
+          return newMap
+        })
+      }
+
       socketService.onMessageReceived(handleMessageReceived)
       socketService.onUserJoined(handleUserJoined)
       socketService.onUserLeft(handleUserLeft)
+      socketService.onUserTyping(handleUserTyping)
+      socketService.onUserStopTyping(handleUserStopTyping)
 
       // Cleanup on unmount
       return () => {
@@ -205,6 +228,8 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
         socketService.off('message_received', handleMessageReceived)
         socketService.off('user_joined', handleUserJoined)
         socketService.off('user_left', handleUserLeft)
+        socketService.off('user_typing', handleUserTyping)
+        socketService.off('user_stop_typing', handleUserStopTyping)
       }
     } catch (err) {
       console.error('Failed to setup socket connection:', err)
@@ -308,7 +333,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
       {typingUsers.size > 0 && (
         <Box sx={{ px: 2, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">
-            {Array.from(typingUsers).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+            {Array.from(typingUsers.values()).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
           </Typography>
         </Box>
       )}

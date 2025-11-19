@@ -53,20 +53,25 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
   };
 
   return (
-    <Paper sx={{ p: 2, mb: 3 }}>
+    <Paper sx={{ p: { xs: 1.5, sm: 2 }, mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <FilterList sx={{ mr: 1 }} />
-          <Typography variant="h6">篩選條件</Typography>
+          <FilterList sx={{ mr: 1, fontSize: { xs: 20, sm: 24 } }} />
+          <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+            篩選條件
+          </Typography>
         </Box>
-        <IconButton onClick={() => setExpanded(!expanded)}>
+        <IconButton 
+          onClick={() => setExpanded(!expanded)}
+          sx={{ minWidth: 44, minHeight: 44 }}
+        >
           {expanded ? <ExpandLess /> : <ExpandMore />}
         </IconButton>
       </Box>
 
       <Collapse in={expanded}>
-        <Box sx={{ mt: 3 }}>
-          <Grid container spacing={3}>
+        <Box sx={{ mt: { xs: 2, sm: 3 } }}>
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid item xs={12} md={6}>
               <TextField
                 label="開始日期"
@@ -75,6 +80,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                 onChange={(e) => setDateFrom(e.target.value)}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
+                size="small"
               />
             </Grid>
             <Grid item xs={12} md={6}>
@@ -85,11 +91,12 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                 onChange={(e) => setDateTo(e.target.value)}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
+                size="small"
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Typography gutterBottom>
+              <Typography gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 距離範圍：{distanceRange[0]} - {distanceRange[1]} 公里
               </Typography>
               <Slider
@@ -99,11 +106,17 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                 min={0}
                 max={50}
                 step={1}
+                sx={{
+                  '& .MuiSlider-thumb': {
+                    width: { xs: 20, sm: 24 },
+                    height: { xs: 20, sm: 24 },
+                  },
+                }}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Typography gutterBottom>
+              <Typography gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 搜尋半徑：{radius} 公里
               </Typography>
               <Slider
@@ -113,15 +126,22 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                 min={1}
                 max={50}
                 step={1}
+                sx={{
+                  '& .MuiSlider-thumb': {
+                    width: { xs: 20, sm: 24 },
+                    height: { xs: 20, sm: 24 },
+                  },
+                }}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                 <Button
                   variant="contained"
                   onClick={handleApplyFilters}
                   fullWidth
+                  sx={{ minHeight: 44 }}
                 >
                   套用篩選
                 </Button>
@@ -129,6 +149,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                   variant="outlined"
                   onClick={handleResetFilters}
                   fullWidth
+                  sx={{ minHeight: 44 }}
                 >
                   重置
                 </Button>

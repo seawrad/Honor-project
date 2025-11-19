@@ -352,6 +352,44 @@ class UserController {
       })
     }
   }
+
+  /**
+   * GET /api/users/:id/ratings - Get ratings for activities created by user
+   */
+  async getUserRatings(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params
+      const page = parseInt(req.query.page as string) || 1
+      const limit = parseInt(req.query.limit as string) || 20
+
+      const { ratings, total, averageRating } = await userService.getUserRatings(id, page, limit)
+
+      res.json({
+        success: true,
+        data: {
+          ratings,
+          averageRating,
+          totalRatings: total,
+        },
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      })
+    } catch (error) {
+      console.error('Error in getUserRatings:', error)
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
+        },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
 }
 
 export const userController = new UserController()

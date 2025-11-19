@@ -67,64 +67,119 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
   };
 
   return (
-    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardContent sx={{ flexGrow: 1 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="h6" component="h2" gutterBottom>
+    <Card 
+      sx={{ 
+        height: '100%', 
+        display: 'flex', 
+        flexDirection: 'column',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 4,
+        },
+      }}
+    >
+      <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 2.5 } }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1, gap: 1 }}>
+          <Typography 
+            variant="h6" 
+            component="h2" 
+            gutterBottom
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
             {activity.title}
           </Typography>
           <Chip
             label={getStatusLabel(activity.status)}
             color={getStatusColor(activity.status)}
             size="small"
+            sx={{ flexShrink: 0 }}
           />
         </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography 
+          variant="body2" 
+          color="text.secondary" 
+          sx={{ 
+            mb: 2,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+          }}
+        >
           {activity.description}
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <CalendarToday sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
+          <CalendarToday sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
             {formatDate(activity.scheduledDate)}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <LocationOn sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
+          <LocationOn sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {activity.location.address}
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-          <DirectionsRun sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
+          <DirectionsRun sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
             {activity.distance} 公里
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <People sx={{ fontSize: 18, mr: 1, color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            {activity.currentParticipants} / {activity.maxParticipants} 人
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <People sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+              {activity.currentParticipants} / {activity.maxParticipants} 人
+            </Typography>
+          </Box>
           {isFull && (
-            <Chip label="已滿" color="error" size="small" sx={{ ml: 1 }} />
+            <Chip label="已滿" color="error" size="small" />
           )}
         </Box>
 
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+        <Typography 
+          variant="caption" 
+          color="text.secondary" 
+          sx={{ 
+            mt: 1, 
+            display: 'block',
+            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+          }}
+        >
           主辦人：{activity.creatorName}
         </Typography>
       </CardContent>
 
-      <CardActions>
+      <CardActions sx={{ p: { xs: 1.5, sm: 2 } }}>
         <Button
           size="small"
           onClick={() => navigate(`/activities/${activity.id}`)}
           fullWidth
+          sx={{ minHeight: 44 }}
         >
           查看詳情
         </Button>

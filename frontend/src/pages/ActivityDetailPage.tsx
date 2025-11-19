@@ -25,8 +25,11 @@ import {
   Edit,
   Cancel,
   Chat,
+  Star,
 } from '@mui/icons-material';
 import { ActivityMap } from '../components/ActivityMap';
+import { RatingDialog } from '../components/RatingDialog';
+import { ActivityRatings } from '../components/ActivityRatings';
 import { activityService } from '../services/activity.service';
 import { Activity } from '../types/activity.types';
 import { useAuth } from '../hooks/useAuth';
@@ -39,6 +42,8 @@ export const ActivityDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [hasRated, setHasRated] = useState(false);
 
   const loadActivity = async () => {
     if (!id) return;
@@ -58,6 +63,23 @@ export const ActivityDetailPage = () => {
   useEffect(() => {
     loadActivity();
   }, [id]);
+
+  useEffect(() => {
+    // Check if user has already rated this activity
+    const checkRatingStatus = async () => {
+      if (!id || !user || !activity || activity.status !== 'completed') return;
+      
+      try {
+        const ratingsData = await activityService.getActivityRatings(id);
+        const userRating = ratingsData.ratings.find((r: any) => r.userId === user.id);
+        setHasRated(!!userRating);
+      } catch (err) {
+        // Ignore error
+      }
+    };
+
+    checkRatingStatus();
+  }, [id, user, activity]);
 
   const handleJoinActivity = async () => {
     if (!id || !activity) return;
@@ -85,6 +107,13 @@ export const ActivityDetailPage = () => {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleSubmitRating = async (rating: number, feedback?: string) => {
+    if (!id) return;
+
+    await activityService.createRating(id, { rating, feedback });
+    setHasRated(true);
   };
 
   if (loading) {
@@ -339,7 +368,45 @@ export const ActivityDetailPage = () => {
             </Button>
           </Box>
         )}
+
+        {isParticipant && activity.status === 'completed' && !hasRated && (
+          <Box sx={{ mt: 3 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              活動已完成！請為這次跑步體驗評分
+            </Alert>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<Star />}
+              onClick={() => setRatingDialogOpen(true)}
+            >
+              評價活動
+            </Button>
+          </Box>
+        )}
+
+        {isParticipant && activity.status === 'completed' && hasRated && (
+          <Box sx={{ mt: 3 }}>
+            <Alert severity="success">
+              感謝您的評價！
+            </Alert>
+          </Box>
+        )}
       </Paper>
+
+      {/* Show ratings for completed activities */}
+      {activity.status === 'completed' && (
+        <Paper sx={{ p: 3, mt: 3 }}>
+          <ActivityRatings activityId={activity.id} />
+        </Paper>
+      )}
+
+      <RatingDialog
+        open={ratingDialogOpen}
+        onClose={() => setRatingDialogOpen(false)}
+        onSubmit={handleSubmitRating}
+        activityTitle={activity.title}
+      />
     </Container>
   );
 };

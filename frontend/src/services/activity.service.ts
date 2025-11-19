@@ -121,4 +121,28 @@ export const activityService = {
     );
     return response.data;
   },
+
+  async createRating(activityId: string, data: { rating: number; feedback?: string }): Promise<void> {
+    await axios.post(
+      `${API_BASE_URL}/activities/${activityId}/ratings`,
+      data,
+      {
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+        },
+      }
+    );
+  },
+
+  async getActivityRatings(activityId: string): Promise<{ averageRating: number; totalRatings: number; ratings: any[] }> {
+    const response = await axios.get(
+      `${API_BASE_URL}/activities/${activityId}/ratings`,
+      {
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+        },
+      }
+    );
+    return response.data;
+  },
 };

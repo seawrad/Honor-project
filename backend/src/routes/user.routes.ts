@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { userController } from '../controllers/user.controller.js'
 import { authenticateToken, optionalAuth } from '../middleware/auth.middleware.js'
+import { strictLimiter } from '../middleware/rateLimiter.middleware.js'
 
 const router = Router()
 
@@ -13,8 +14,8 @@ router.get('/:id', optionalAuth, (req, res) => userController.getUserProfile(req
 // Update user profile (requires auth)
 router.put('/:id', authenticateToken, (req, res) => userController.updateProfile(req, res))
 
-// Delete user account (requires auth)
-router.delete('/:id', authenticateToken, (req, res) => userController.deleteAccount(req, res))
+// Delete user account (requires auth) - apply strict rate limiting
+router.delete('/:id', authenticateToken, strictLimiter, (req, res) => userController.deleteAccount(req, res))
 
 // Follow user (requires auth)
 router.post('/:id/follow', authenticateToken, (req, res) => userController.followUser(req, res))
@@ -27,5 +28,8 @@ router.get('/:id/followers', (req, res) => userController.getFollowers(req, res)
 
 // Get users that the user is following
 router.get('/:id/following', (req, res) => userController.getFollowing(req, res))
+
+// Get user's ratings (as activity creator)
+router.get('/:id/ratings', (req, res) => userController.getUserRatings(req, res))
 
 export default router
