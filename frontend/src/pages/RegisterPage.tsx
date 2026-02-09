@@ -11,14 +11,20 @@ import {
   Checkbox,
   FormControlLabel,
   Paper,
+  IconButton,
+  InputAdornment,
 } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { RegisterData } from '../types/auth.types';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { register } = useAuth();
-  
+
   const [formData, setFormData] = useState<RegisterData>({
     email: '',
     password: '',
@@ -26,7 +32,8 @@ export const RegisterPage: React.FC = () => {
     age: 0,
     agreedToTerms: false,
   });
-  
+
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,39 +41,34 @@ export const RegisterPage: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Email validation
     if (!formData.email) {
-      newErrors.email = '電子郵件為必填';
+      newErrors.email = t('emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '請輸入有效的電子郵件地址';
+      newErrors.email = t('emailInvalid');
     }
 
-    // Password validation
     if (!formData.password) {
-      newErrors.password = '密碼為必填';
+      newErrors.password = t('passwordRequired');
     } else if (formData.password.length < 8) {
-      newErrors.password = '密碼至少需要 8 個字元';
+      newErrors.password = t('passwordMinLength');
     } else if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(formData.password)) {
-      newErrors.password = '密碼必須包含字母和數字';
+      newErrors.password = t('passwordRule');
     }
 
-    // Display name validation
     if (!formData.displayName) {
-      newErrors.displayName = '顯示名稱為必填';
+      newErrors.displayName = t('displayNameRequired');
     } else if (formData.displayName.length < 2) {
-      newErrors.displayName = '顯示名稱至少需要 2 個字元';
+      newErrors.displayName = t('displayNameMin');
     }
 
-    // Age validation (18-65)
     if (!formData.age) {
-      newErrors.age = '年齡為必填';
+      newErrors.age = t('ageRequired');
     } else if (formData.age < 18 || formData.age > 65) {
-      newErrors.age = '年齡必須在 18 到 65 歲之間';
+      newErrors.age = t('ageRange');
     }
 
-    // Terms acceptance validation
     if (!formData.agreedToTerms) {
-      newErrors.agreedToTerms = '您必須同意服務條款';
+      newErrors.agreedToTerms = t('termsRequired');
     }
 
     setErrors(newErrors);
@@ -104,8 +106,8 @@ export const RegisterPage: React.FC = () => {
     try {
       await register(formData);
       // Redirect to login page after successful registration
-      navigate('/login', { 
-        state: { message: '註冊成功！請登入您的帳戶。' } 
+      navigate('/login', {
+        state: { message: t('registerSuccess') },
       });
     } catch (error: any) {
       if (error.response?.data?.error) {
@@ -113,14 +115,14 @@ export const RegisterPage: React.FC = () => {
         const errorMessage = error.response.data.error.message;
         
         if (errorCode === 'VALIDATION_DUPLICATE_EMAIL') {
-          setErrors({ email: '此電子郵件已被註冊' });
+          setErrors({ email: t('duplicateEmail') });
         } else if (errorCode === 'VALIDATION_AGE_RESTRICTION') {
-          setErrors({ age: '年齡必須在 18 到 65 歲之間' });
+          setErrors({ age: t('ageRange') });
         } else {
-          setApiError(errorMessage || '註冊失敗，請稍後再試');
+          setApiError(errorMessage || t('registerFailed'));
         }
       } else {
-        setApiError('註冊失敗，請檢查您的網路連線');
+        setApiError(t('registerFailed'));
       }
     } finally {
       setIsSubmitting(false);
@@ -139,11 +141,11 @@ export const RegisterPage: React.FC = () => {
       >
         <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
           <Typography component="h1" variant="h4" align="center" gutterBottom>
-            註冊
+            {t('registerTitle')}
           </Typography>
-          
+
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            加入 Group Running App 開始您的跑步之旅
+            {t('registerWelcome')}
           </Typography>
 
           {apiError && (
@@ -158,7 +160,7 @@ export const RegisterPage: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="電子郵件"
+              label={t('email')}
               name="email"
               autoComplete="email"
               autoFocus
@@ -173,14 +175,28 @@ export const RegisterPage: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="密碼"
-              type="password"
+              label={t('password')}
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="new-password"
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
-              helperText={errors.password || '至少 8 個字元，包含字母和數字'}
+              helperText={errors.password || t('passwordMinLength')}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                      onClick={() => setShowPassword((p) => !p)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
 
             <TextField
@@ -188,7 +204,7 @@ export const RegisterPage: React.FC = () => {
               required
               fullWidth
               name="displayName"
-              label="顯示名稱"
+              label={t('displayName')}
               id="displayName"
               autoComplete="name"
               value={formData.displayName}
@@ -202,13 +218,13 @@ export const RegisterPage: React.FC = () => {
               required
               fullWidth
               name="age"
-              label="年齡"
+              label={t('age')}
               type="number"
               id="age"
               value={formData.age || ''}
               onChange={handleChange}
               error={!!errors.age}
-              helperText={errors.age || '必須年滿 18 歲且不超過 65 歲'}
+              helperText={errors.age || t('ageRange')}
               inputProps={{ min: 18, max: 65 }}
             />
 
@@ -223,13 +239,13 @@ export const RegisterPage: React.FC = () => {
               }
               label={
                 <Typography variant="body2">
-                  我同意{' '}
+                  {t('agreeTermsPrefix')}
                   <Link href="/terms" target="_blank">
-                    服務條款
-                  </Link>{' '}
-                  和{' '}
+                    {t('terms')}
+                  </Link>
+                  {t('agreeTermsMiddle')}
                   <Link href="/privacy" target="_blank">
-                    隱私政策
+                    {t('privacyPolicy')}
                   </Link>
                 </Typography>
               }
@@ -247,12 +263,12 @@ export const RegisterPage: React.FC = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={isSubmitting}
             >
-              {isSubmitting ? '註冊中...' : '註冊'}
+              {isSubmitting ? t('registering') : t('register')}
             </Button>
 
             <Box sx={{ textAlign: 'center' }}>
               <Link component={RouterLink} to="/login" variant="body2">
-                已有帳戶？登入
+                {t('haveAccount')}
               </Link>
             </Box>
           </Box>

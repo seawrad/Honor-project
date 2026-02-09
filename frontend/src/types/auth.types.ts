@@ -24,11 +24,15 @@ export interface RegisterData {
   agreedToTerms: boolean;
 }
 
+export interface LoginOptions {
+  keepLoggedIn?: boolean;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials, options?: LoginOptions) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   refreshToken: () => Promise<void>;

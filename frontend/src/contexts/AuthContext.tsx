@@ -80,15 +80,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<void> => {
+  const login = async (credentials: LoginCredentials, options?: { keepLoggedIn?: boolean }): Promise<void> => {
     const response = await authService.login(credentials);
-    
+    const persistent = options?.keepLoggedIn !== false;
+
     setUser(response.user);
-    tokenStorage.setAccessToken(response.accessToken);
-    tokenStorage.setRefreshToken(response.refreshToken);
-    tokenStorage.setUser(response.user);
-    
-    // Setup axios default header
+    tokenStorage.setAccessToken(response.accessToken, persistent);
+    tokenStorage.setRefreshToken(response.refreshToken, persistent);
+    tokenStorage.setUser(response.user, persistent);
+
     axios.defaults.headers.common['Authorization'] = `Bearer ${response.accessToken}`;
   };
 
@@ -109,23 +109,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const refreshToken = async (): Promise<void> => {
     const currentRefreshToken = tokenStorage.getRefreshToken();
-    
+
     if (!currentRefreshToken) {
       throw new Error('No refresh token available');
     }
 
     const tokens = await authService.refreshToken(currentRefreshToken);
-    
-    tokenStorage.setAccessToken(tokens.accessToken);
-    tokenStorage.setRefreshToken(tokens.refreshToken);
-    
-    // Setup axios default header
+    const persistent = tokenStorage.isPersistent();
+
+    tokenStorage.setAccessToken(tokens.accessToken, persistent);
+    tokenStorage.setRefreshToken(tokens.refreshToken, persistent);
+
     axios.defaults.headers.common['Authorization'] = `Bearer ${tokens.accessToken}`;
-    
-    // Fetch updated user data
+
     const currentUser = await authService.getCurrentUser(tokens.accessToken);
     setUser(currentUser);
-    tokenStorage.setUser(currentUser);
+    tokenStorage.setUser(currentUser, persistent);
   };
 
   const value: AuthContextType = {

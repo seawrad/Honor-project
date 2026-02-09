@@ -1,8 +1,11 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { CssBaseline, ThemeProvider, createTheme, CircularProgress, Box } from '@mui/material'
+import { CircularProgress, Box } from '@mui/material'
 import { AuthProvider } from './contexts/AuthContext'
+import { SettingsProvider } from './contexts/SettingsContext'
+import { AppThemeWrapper } from './components/AppThemeWrapper'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AppLayout } from './components/AppLayout'
 import { PWAUpdatePrompt } from './components/PWAUpdatePrompt'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider, useToast } from './components/ErrorToast'
@@ -30,6 +33,8 @@ const UserSearchPage = lazy(() => import('./pages/UserSearchPage').then(m => ({ 
 const FollowersPage = lazy(() => import('./pages/FollowersPage').then(m => ({ default: m.FollowersPage })))
 const ActivityFeedPage = lazy(() => import('./pages/ActivityFeedPage').then(m => ({ default: m.ActivityFeedPage })))
 const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
+const ChatListPage = lazy(() => import('./pages/ChatListPage').then(m => ({ default: m.ChatListPage })))
 
 // Loading component
 const LoadingFallback = () => (
@@ -44,118 +49,6 @@ const LoadingFallback = () => (
     <CircularProgress />
   </Box>
 )
-
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-  breakpoints: {
-    values: {
-      xs: 0,
-      sm: 600,
-      md: 960,
-      lg: 1280,
-      xl: 1920,
-    },
-  },
-  typography: {
-    h1: {
-      fontSize: '2.5rem',
-      '@media (min-width:600px)': {
-        fontSize: '3rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '3.5rem',
-      },
-    },
-    h2: {
-      fontSize: '2rem',
-      '@media (min-width:600px)': {
-        fontSize: '2.5rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '3rem',
-      },
-    },
-    h3: {
-      fontSize: '1.75rem',
-      '@media (min-width:600px)': {
-        fontSize: '2rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '2.5rem',
-      },
-    },
-    h4: {
-      fontSize: '1.5rem',
-      '@media (min-width:600px)': {
-        fontSize: '1.75rem',
-      },
-      '@media (min-width:960px)': {
-        fontSize: '2rem',
-      },
-    },
-    h5: {
-      fontSize: '1.25rem',
-      '@media (min-width:600px)': {
-        fontSize: '1.5rem',
-      },
-    },
-    h6: {
-      fontSize: '1rem',
-      '@media (min-width:600px)': {
-        fontSize: '1.25rem',
-      },
-    },
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          minHeight: '44px', // Touch-friendly size
-          '@media (max-width:600px)': {
-            fontSize: '0.875rem',
-          },
-        },
-      },
-    },
-    MuiIconButton: {
-      styleOverrides: {
-        root: {
-          minWidth: '44px',
-          minHeight: '44px', // Touch-friendly size
-        },
-      },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiInputBase-root': {
-            minHeight: '44px', // Touch-friendly size
-          },
-        },
-      },
-    },
-    MuiContainer: {
-      styleOverrides: {
-        root: {
-          paddingLeft: '16px',
-          paddingRight: '16px',
-          '@media (min-width:600px)': {
-            paddingLeft: '24px',
-            paddingRight: '24px',
-          },
-        },
-      },
-    },
-  },
-})
 
 // Inner component to access toast context
 function AppContent() {
@@ -174,118 +67,31 @@ function AppContent() {
           <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               <Route
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <HomePage />
+                    <AppLayout />
                   </ProtectedRoute>
                 }
-              />
-              <Route
-                path="/activities"
-                element={
-                  <ProtectedRoute>
-                    <ActivityListPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/create"
-                element={
-                  <ProtectedRoute>
-                    <CreateActivityPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/:id"
-                element={
-                  <ProtectedRoute>
-                    <ActivityDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <EditActivityPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/:id/cancel"
-                element={
-                  <ProtectedRoute>
-                    <CancelActivityPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/:activityId/tracking"
-                element={
-                  <ProtectedRoute>
-                    <GPSTrackingPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/routes/history"
-                element={
-                  <ProtectedRoute>
-                    <RouteHistoryPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/users/:userId"
-                element={
-                  <ProtectedRoute>
-                    <UserProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/users/search"
-                element={
-                  <ProtectedRoute>
-                    <UserSearchPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/users/:userId/followers"
-                element={
-                  <ProtectedRoute>
-                    <FollowersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/users/:userId/following"
-                element={
-                  <ProtectedRoute>
-                    <FollowersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/feed"
-                element={
-                  <ProtectedRoute>
-                    <ActivityFeedPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/activities/:activityId/chat"
-                element={
-                  <ProtectedRoute>
-                    <ChatPage />
-                  </ProtectedRoute>
-                }
-              />
+              >
+                <Route index element={<HomePage />} />
+                <Route path="activities" element={<ActivityListPage />} />
+                <Route path="activities/create" element={<CreateActivityPage />} />
+                <Route path="activities/:id" element={<ActivityDetailPage />} />
+                <Route path="activities/:id/edit" element={<EditActivityPage />} />
+                <Route path="activities/:id/cancel" element={<CancelActivityPage />} />
+                <Route path="activities/:activityId/tracking" element={<GPSTrackingPage />} />
+                <Route path="activities/:activityId/chat" element={<ChatPage />} />
+                <Route path="routes/history" element={<RouteHistoryPage />} />
+                <Route path="users/:userId" element={<UserProfilePage />} />
+                <Route path="users/search" element={<UserSearchPage />} />
+                <Route path="users/:userId/followers" element={<FollowersPage />} />
+                <Route path="users/:userId/following" element={<FollowersPage />} />
+                <Route path="feed" element={<ActivityFeedPage />} />
+                <Route path="chat-list" element={<ChatListPage />} />
+              </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
@@ -297,12 +103,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ToastProvider>
-          <AppContent />
-        </ToastProvider>
-      </ThemeProvider>
+      <SettingsProvider>
+        <AppThemeWrapper>
+          <ToastProvider>
+            <AppContent />
+          </ToastProvider>
+        </AppThemeWrapper>
+      </SettingsProvider>
     </ErrorBoundary>
   )
 }

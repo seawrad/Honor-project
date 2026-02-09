@@ -1,3 +1,11 @@
+export interface RecentActivity {
+  id: string
+  title: string
+  scheduledDate: string
+  distance: number
+  status: 'upcoming' | 'in-progress' | 'completed' | 'cancelled'
+}
+
 export interface UserProfile {
   id: string
   email: string
@@ -8,6 +16,10 @@ export interface UserProfile {
   averageRating: number
   followersCount: number
   followingCount: number
+  avatarUrl?: string | null
+  isFollowing?: boolean
+  recentActivities: RecentActivity[]
+  joinedDate: string
   createdAt: string
   updatedAt: string
 }
@@ -15,6 +27,7 @@ export interface UserProfile {
 export interface UpdateProfileRequest {
   displayName?: string
   age?: number
+  avatarUrl?: string | null
 }
 
 export interface UserStats {

@@ -10,7 +10,11 @@ import {
   ErrorPayload,
 } from '../types/chat.types'
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+// In dev: use same origin so Vite proxy forwards /socket.io to backend
+// In production: use VITE_API_URL or fallback to same origin
+const SOCKET_URL = import.meta.env.DEV
+  ? ''
+  : (import.meta.env.VITE_API_URL || '').replace(/\/$/, '') || undefined
 
 class SocketService {
   private socket: Socket | null = null
@@ -31,11 +35,12 @@ class SocketService {
       throw new Error('No authentication token found')
     }
 
-    this.socket = io(SOCKET_URL, {
+    this.socket = io(SOCKET_URL || undefined, {
       auth: {
         token,
       },
       transports: ['websocket', 'polling'],
+      path: '/socket.io',
       reconnection: true,
       reconnectionAttempts: this.maxReconnectAttempts,
       reconnectionDelay: this.reconnectDelay,
@@ -44,6 +49,27 @@ class SocketService {
     this.setupEventHandlers()
 
     return this.socket
+  }
+
+  /**
+   * Connect and wait until socket is connected (for use before joinRoom)
+   */
+  async connectAndWait(): Promise<Socket> {
+    const socket = this.connect()
+    if (socket.connected) return socket
+
+    return new Promise((resolve, reject) => {
+      const onConnect = () => {
+        socket.off('connect_error', onError)
+        resolve(socket)
+      }
+      const onError = (err: Error) => {
+        socket.off('connect', onConnect)
+        reject(err)
+      }
+      socket.once('connect', onConnect)
+      socket.once('connect_error', onError)
+    })
   }
 
   /**

@@ -142,14 +142,17 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
   useEffect(() => {
     if (!roomId) return
 
-    try {
-      // Connect socket
-      socketService.connect()
+    let mounted = true
+    const setupSocket = async () => {
+      try {
+        // Connect socket and wait for connection
+        await socketService.connectAndWait()
+        if (!mounted) return
 
-      // Join room
-      socketService.joinRoom(roomId)
+        // Join room (socket is now connected)
+        socketService.joinRoom(roomId)
 
-      // Listen for new messages
+        // Listen for new messages
       const handleMessageReceived = (message: MessageReceivedPayload) => {
         const newMessage: ChatMessage = {
           id: message.id,
@@ -216,24 +219,36 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
         })
       }
 
-      socketService.onMessageReceived(handleMessageReceived)
-      socketService.onUserJoined(handleUserJoined)
-      socketService.onUserLeft(handleUserLeft)
-      socketService.onUserTyping(handleUserTyping)
-      socketService.onUserStopTyping(handleUserStopTyping)
-
-      // Cleanup on unmount
-      return () => {
-        socketService.leaveRoom(roomId)
-        socketService.off('message_received', handleMessageReceived)
-        socketService.off('user_joined', handleUserJoined)
-        socketService.off('user_left', handleUserLeft)
-        socketService.off('user_typing', handleUserTyping)
-        socketService.off('user_stop_typing', handleUserStopTyping)
+        socketService.onMessageReceived(handleMessageReceived)
+        socketService.onUserJoined(handleUserJoined)
+        socketService.onUserLeft(handleUserLeft)
+        socketService.onUserTyping(handleUserTyping)
+        socketService.onUserStopTyping(handleUserStopTyping)
+      } catch (err) {
+        if (mounted) {
+          console.error('Failed to setup socket connection:', err)
+          setError('Failed to connect to chat')
+        }
       }
-    } catch (err) {
-      console.error('Failed to setup socket connection:', err)
-      setError('Failed to connect to chat')
+    }
+
+    setupSocket()
+
+    // Cleanup on unmount
+    return () => {
+      mounted = false
+      try {
+        if (roomId && socketService.isConnected()) {
+          socketService.leaveRoom(roomId)
+        }
+      } catch {
+        // Socket may have disconnected
+      }
+      socketService.off('message_received')
+      socketService.off('user_joined')
+      socketService.off('user_left')
+      socketService.off('user_typing')
+      socketService.off('user_stop_typing')
     }
   }, [roomId])
 

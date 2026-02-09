@@ -10,6 +10,7 @@
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "migrate": "tsx src/database/migrate.ts up",
     "migrate:rollback": "tsx src/database/migrate.ts rollback",
+    "seed": "tsx src/database/seed.ts",
     "db:test": "tsx src/database/test-connection.ts",
     "test": "vitest --run",
     "test:watch": "vitest"

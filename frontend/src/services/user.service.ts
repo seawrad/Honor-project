@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { UserProfile, UserSearchResult } from '../types/user.types';
+import { UserProfile, UserSearchResult, UpdateProfileData } from '../types/user.types';
 
 const API_BASE_URL = '/api';
 
@@ -9,8 +9,12 @@ export const userService = {
     return response.data.data;
   },
 
-  async updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<UserProfile> {
-    const response = await axios.put<{ data: UserProfile }>(`${API_BASE_URL}/users/${userId}`, data);
+  async updateUserProfile(userId: string, data: UpdateProfileData): Promise<UserProfile> {
+    const body: Record<string, unknown> = {};
+    if (data.displayName !== undefined) body.displayName = data.displayName;
+    if (data.age !== undefined) body.age = data.age;
+    if (data.avatarUrl !== undefined) body.avatarUrl = data.avatarUrl;
+    const response = await axios.put<{ data: UserProfile }>(`${API_BASE_URL}/users/${userId}`, body);
     return response.data.data;
   },
 

@@ -66,6 +66,7 @@ class UserController {
       const updates: UpdateProfileRequest = {
         displayName: req.body.displayName,
         age: req.body.age,
+        avatarUrl: req.body.avatarUrl,
       }
 
       const profile = await userService.updateProfile(id, updates)

@@ -1,48 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
-  Container,
   Box,
   TextField,
   Button,
   Typography,
   Link,
   Alert,
+  FormControlLabel,
+  Checkbox,
+  IconButton,
+  InputAdornment,
   Paper,
 } from '@mui/material';
+import SettingsIcon from '@mui/icons-material/Settings';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { LoginCredentials } from '../types/auth.types';
+import { tokenStorage } from '../utils/tokenStorage';
+import { LoginSuccessTransition } from '../components/LoginSuccessTransition';
+import './LoginPage.css';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const { login } = useAuth();
-  
+
+  const rememberedEmail = tokenStorage.getRememberedEmail();
   const [formData, setFormData] = useState<LoginCredentials>({
-    email: '',
+    email: rememberedEmail ?? '',
     password: '',
   });
-  
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(true);
+  const [rememberEmail, setRememberEmail] = useState(!!rememberedEmail);
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Get success message from registration redirect
-  const successMessage = location.state?.message;
+  const [showSuccessTransition, setShowSuccessTransition] = useState(false);
+
+  const successMessage = location.state?.message as string | undefined;
+  const from = (location.state?.from?.pathname as string) || '/';
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Email validation
     if (!formData.email) {
-      newErrors.email = '電子郵件為必填';
+      newErrors.email = t('emailRequired');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '請輸入有效的電子郵件地址';
+      newErrors.email = t('emailInvalid');
     }
 
-    // Password validation
     if (!formData.password) {
-      newErrors.password = '密碼為必填';
+      newErrors.password = t('passwordRequired');
     }
 
     setErrors(newErrors);
@@ -51,13 +66,12 @@ export const LoginPage: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-    
-    // Clear error for this field
+
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -65,12 +79,16 @@ export const LoginPage: React.FC = () => {
         return newErrors;
       });
     }
-    
-    // Clear API error when user starts typing
+
     if (apiError) {
       setApiError('');
     }
   };
+
+  const handleCompleteTransition = useCallback(() => {
+    setShowSuccessTransition(false);
+    navigate(from, { replace: true });
+  }, [navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,61 +101,85 @@ export const LoginPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      await login(formData);
-      
-      // Redirect to home page or the page user was trying to access
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      await login(formData, { keepLoggedIn });
+
+      if (rememberEmail) {
+        tokenStorage.setRememberedEmail(formData.email);
+      } else {
+        tokenStorage.clearRememberedEmail();
+      }
+
+      setIsSubmitting(false);
+      setShowSuccessTransition(true);
     } catch (error: any) {
       if (error.response?.data?.error) {
         const errorCode = error.response.data.error.code;
         const errorMessage = error.response.data.error.message;
-        
+
         if (errorCode === 'AUTH_INVALID_CREDENTIALS') {
-          setApiError('電子郵件或密碼不正確');
+          setApiError(t('invalidCredentials'));
         } else {
-          setApiError(errorMessage || '登入失敗，請稍後再試');
+          setApiError(errorMessage || t('loginFailed'));
         }
       } else if (error.request) {
-        setApiError('無法連接到伺服器，請檢查您的網路連線');
+        setApiError(t('networkError'));
       } else {
-        setApiError('登入失敗，請稍後再試');
+        setApiError(t('loginFailed'));
       }
-      
-      // Allow retry after 2 seconds
+
       setTimeout(() => {
         setIsSubmitting(false);
       }, 2000);
     }
   };
 
+  if (showSuccessTransition) {
+    return <LoginSuccessTransition onComplete={handleCompleteTransition} />;
+  }
+
   return (
-    <Container maxWidth="sm">
-      <Box
+    <Box className="login-page-root">
+      <IconButton
+        component={RouterLink}
+        to="/settings"
+        aria-label={t('settings')}
         sx={{
-          marginTop: { xs: 2, sm: 4, md: 8 },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          zIndex: 10,
+          color: 'rgba(255,255,255,0.95)',
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
         }}
       >
-        <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
-          <Typography component="h1" variant="h4" align="center" gutterBottom>
-            登入
+        <SettingsIcon />
+      </IconButton>
+
+      <Box className="login-page-inner">
+        {/* Logo area – replace the inner content with <img src="/logo.png" alt="App" /> or your logo */}
+        <Box className="login-page-logo" component="div">
+          {/* Leave this space for your app logo. Replace with: <img src="/logo.png" alt="Logo" /> */}
+          Logo
+        </Box>
+
+        <Paper elevation={0} className="login-page-card" sx={{ p: { xs: 2.5, sm: 3.5 }, bgcolor: 'background.paper' }}>
+
+          <Typography component="h1" variant="h5" align="center" fontWeight="700" gutterBottom sx={{ color: 'text.primary' }}>
+            {t('loginTitle')}
           </Typography>
-          
+
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
-            歡迎回到 Group Running App
+            {t('loginWelcome')}
           </Typography>
 
           {successMessage && (
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ mb: 2 }} variant="standard">
               {successMessage}
             </Alert>
           )}
 
           {apiError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }} variant="standard">
               {apiError}
             </Alert>
           )}
@@ -148,7 +190,7 @@ export const LoginPage: React.FC = () => {
               required
               fullWidth
               id="email"
-              label="電子郵件"
+              label={t('email')}
               name="email"
               autoComplete="email"
               autoFocus
@@ -156,6 +198,8 @@ export const LoginPage: React.FC = () => {
               onChange={handleChange}
               error={!!errors.email}
               helperText={errors.email}
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
             />
 
             <TextField
@@ -163,34 +207,82 @@ export const LoginPage: React.FC = () => {
               required
               fullWidth
               name="password"
-              label="密碼"
-              type="password"
+              label={t('password')}
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
               helperText={errors.password}
+              variant="outlined"
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={showPassword ? t('hidePassword') : t('showPassword')}
+                      onClick={() => setShowPassword((p) => !p)}
+                      onMouseDown={(e) => e.preventDefault()}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, mt: 2 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={keepLoggedIn}
+                    onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={t('keepLoggedIn')}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberEmail}
+                    onChange={(e) => setRememberEmail(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={t('rememberEmail')}
+              />
+            </Box>
 
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              size="large"
               disabled={isSubmitting}
+              sx={{
+                mt: 3,
+                mb: 2,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '1rem',
+              }}
             >
-              {isSubmitting ? '登入中...' : '登入'}
+              {isSubmitting ? t('loggingIn') : t('login')}
             </Button>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Link component={RouterLink} to="/register" variant="body2">
-                還沒有帳戶？註冊
+              <Link component={RouterLink} to="/register" variant="body2" underline="hover">
+                {t('noAccount')}
               </Link>
             </Box>
           </Box>
         </Paper>
       </Box>
-    </Container>
+    </Box>
   );
 };

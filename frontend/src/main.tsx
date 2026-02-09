@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import axios from 'axios'
+import './i18n'
 import App from './App.tsx'
 import './index.css'
 import { reportWebVitals } from './utils/performance'

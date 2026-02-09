@@ -6,10 +6,11 @@ import { notificationService } from './notification.service.js'
 class UserService {
   /**
    * Get user profile by ID with statistics
+   * @param requestingUserId - Optional; when provided, includes isFollowing for that user
    */
-  async getUserProfile(userId: string): Promise<UserProfile> {
+  async getUserProfile(userId: string, requestingUserId?: string): Promise<UserProfile> {
     try {
-      // Get user basic info
+      // Get user basic info (avatar_url selected separately for migration compatibility)
       const userResult = await db.query(
         `SELECT id, email, display_name, age, created_at, updated_at
          FROM users
@@ -22,6 +23,20 @@ class UserService {
       }
 
       const user = userResult.rows[0]
+
+      // Get avatar_url if column exists (migration 002 may not have run yet)
+      let avatarUrl: string | null = null
+      try {
+        const avatarResult = await db.query(
+          'SELECT avatar_url FROM users WHERE id = $1',
+          [userId]
+        )
+        if (avatarResult.rows[0]?.avatar_url) {
+          avatarUrl = avatarResult.rows[0].avatar_url
+        }
+      } catch {
+        // Column may not exist; ignore
+      }
 
       // Get user statistics
       const stats = await this.getUserStats(userId)
@@ -37,6 +52,35 @@ class UserService {
         [userId]
       )
 
+      // Get recent activities (created or participated)
+      const activitiesResult = await db.query(
+        `SELECT DISTINCT a.id, a.title, a.scheduled_date, a.distance, a.status
+         FROM activities a
+         LEFT JOIN activity_participants ap ON a.id = ap.activity_id AND ap.user_id = $1
+         WHERE a.creator_id = $1 OR ap.user_id = $1
+         ORDER BY a.scheduled_date DESC
+         LIMIT 10`,
+        [userId]
+      )
+
+      const recentActivities = activitiesResult.rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        scheduledDate: row.scheduled_date.toISOString(),
+        distance: parseFloat(row.distance),
+        status: row.status,
+      }))
+
+      // Check if requesting user follows this profile user
+      let isFollowing = false
+      if (requestingUserId && requestingUserId !== userId) {
+        const followResult = await db.query(
+          'SELECT 1 FROM social_connections WHERE follower_id = $1 AND following_id = $2',
+          [requestingUserId, userId]
+        )
+        isFollowing = followResult.rows.length > 0
+      }
+
       return {
         id: user.id,
         email: user.email,
@@ -47,6 +91,10 @@ class UserService {
         averageRating: stats.averageRating,
         followersCount: parseInt(followersResult.rows[0].count),
         followingCount: parseInt(followingResult.rows[0].count),
+        avatarUrl,
+        isFollowing: requestingUserId ? isFollowing : undefined,
+        recentActivities,
+        joinedDate: user.created_at.toISOString(),
         createdAt: user.created_at.toISOString(),
         updatedAt: user.updated_at.toISOString(),
       }
@@ -125,6 +173,23 @@ class UserService {
         }
       }
 
+      // Validate avatarUrl if provided (must be data URL or null)
+      if (updates.avatarUrl !== undefined && updates.avatarUrl !== null) {
+        if (typeof updates.avatarUrl !== 'string' || !updates.avatarUrl.startsWith('data:image/')) {
+          throw new ValidationError(
+            'Avatar must be a valid image data URL (data:image/...)',
+            'VALIDATION_INVALID_FORMAT'
+          )
+        }
+        // Limit size (e.g. 500KB for base64)
+        if (updates.avatarUrl.length > 700000) {
+          throw new ValidationError(
+            'Avatar image is too large. Please use a smaller image.',
+            'VALIDATION_INVALID_FORMAT'
+          )
+        }
+      }
+
       // Build update query dynamically
       const updateFields: string[] = []
       const values: any[] = []
@@ -139,6 +204,12 @@ class UserService {
       if (updates.age !== undefined) {
         updateFields.push(`age = $${paramCount}`)
         values.push(updates.age)
+        paramCount++
+      }
+
+      if (updates.avatarUrl !== undefined) {
+        updateFields.push(`avatar_url = $${paramCount}`)
+        values.push(updates.avatarUrl)
         paramCount++
       }
 

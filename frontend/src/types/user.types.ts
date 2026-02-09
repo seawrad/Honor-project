@@ -1,11 +1,15 @@
 export interface UserProfile {
   id: string;
+  email?: string;
   displayName: string;
+  age?: number;
   totalRuns: number;
   totalDistance: number;
   averageRating: number;
   followersCount: number;
   followingCount: number;
+  avatarUrl?: string | null;
+  isFollowing?: boolean;
   recentActivities: RecentActivity[];
   joinedDate: string;
 }
@@ -30,4 +34,10 @@ export interface SocialConnection {
   followerId: string;
   followingId: string;
   createdAt: string;
+}
+
+export interface UpdateProfileData {
+  displayName?: string;
+  age?: number;
+  avatarUrl?: string | null;
 }
