@@ -1,6 +1,6 @@
 import { db } from '../database/db.js'
 import { ValidationError } from '../utils/validation.js'
-import { UserProfile, UpdateProfileRequest, UserStats, UserSearchResult } from '../types/user.types.js'
+import { UserProfile, UpdateProfileRequest, UserStats, UserSearchResult, UserStatsSummary, RUNCREW_LEVELS } from '../types/user.types.js'
 import { notificationService } from './notification.service.js'
 
 class UserService {
@@ -146,6 +146,88 @@ class UserService {
     } catch (error) {
       console.error('Error calculating user stats:', error)
       throw new Error('Failed to calculate user statistics')
+    }
+  }
+
+  /**
+   * Get user stats summary: weekly distance, monthly completed activities, RunCrew level
+   */
+  async getUserStatsSummary(userId: string): Promise<UserStatsSummary> {
+    try {
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+      weekStart.setHours(0, 0, 0, 0)
+
+      const monthStart = new Date()
+      monthStart.setDate(1)
+      monthStart.setHours(0, 0, 0, 0)
+
+      const [weeklyRes, monthlyActivitiesRes, monthlyDistanceRes] = await Promise.all([
+        db.query(
+          `SELECT COALESCE(SUM(total_distance), 0) as total
+           FROM routes WHERE user_id = $1 AND start_time >= $2`,
+          [userId, weekStart]
+        ),
+        db.query(
+          `SELECT COUNT(*) as count
+           FROM activity_participants ap
+           JOIN activities a ON ap.activity_id = a.id
+           WHERE ap.user_id = $1 AND a.status = 'completed'
+           AND a.scheduled_date >= $2`,
+          [userId, monthStart]
+        ),
+        db.query(
+          `SELECT COALESCE(SUM(total_distance), 0) as total
+           FROM routes WHERE user_id = $1 AND start_time >= $2`,
+          [userId, monthStart]
+        ),
+      ])
+
+      const weeklyDistanceKm = parseFloat(weeklyRes.rows[0]?.total ?? 0)
+      const monthlyCompletedActivities = parseInt(monthlyActivitiesRes.rows[0]?.count ?? 0)
+      const monthlyDistanceKm = parseFloat(monthlyDistanceRes.rows[0]?.total ?? 0)
+
+      const levelInfo = this.computeLevel(monthlyDistanceKm)
+
+      return {
+        weeklyDistanceKm: Math.round(weeklyDistanceKm * 10) / 10,
+        monthlyCompletedActivities,
+        monthlyDistanceKm: Math.round(monthlyDistanceKm * 10) / 10,
+        level: levelInfo,
+      }
+    } catch (error) {
+      console.error('Error fetching user stats summary:', error)
+      throw new Error('Failed to fetch user stats summary')
+    }
+  }
+
+  private computeLevel(monthlyKm: number): UserStatsSummary['level'] {
+    for (let i = RUNCREW_LEVELS.length - 1; i >= 0; i--) {
+      if (monthlyKm >= RUNCREW_LEVELS[i].minKm) {
+        const level = RUNCREW_LEVELS[i]
+        const nextLevel = RUNCREW_LEVELS[i + 1]
+        const levelStart = level.minKm
+        const nextLevelKm = nextLevel ? nextLevel.minKm : null
+        const progressPercent = nextLevelKm
+          ? Math.min(100, ((monthlyKm - levelStart) / (nextLevelKm - levelStart)) * 100)
+          : 100
+        return {
+          name: level.name,
+          nameZh: level.nameZh,
+          currentKm: Math.round(monthlyKm * 10) / 10,
+          nextLevelKm,
+          progressPercent: Math.round(progressPercent),
+        }
+      }
+    }
+    const first = RUNCREW_LEVELS[0]
+    const next = RUNCREW_LEVELS[1]
+    return {
+      name: first.name,
+      nameZh: first.nameZh,
+      currentKm: monthlyKm,
+      nextLevelKm: next.minKm,
+      progressPercent: Math.min(100, (monthlyKm / next.minKm) * 100),
     }
   }
 

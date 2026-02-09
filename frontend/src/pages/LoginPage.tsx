@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { LoginCredentials } from '../types/auth.types';
 import { tokenStorage } from '../utils/tokenStorage';
-import { LoginSuccessTransition } from '../components/LoginSuccessTransition';
+import { RunCrewLoadingScreen } from '../components/RunCrewLoadingScreen';
 import './LoginPage.css';
 
 export const LoginPage: React.FC = () => {
@@ -134,7 +134,7 @@ export const LoginPage: React.FC = () => {
   };
 
   if (showSuccessTransition) {
-    return <LoginSuccessTransition onComplete={handleCompleteTransition} />;
+    return <RunCrewLoadingScreen onComplete={handleCompleteTransition} duration={4800} />;
   }
 
   return (
@@ -148,21 +148,32 @@ export const LoginPage: React.FC = () => {
           top: 20,
           right: 20,
           zIndex: 10,
-          color: 'rgba(255,255,255,0.95)',
-          '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
+          color: 'rgba(255, 255, 255, 0.95)',
+          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' },
         }}
       >
         <SettingsIcon />
       </IconButton>
 
       <Box className="login-page-inner">
-        {/* Logo area – replace the inner content with <img src="/logo.png" alt="App" /> or your logo */}
+        {/* Logo area – RunCrew branding */}
         <Box className="login-page-logo" component="div">
-          {/* Leave this space for your app logo. Replace with: <img src="/logo.png" alt="Logo" /> */}
-          Logo
+          <img src="/Main_logo.png" alt="RunCrew" />
         </Box>
 
-        <Paper elevation={0} className="login-page-card" sx={{ p: { xs: 2.5, sm: 3.5 }, bgcolor: 'background.paper' }}>
+        <Paper
+          elevation={0}
+          className="login-page-card"
+          sx={{
+            p: { xs: 2.5, sm: 3.5 },
+            bgcolor: '#ffffff',
+            color: 'rgba(0,0,0,0.87)',
+            '& .MuiFormLabel-root, & .MuiInputBase-input': { color: 'rgba(0,0,0,0.87)' },
+            '& .MuiFormHelperText-root': { color: 'rgba(0,0,0,0.6)' },
+            '& .MuiTypography-root': { color: 'inherit' },
+            '& .MuiTypography-colorSecondary': { color: 'rgba(0,0,0,0.6)' },
+          }}
+        >
 
           <Typography component="h1" variant="h5" align="center" fontWeight="700" gutterBottom sx={{ color: 'text.primary' }}>
             {t('loginTitle')}

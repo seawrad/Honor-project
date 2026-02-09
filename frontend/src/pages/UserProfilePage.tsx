@@ -32,8 +32,9 @@ import {
   PhotoCamera,
 } from '@mui/icons-material';
 import { userService } from '../services/user.service';
-import { UserProfile } from '../types/user.types';
+import { UserProfile, UserStatsSummary } from '../types/user.types';
 import { FollowButton } from '../components/FollowButton';
+import { LevelProgressBar } from '../components/LevelProgressBar';
 import { useAuth } from '../hooks/useAuth';
 import { RatingsList } from '../components/RatingsList';
 
@@ -56,6 +57,7 @@ export const UserProfilePage: React.FC = () => {
   const [editAge, setEditAge] = useState<number>(18);
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [stats, setStats] = useState<UserStatsSummary | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = currentUser?.id === userId;
@@ -97,6 +99,19 @@ export const UserProfilePage: React.FC = () => {
     };
     fetchRatings();
   }, [userId, activeTab]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!userId) return;
+      try {
+        const data = await userService.getUserStatsSummary(userId);
+        setStats(data);
+      } catch {
+        setStats(null);
+      }
+    };
+    fetchStats();
+  }, [userId]);
 
   const handleFollowChange = (isFollowing: boolean) => {
     if (profile) {
@@ -333,6 +348,8 @@ export const UserProfilePage: React.FC = () => {
         </Box>
 
         <Divider sx={{ mb: 3 }} />
+
+        <LevelProgressBar stats={stats} />
 
         {/* Statistics Grid */}
         <Grid container spacing={3} sx={{ mb: 4 }}>

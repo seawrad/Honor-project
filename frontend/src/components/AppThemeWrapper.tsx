@@ -1,11 +1,25 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
-import { useSettings } from '../contexts/SettingsContext'
+
+/* RunCrew brand palette */
+const palette = {
+  primary: { main: '#00B8D4', light: '#4DD4ED', dark: '#0097A7' },
+  secondary: { main: '#6EE0FF', light: '#B3F0FF', dark: '#18c9e8' },
+  warning: { main: '#FFD34E' },
+  background: {
+    default: '#F7FBFF',
+    paper: '#FFFFFF',
+  },
+  text: {
+    primary: '#0A2640',
+    secondary: '#3A3A3A',
+  },
+}
 
 const baseThemeOptions = {
   palette: {
-    primary: { main: '#1976d2' },
-    secondary: { main: '#dc004e' },
+    ...palette,
+    mode: 'light' as const,
   },
   breakpoints: {
     values: { xs: 0, sm: 600, md: 960, lg: 1280, xl: 1920 },
@@ -18,22 +32,29 @@ const baseThemeOptions = {
     h5: { fontSize: '1.25rem', '@media (min-width:600px)': { fontSize: '1.5rem' } },
     h6: { fontSize: '1rem', '@media (min-width:600px)': { fontSize: '1.25rem' } },
   },
+  shape: { borderRadius: 12 },
   components: {
-    MuiButton: { styleOverrides: { root: { minHeight: '44px', '@media (max-width:600px)': { fontSize: '0.875rem' } } } },
+    MuiButton: {
+      styleOverrides: {
+        root: { minHeight: '44px', borderRadius: 12, '@media (max-width:600px)': { fontSize: '0.875rem' } },
+        containedPrimary: {
+          background: `linear-gradient(180deg, #00B8D4 0%, #0097A7 100%)`,
+          '&:hover': { background: `linear-gradient(180deg, #18c9e8 0%, #00B8D4 100%)` },
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          background: `linear-gradient(160deg, #00B8D4 0%, #18c9e8 50%, #6EE0FF 100%)`,
+        },
+      },
+    },
     MuiIconButton: { styleOverrides: { root: { minWidth: '44px', minHeight: '44px' } } },
-    MuiTextField: { styleOverrides: { root: { '& .MuiInputBase-root': { minHeight: '44px' } } } },
+    MuiTextField: { styleOverrides: { root: { '& .MuiInputBase-root': { minHeight: '44px', borderRadius: 12 } } } },
+    MuiPaper: { styleOverrides: { root: { borderRadius: 16, backgroundColor: '#FFFFFF' } } },
     MuiContainer: { styleOverrides: { root: { paddingLeft: '16px', paddingRight: '16px', '@media (min-width:600px)': { paddingLeft: '24px', paddingRight: '24px' } } } },
   },
-}
-
-function getResolvedMode(theme: 'light' | 'dark' | 'system'): 'light' | 'dark' {
-  if (theme === 'system') {
-    if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark'
-    }
-    return 'light'
-  }
-  return theme
 }
 
 interface AppThemeWrapperProps {
@@ -41,35 +62,7 @@ interface AppThemeWrapperProps {
 }
 
 export function AppThemeWrapper({ children }: AppThemeWrapperProps) {
-  const { settings } = useSettings()
-  const [systemDark, setSystemDark] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches
-  )
-
-  useEffect(() => {
-    if (settings.theme !== 'system') return
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const handler = () => setSystemDark(mq.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [settings.theme])
-
-  const mode = useMemo(() => {
-    if (settings.theme === 'system') return systemDark ? 'dark' : 'light'
-    return settings.theme
-  }, [settings.theme, systemDark])
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        ...baseThemeOptions,
-        palette: {
-          ...baseThemeOptions.palette,
-          mode,
-        },
-      }),
-    [mode]
-  )
+  const theme = useMemo(() => createTheme(baseThemeOptions), [])
 
   return (
     <ThemeProvider theme={theme}>

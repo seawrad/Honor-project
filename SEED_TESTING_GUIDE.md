@@ -23,12 +23,14 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 
 | Email | Password | Display Name | Use For |
 |-------|----------|--------------|---------|
-| alice@test.com | Test1234! | Alice Chen | Activity creator, has upcoming & completed activities |
-| bob@test.com | Test1234! | Bob Wong | Activity creator, participant, chat user |
-| carol@test.com | Test1234! | Carol Lee | Participant, follower/following relationships |
+| alice@test.com | Test1234! | Alice Chen | Activity creator, many upcoming & completed, rich feed |
+| bob@test.com | Test1234! | Bob Wong | Activity creator, participant, chat, route history |
+| carol@test.com | Test1234! | Carol Lee | Participant, many follows, notifications |
 | dave@test.com | Test1234! | Dave Lam | Participant, route history |
+| eva@test.com | Test1234! | Eva Tang | Creator of full activity, Sha Tin run |
+| frank@test.com | Test1234! | Frank Liu | Creator of empty/new activity, first-timer run |
 
-**All 4 accounts use the same password: `Test1234!`**
+**All 6 accounts use the same password: `Test1234!`**
 
 ---
 
@@ -41,12 +43,17 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 
 ### 2. Activity List & Discovery
 - **Use:** Any logged-in account
-- **Test:** `/activities` — Should show 5 activities (3 upcoming, 2 completed)
-  - Morning Jog - Victoria Park (upcoming)
+- **Test:** `/activities` — Should show 10 activities (6 upcoming, 3 completed, 1 cancelled)
+  - Morning Jog - Victoria Park (upcoming, 3 participants)
   - Evening Run - Kowloon Park (upcoming)
   - Weekend Long Run - Stanley (upcoming)
+  - Sunrise Run - West Kowloon (upcoming, **FULL** – 4/4)
+  - Discovery Bay Trail (upcoming, 5 participants)
+  - First Timer Friendly - 2K (upcoming, **only creator** – good for "new/empty" UI)
   - Central Harbour Run (completed)
   - Tai Tam Reservoir Trail (completed)
+  - Sha Tin Riverside Run (completed)
+  - Rain Cancelled - Repo Bay (**cancelled**)
 - **Test:** Search, filters, sort by date/location
 
 ### 3. Activity Detail & Join/Leave
@@ -72,14 +79,18 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 
 ### 7. Chat
 - **Use:** alice@test.com and bob@test.com (open two browsers or incognito)
-- **Test:** `/activities/:activityId/chat` — For "Morning Jog", "Evening Run", or "Central Harbour Run"
-- **Test:** Real-time messages (4 sample messages already in Morning Jog chat)
+- **Test:** `/activities/:activityId/chat` — 7 activities have chat messages:
+  - Morning Jog (6 messages), Evening Run (2), Weekend Long Run (3)
+  - Sunrise Run (2), First Timer Friendly (1)
+  - Central Harbour Run (2), Sha Tin Riverside Run (3)
+- **Test:** Real-time messages
 - **Test:** Send new messages and see them appear in the other session
 
 ### 8. Notifications
-- **Use:** alice@test.com
-- **Test:** Notification bell in header — Should show unread notifications (activity reminder, chat message)
-- **Use:** carol@test.com — Has "new follower" and "activity joined" notifications
+- **Use:** alice@test.com — 3 unread (activity reminder, chat message, new follower)
+- **Use:** carol@test.com — 2 unread (new follower, chat message)
+- **Use:** eva@test.com — 1 unread (activity reminder)
+- **Use:** frank@test.com — 2 unread (new follower, activity reminder)
 - **Test:** Mark as read, notification dropdown
 
 ### 9. Ratings & Feedback
@@ -96,8 +107,8 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 - **Note:** Seed data has route records with metrics only (no GPS track). Real GPS data is created when you record a run.
 
 ### 11. Route History
-- **Use:** alice@test.com or bob@test.com (have completed routes)
-- **Test:** `/routes/history` — Shows past routes with distance, speed, duration
+- **Use:** alice@test.com, bob@test.com, carol@test.com, dave@test.com, eva@test.com, frank@test.com
+- **Test:** `/routes/history` — Alice & Bob: Central Harbour + Sha Tin; Carol & Dave: Tai Tam; Eva & Frank: Sha Tin
 - **Note:** Routes from seed have metrics but no map track (positions_s3_key is null for local testing)
 
 ### 12. PWA & Offline
@@ -110,14 +121,17 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 ## Quick Test Scenario
 
 1. **Login** as alice@test.com
-2. Go to **Activity List** — see 5 activities
+2. Go to **Activity List** — see 10 activities (including cancelled, full, empty)
 3. Open **Morning Jog** → see participants, chat link
-4. Open **Chat** for Morning Jog — see 4 messages
-5. Open **Profile** of Bob — see stats, follow button
-6. Go to **Feed** — see activities from followed users
-7. Open **Notifications** — see reminders and chat alerts
-8. Open **Central Harbour Run** (completed) — see ratings
-9. **Logout**, login as bob@test.com, repeat key flows
+4. Open **Sunrise Run** → see **FULL** status (4/4)
+5. Open **First Timer Friendly** → see only Frank (creator)
+6. Open **Chat** for Morning Jog — see 6 messages
+7. Open **Profile** of Eva or Frank — see stats
+8. Go to **Feed** — see activities from followed users (alice follows 5 people)
+9. Open **Notifications** — see 3 unread
+10. Open **Central Harbour Run** (completed) — see ratings
+11. Go to **Rain Cancelled** — see cancelled status
+12. **Logout**, login as frank@test.com → test empty activity, first-timer flow
 
 ---
 
@@ -129,4 +143,19 @@ To get a clean set of mock data again:
 npm run seed --workspace=backend
 ```
 
-This removes the 4 test users and all their related data, then re-inserts fresh mock data.
+This removes the 6 test users and all their related data, then re-inserts fresh mock data.
+
+---
+
+## Suggested Next Steps (Based on Mock Data Coverage)
+
+| Area | Current Coverage | Possible Next Step |
+|------|------------------|--------------------|
+| **Activity filters** | Date range, status, distance | Add geo/radius filter, test with varied locations |
+| **Activity capacity** | Full (4/4), empty (1/5) | Ensure "Join" disabled when full, empty state UI |
+| **Cancelled activities** | 1 cancelled | Filter/hide cancelled, show cancellation reason |
+| **Chat list** | 7 activities with messages | Sort by last message, unread badge |
+| **User search** | 6 users | Search by display name, pagination |
+| **Feed** | Alice follows 5 users | Infinite scroll, empty feed handling |
+| **Route history** | 7 route records across users | Map placeholder when no GPS track |
+| **Notifications** | 12 notifications, 4 types | Notification preferences, mark all read |

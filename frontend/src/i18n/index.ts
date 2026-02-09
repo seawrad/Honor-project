@@ -29,7 +29,7 @@ const resources = {
       // Login
       login: 'Login',
       loginTitle: 'Login',
-      loginWelcome: 'Welcome back to Group Running App',
+      loginWelcome: 'Welcome back!',
       email: 'Email',
       password: 'Password',
       emailRequired: 'Email is required',
@@ -96,7 +96,7 @@ const resources = {
       // Login
       login: '登入',
       loginTitle: '登入',
-      loginWelcome: '歡迎回到 Group Running App',
+      loginWelcome: '歡迎回來！',
       email: '電子郵件',
       password: '密碼',
       emailRequired: '電子郵件為必填',

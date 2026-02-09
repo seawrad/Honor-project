@@ -1,5 +1,7 @@
 // Activity types and interfaces
 
+export type ActivityType = 'time-based' | 'route-based'
+
 export interface Activity {
   id: string
   creatorId: string
@@ -15,6 +17,11 @@ export interface Activity {
   maxParticipants: number
   currentParticipants: number
   status: ActivityStatus
+  activityType: ActivityType
+  durationMinutes?: number
+  endLatitude?: number
+  endLongitude?: number
+  endAddress?: string
   createdAt: string
   updatedAt: string
 }
@@ -31,6 +38,11 @@ export interface CreateActivityRequest {
   route?: string
   distance: number
   maxParticipants: number
+  activityType: ActivityType
+  durationMinutes?: number
+  endLatitude?: number
+  endLongitude?: number
+  endAddress?: string
 }
 
 export interface UpdateActivityRequest {
@@ -64,6 +76,7 @@ export interface ActivitySearchFilters {
   minDistance?: number
   maxDistance?: number
   status?: ActivityStatus
+  activityType?: ActivityType
 }
 
 export interface ActivitySearchResult {

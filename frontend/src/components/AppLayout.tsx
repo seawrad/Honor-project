@@ -99,7 +99,7 @@ export const AppLayout: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F7FBFF' }}>
       <AppBar position="sticky" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
@@ -112,19 +112,37 @@ export const AppLayout: React.FC = () => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              flexGrow: 1,
-              fontSize: { xs: '1rem', sm: '1.25rem' },
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Group Running App
-          </Typography>
+          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box
+              component="button"
+              onClick={() => handleNavClick('/')}
+              aria-label="Go to homepage"
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                borderRadius: '9999px',
+                p: 0.5,
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.15)' },
+              }}
+            >
+            <Box
+              component="img"
+              src="/Home_logo_rectangle.png"
+              alt="RunCrew"
+              sx={{
+                height: { xs: 32, sm: 40 },
+                width: 'auto',
+                maxWidth: { xs: 140, sm: 180 },
+                objectFit: 'contain',
+                borderRadius: '9999px',
+              }}
+            />
+            </Box>
+          </Box>
           {isAuthenticated && (
             <>
               <NotificationBell />

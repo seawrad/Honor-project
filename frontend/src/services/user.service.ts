@@ -53,6 +53,16 @@ export const userService = {
     return response.data.data;
   },
 
+  async getUserStatsSummary(userId: string): Promise<{
+    weeklyDistanceKm: number;
+    monthlyCompletedActivities: number;
+    monthlyDistanceKm: number;
+    level: { name: string; nameZh: string; currentKm: number; nextLevelKm: number | null; progressPercent: number };
+  }> {
+    const response = await axios.get<{ data: any }>(`${API_BASE_URL}/users/${userId}/stats`);
+    return response.data.data;
+  },
+
   async getUserRatings(userId: string, page = 1, limit = 20): Promise<{ ratings: any[]; averageRating: number; totalRatings: number }> {
     const response = await axios.get<{ data: { ratings: any[]; averageRating: number; totalRatings: number } }>(
       `${API_BASE_URL}/users/${userId}/ratings`,

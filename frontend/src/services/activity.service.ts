@@ -12,20 +12,34 @@ interface ActivityListResponse {
 }
 
 /** Backend returns latitude/longitude/address at top level; frontend expects location object */
-type BackendActivity = Omit<Activity, 'location' | 'participants'> & {
+type BackendActivity = Omit<Activity, 'location' | 'participants' | 'endLocation'> & {
   latitude: number;
   longitude: number;
   address: string;
+  activityType?: Activity['activityType'];
+  durationMinutes?: number;
+  endLatitude?: number;
+  endLongitude?: number;
+  endAddress?: string;
   participants?: Activity['participants'];
 };
 
 function mapBackendActivity(a: BackendActivity): Activity {
-  const { latitude, longitude, address, ...rest } = a;
-  return {
+  const { latitude, longitude, address, endLatitude, endLongitude, endAddress, ...rest } = a;
+  const activity: Activity = {
     ...rest,
     location: { latitude, longitude, address },
+    activityType: a.activityType ?? 'route-based',
     participants: a.participants ?? [],
   } as Activity;
+  if (endLatitude != null && endLongitude != null) {
+    activity.endLocation = {
+      latitude: endLatitude,
+      longitude: endLongitude,
+      address: endAddress ?? '',
+    };
+  }
+  return activity;
 }
 
 export const activityService = {
@@ -42,6 +56,8 @@ export const activityService = {
       if (filters.latitude !== undefined) params.append('latitude', filters.latitude.toString());
       if (filters.longitude !== undefined) params.append('longitude', filters.longitude.toString());
       if (filters.radius !== undefined) params.append('radius', filters.radius.toString());
+      if (filters.status) params.append('status', filters.status);
+      if (filters.activityType) params.append('activityType', filters.activityType);
     }
 
     const response = await axios.get<{
@@ -64,12 +80,24 @@ export const activityService = {
   },
 
   async createActivity(data: CreateActivityData): Promise<Activity> {
-    const body = {
-      ...data,
+    const body: Record<string, unknown> = {
+      title: data.title,
+      description: data.description,
+      scheduledDate: data.scheduledDate,
       latitude: data.location.latitude,
       longitude: data.location.longitude,
       address: data.location.address,
+      route: data.route,
+      distance: data.distance,
+      maxParticipants: data.maxParticipants,
+      activityType: data.activityType ?? 'route-based',
+      durationMinutes: data.durationMinutes,
     };
+    if (data.endLocation) {
+      body.endLatitude = data.endLocation.latitude;
+      body.endLongitude = data.endLocation.longitude;
+      body.endAddress = data.endLocation.address;
+    }
     const response = await axios.post<{ data: BackendActivity }>(
       `${API_BASE_URL}/activities`,
       body,

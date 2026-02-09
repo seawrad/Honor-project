@@ -36,6 +36,28 @@ export interface UserStats {
   averageRating: number
 }
 
+/** RunCrew level thresholds (monthly km): Starter 0, Explorer 10, Runner 25, Champion 50, Legend 100 */
+export const RUNCREW_LEVELS = [
+  { name: 'Starter', nameZh: '新手', minKm: 0 },
+  { name: 'Explorer', nameZh: '探索者', minKm: 10 },
+  { name: 'Runner', nameZh: '跑者', minKm: 25 },
+  { name: 'Champion', nameZh: '冠軍', minKm: 50 },
+  { name: 'Legend', nameZh: '傳奇', minKm: 100 },
+] as const
+
+export interface UserStatsSummary {
+  weeklyDistanceKm: number
+  monthlyCompletedActivities: number
+  monthlyDistanceKm: number
+  level: {
+    name: string
+    nameZh: string
+    currentKm: number
+    nextLevelKm: number | null
+    progressPercent: number
+  }
+}
+
 export interface UserSearchResult {
   id: string
   displayName: string

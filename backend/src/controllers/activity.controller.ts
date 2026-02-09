@@ -20,6 +20,11 @@ class ActivityController {
         route: req.body.route,
         distance: req.body.distance,
         maxParticipants: req.body.maxParticipants,
+        activityType: req.body.activityType || 'route-based',
+        durationMinutes: req.body.durationMinutes,
+        endLatitude: req.body.endLatitude,
+        endLongitude: req.body.endLongitude,
+        endAddress: req.body.endAddress,
       }
 
       const activity = await activityService.createActivity(creatorId, data)
@@ -336,6 +341,7 @@ class ActivityController {
         minDistance: req.query.minDistance ? parseFloat(req.query.minDistance as string) : undefined,
         maxDistance: req.query.maxDistance ? parseFloat(req.query.maxDistance as string) : undefined,
         status: req.query.status as any,
+        activityType: req.query.activityType as any,
       }
 
       const { activities, total } = await activityService.searchActivities(filters, page, limit)

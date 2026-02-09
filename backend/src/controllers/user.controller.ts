@@ -355,6 +355,30 @@ class UserController {
   }
 
   /**
+   * GET /api/users/:id/stats - Get user stats summary (weekly distance, monthly completed, RunCrew level)
+   */
+  async getUserStats(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params
+      const stats = await userService.getUserStatsSummary(id)
+      res.json({
+        success: true,
+        data: stats,
+      })
+    } catch (error) {
+      console.error('Error in getUserStats:', error)
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
+        },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
    * GET /api/users/:id/ratings - Get ratings for activities created by user
    */
   async getUserRatings(req: Request, res: Response): Promise<void> {

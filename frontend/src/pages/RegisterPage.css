@@ -1,0 +1,14 @@
+/* Register page – teal to light blue, matches login/loading */
+.register-page-root {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #00B8D4 0%, #18c9e8 40%, #4dd4ed 70%, #6EE0FF 100%);
+  background-attachment: fixed;
+  padding: 24px 16px;
+}
+
+.register-page-card {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}

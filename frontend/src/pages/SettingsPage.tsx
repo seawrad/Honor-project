@@ -22,23 +22,18 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '../contexts/SettingsContext'
 import { useAuth } from '../hooks/useAuth'
-import type { Language, ThemeMode, DistanceUnit } from '../contexts/SettingsContext'
+import type { Language, DistanceUnit } from '../contexts/SettingsContext'
 
 export const SettingsPage: React.FC = () => {
   const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
-  const { settings, setLanguage, setTheme, setDistanceUnit, setActivityReminders, setChatNotifications } =
+  const { settings, setLanguage, setDistanceUnit, setActivityReminders, setChatNotifications } =
     useSettings()
   const [savedSnack, setSavedSnack] = useState(false)
 
   const handleLanguageChange = (e: SelectChangeEvent<string>) => {
     const val = e.target.value as Language
     setLanguage(val)
-    setSavedSnack(true)
-  }
-
-  const handleThemeChange = (e: SelectChangeEvent<string>) => {
-    setTheme(e.target.value as ThemeMode)
     setSavedSnack(true)
   }
 
@@ -98,21 +93,6 @@ export const SettingsPage: React.FC = () => {
           >
             <MenuItem value="km">{t('km')}</MenuItem>
             <MenuItem value="miles">{t('miles')}</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Divider sx={{ my: 3 }} />
-
-        {/* Appearance */}
-        <Typography variant="subtitle1" color="primary" fontWeight="bold" sx={{ mb: 2 }}>
-          {t('appearance')}
-        </Typography>
-        <FormControl fullWidth sx={{ mb: 3 }}>
-          <InputLabel>{t('theme')}</InputLabel>
-          <Select value={settings.theme} label={t('theme')} onChange={handleThemeChange}>
-            <MenuItem value="light">{t('light')}</MenuItem>
-            <MenuItem value="dark">{t('dark')}</MenuItem>
-            <MenuItem value="system">{t('system')}</MenuItem>
           </Select>
         </FormControl>
 

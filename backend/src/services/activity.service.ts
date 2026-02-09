@@ -14,6 +14,32 @@ import {
 } from '../types/activity.types.js'
 import { notificationService } from './notification.service.js'
 
+function mapActivityRow(row: any, creatorName: string, currentParticipants: number): Activity {
+  return {
+    id: row.id,
+    creatorId: row.creator_id,
+    creatorName,
+    title: row.title,
+    description: row.description || '',
+    scheduledDate: row.scheduled_date.toISOString(),
+    latitude: parseFloat(row.latitude),
+    longitude: parseFloat(row.longitude),
+    address: row.address,
+    route: row.route || '',
+    distance: parseFloat(row.distance),
+    maxParticipants: row.max_participants,
+    currentParticipants,
+    status: row.status,
+    activityType: (row.activity_type || 'route-based') as Activity['activityType'],
+    durationMinutes: row.duration_minutes != null ? parseInt(row.duration_minutes) : undefined,
+    endLatitude: row.end_latitude != null ? parseFloat(row.end_latitude) : undefined,
+    endLongitude: row.end_longitude != null ? parseFloat(row.end_longitude) : undefined,
+    endAddress: row.end_address || undefined,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  }
+}
+
 class ActivityService {
   /**
    * Create a new activity
@@ -31,6 +57,14 @@ class ActivityService {
 
       if (data.latitude === undefined || data.longitude === undefined) {
         throw new ValidationError('Location is required', 'VALIDATION_REQUIRED_FIELD')
+      }
+
+      const activityType = data.activityType || 'route-based'
+
+      if (activityType === 'time-based') {
+        if (!data.durationMinutes || data.durationMinutes <= 0) {
+          throw new ValidationError('Duration (minutes) is required for time-based activities', 'VALIDATION_REQUIRED_FIELD')
+        }
       }
 
       if (!data.distance || data.distance <= 0) {
@@ -61,11 +95,14 @@ class ActivityService {
       const result = await db.query(
         `INSERT INTO activities (
           creator_id, title, description, scheduled_date,
-          latitude, longitude, address, route, distance, max_participants
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          latitude, longitude, address, route, distance, max_participants,
+          activity_type, duration_minutes, end_latitude, end_longitude, end_address
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING id, creator_id, title, description, scheduled_date,
                   latitude, longitude, address, route, distance,
-                  max_participants, status, created_at, updated_at`,
+                  max_participants, status, activity_type, duration_minutes,
+                  end_latitude, end_longitude, end_address,
+                  created_at, updated_at`,
         [
           creatorId,
           data.title,
@@ -77,6 +114,11 @@ class ActivityService {
           data.route || null,
           data.distance,
           data.maxParticipants,
+          activityType,
+          data.durationMinutes || null,
+          data.endLatitude ?? null,
+          data.endLongitude ?? null,
+          data.endAddress || null,
         ]
       )
 
@@ -94,24 +136,7 @@ class ActivityService {
         [creatorId]
       )
 
-      return {
-        id: activity.id,
-        creatorId: activity.creator_id,
-        creatorName: creatorResult.rows[0].display_name,
-        title: activity.title,
-        description: activity.description || '',
-        scheduledDate: activity.scheduled_date.toISOString(),
-        latitude: parseFloat(activity.latitude),
-        longitude: parseFloat(activity.longitude),
-        address: activity.address,
-        route: activity.route || '',
-        distance: parseFloat(activity.distance),
-        maxParticipants: activity.max_participants,
-        currentParticipants: 0,
-        status: activity.status,
-        createdAt: activity.created_at.toISOString(),
-        updatedAt: activity.updated_at.toISOString(),
-      }
+      return mapActivityRow(activity, creatorResult.rows[0].display_name, 0)
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error
@@ -151,29 +176,14 @@ class ActivityService {
         [activityId]
       )
 
-      const participants: ActivityParticipant[] = participantsResult.rows.map(row => ({
-        userId: row.user_id,
-        displayName: row.display_name,
-        joinedAt: row.joined_at.toISOString(),
+      const participants: ActivityParticipant[] = participantsResult.rows.map(r => ({
+        userId: r.user_id,
+        displayName: r.display_name,
+        joinedAt: r.joined_at.toISOString(),
       }))
 
       return {
-        id: activity.id,
-        creatorId: activity.creator_id,
-        creatorName: activity.creator_name,
-        title: activity.title,
-        description: activity.description || '',
-        scheduledDate: activity.scheduled_date.toISOString(),
-        latitude: parseFloat(activity.latitude),
-        longitude: parseFloat(activity.longitude),
-        address: activity.address,
-        route: activity.route || '',
-        distance: parseFloat(activity.distance),
-        maxParticipants: activity.max_participants,
-        currentParticipants: participants.length,
-        status: activity.status,
-        createdAt: activity.created_at.toISOString(),
-        updatedAt: activity.updated_at.toISOString(),
+        ...mapActivityRow(activity, activity.creator_name, participants.length),
         participants,
       }
     } catch (error) {
@@ -543,7 +553,7 @@ class ActivityService {
     page: number = 1,
     limit: number = 20
   ): Promise<ActivitySearchResult> {
-    try {
+    const runSearch = (skipActivityType = false) => {
       const offset = (page - 1) * limit
       const conditions: string[] = []
       const values: any[] = []
@@ -579,6 +589,18 @@ class ActivityService {
         values.push(filters.maxDistance)
         paramCount++
       }
+
+      if (filters.activityType && !skipActivityType) {
+        conditions.push(`a.activity_type = $${paramCount}`)
+        values.push(filters.activityType)
+        paramCount++
+      }
+
+      return { conditions, values, paramCount, offset }
+    }
+
+    try {
+      const { conditions, values, paramCount, offset } = runSearch(false)
 
       // Build base query
       let query = `
@@ -629,8 +651,21 @@ class ActivityService {
       query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`
       values.push(limit, offset)
 
-      // Execute query
-      const result = await db.query(query, values)
+      // Execute query (retry without activityType if column doesn't exist)
+      let result: { rows: any[] }
+      try {
+        result = await db.query(query, values)
+      } catch (queryErr: any) {
+        const msg = String(queryErr?.message || '')
+        if (
+          filters.activityType &&
+          (msg.includes('activity_type') || msg.includes('does not exist'))
+        ) {
+          const { activityType: _, ...filtersWithoutType } = filters
+          return this.searchActivities(filtersWithoutType, page, limit)
+        }
+        throw queryErr
+      }
 
       // Get total count
       let countQuery = `
@@ -643,26 +678,9 @@ class ActivityService {
       const countResult = await db.query(countQuery, countValues)
       const total = parseInt(countResult.rows[0].count)
 
-      // Format activities
-      const activities: Activity[] = result.rows.map(row => ({
-        id: row.id,
-        creatorId: row.creator_id,
-        creatorName: row.creator_name,
-        title: row.title,
-        description: row.description || '',
-        scheduledDate: row.scheduled_date.toISOString(),
-        latitude: parseFloat(row.latitude),
-        longitude: parseFloat(row.longitude),
-        address: row.address,
-        route: row.route || '',
-        distance: parseFloat(row.distance),
-        maxParticipants: row.max_participants,
-        currentParticipants: parseInt(row.current_participants),
-        status: row.status,
-        createdAt: row.created_at.toISOString(),
-        updatedAt: row.updated_at.toISOString(),
-      }))
-
+      const activities: Activity[] = result.rows.map(row =>
+        mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+      )
       return { activities, total }
     } catch (error) {
       console.error('Error searching activities:', error)
@@ -699,24 +717,9 @@ class ActivityService {
         [userId]
       )
       const total = parseInt(countResult.rows[0].count)
-      const activities: Activity[] = result.rows.map(row => ({
-        id: row.id,
-        creatorId: row.creator_id,
-        creatorName: row.creator_name,
-        title: row.title,
-        description: row.description || '',
-        scheduledDate: row.scheduled_date.toISOString(),
-        latitude: parseFloat(row.latitude),
-        longitude: parseFloat(row.longitude),
-        address: row.address,
-        route: row.route || '',
-        distance: parseFloat(row.distance),
-        maxParticipants: row.max_participants,
-        currentParticipants: parseInt(row.current_participants),
-        status: row.status,
-        createdAt: row.created_at.toISOString(),
-        updatedAt: row.updated_at.toISOString(),
-      }))
+      const activities: Activity[] = result.rows.map(row =>
+        mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+      )
       return { activities, total }
     } catch (error) {
       console.error('Error getting feed:', error)

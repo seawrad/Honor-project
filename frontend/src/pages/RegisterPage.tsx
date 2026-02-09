@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
-  Container,
   Box,
   TextField,
+  IconButton,
   Button,
   Typography,
   Link,
@@ -11,14 +11,15 @@ import {
   Checkbox,
   FormControlLabel,
   Paper,
-  IconButton,
   InputAdornment,
 } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import SettingsIcon from '@mui/icons-material/Settings';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { RegisterData } from '../types/auth.types';
+import './RegisterPage.css';
 
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -130,16 +131,39 @@ export const RegisterPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Box className="register-page-root">
+      <IconButton
+        component={RouterLink}
+        to="/settings"
+        aria-label={t('settings')}
+        sx={{ position: 'fixed', top: 20, right: 20, zIndex: 10, color: 'rgba(255, 255, 255, 0.95)', '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' } }}
+      >
+        <SettingsIcon />
+      </IconButton>
       <Box
         sx={{
-          marginTop: { xs: 2, sm: 4, md: 8 },
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
-        <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
+        <Paper
+            elevation={0}
+            className="register-page-card"
+            sx={{
+              p: { xs: 2.5, sm: 3.5 },
+              width: '100%',
+              bgcolor: '#ffffff',
+              position: 'relative',
+              color: 'rgba(0,0,0,0.87)',
+              '& .MuiFormLabel-root, & .MuiInputBase-input': { color: 'rgba(0,0,0,0.87)' },
+              '& .MuiFormHelperText-root': { color: 'rgba(0,0,0,0.6)' },
+              '& .MuiTypography-root': { color: 'inherit' },
+              '& .MuiTypography-colorSecondary': { color: 'rgba(0,0,0,0.6)' },
+            }}
+          >
           <Typography component="h1" variant="h4" align="center" gutterBottom>
             {t('registerTitle')}
           </Typography>
@@ -274,6 +298,6 @@ export const RegisterPage: React.FC = () => {
           </Box>
         </Paper>
       </Box>
-    </Container>
+    </Box>
   );
 };

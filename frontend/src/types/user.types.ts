@@ -41,3 +41,16 @@ export interface UpdateProfileData {
   age?: number;
   avatarUrl?: string | null;
 }
+
+export interface UserStatsSummary {
+  weeklyDistanceKm: number;
+  monthlyCompletedActivities: number;
+  monthlyDistanceKm: number;
+  level: {
+    name: string;
+    nameZh: string;
+    currentKm: number;
+    nextLevelKm: number | null;
+    progressPercent: number;
+  };
+}

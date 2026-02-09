@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { AuthContextType, User, LoginCredentials, RegisterData } from '../types/auth.types';
 import { authService } from '../services/auth.service';
 import { tokenStorage } from '../utils/tokenStorage';
+import { RunCrewLoadingScreen } from '../components/RunCrewLoadingScreen';
 import axios from 'axios';
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,31 +51,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   // Initialize auth state from localStorage
+  // Minimum 3.5s display so users can see the RunCrew loading animation
+  const MIN_LOADING_MS = 3500;
+
   useEffect(() => {
+    const startTime = Date.now();
+
     const initializeAuth = async () => {
       const accessToken = tokenStorage.getAccessToken();
       const storedUser = tokenStorage.getUser();
 
       if (accessToken && storedUser) {
         try {
-          // Verify token is still valid
           const currentUser = await authService.getCurrentUser(accessToken);
           setUser(currentUser);
-          
-          // Setup axios default header
           axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
         } catch (error) {
-          // Token invalid, try to refresh
           try {
             await refreshToken();
           } catch (refreshError) {
-            // Refresh failed, clear storage
             tokenStorage.clearAll();
           }
         }
       }
 
-      setIsLoading(false);
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, MIN_LOADING_MS - elapsed);
+      setTimeout(() => setIsLoading(false), remaining);
     };
 
     initializeAuth();
@@ -137,5 +140,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshToken,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {isLoading ? <RunCrewLoadingScreen /> : children}
+    </AuthContext.Provider>
+  );
 };

@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import i18n from '../i18n'
 
-export type ThemeMode = 'light' | 'dark' | 'system'
 export type Language = 'en' | 'zh-TW'
 export type DistanceUnit = 'km' | 'miles'
 
 export interface AppSettings {
   language: Language
-  theme: ThemeMode
   distanceUnit: DistanceUnit
   activityReminders: boolean
   chatNotifications: boolean
@@ -17,7 +15,6 @@ const STORAGE_KEY = 'app-settings'
 
 const defaultSettings: AppSettings = {
   language: 'zh-TW',
-  theme: 'system',
   distanceUnit: 'km',
   activityReminders: true,
   chatNotifications: true,
@@ -27,8 +24,9 @@ function loadSettings(): AppSettings {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) {
-      const parsed = JSON.parse(saved) as Partial<AppSettings>
-      return { ...defaultSettings, ...parsed }
+      const parsed = JSON.parse(saved) as Record<string, unknown>
+      const { theme: _removed, ...rest } = parsed
+      return { ...defaultSettings, ...rest } as AppSettings
     }
   } catch (e) {
     console.warn('Failed to load settings:', e)
@@ -47,7 +45,6 @@ function saveSettings(settings: AppSettings): void {
 interface SettingsContextType {
   settings: AppSettings
   setLanguage: (lang: Language) => void
-  setTheme: (theme: ThemeMode) => void
   setDistanceUnit: (unit: DistanceUnit) => void
   setActivityReminders: (enabled: boolean) => void
   setChatNotifications: (enabled: boolean) => void
@@ -78,10 +75,6 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     setSettingsState((s) => ({ ...s, language: lang }))
     i18n.changeLanguage(lang)
     localStorage.setItem('app-language', lang)
-  }, [])
-
-  const setTheme = useCallback((theme: ThemeMode) => {
-    setSettingsState((s) => ({ ...s, theme }))
   }, [])
 
   const setDistanceUnit = useCallback((unit: DistanceUnit) => {
@@ -118,7 +111,6 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
   const value: SettingsContextType = {
     settings,
     setLanguage,
-    setTheme,
     setDistanceUnit,
     setActivityReminders,
     setChatNotifications,

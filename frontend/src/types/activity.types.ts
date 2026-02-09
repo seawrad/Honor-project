@@ -10,6 +10,8 @@ export interface Participant {
   joinedAt: string;
 }
 
+export type ActivityType = 'time-based' | 'route-based';
+
 export interface Activity {
   id: string;
   creatorId: string;
@@ -24,6 +26,9 @@ export interface Activity {
   currentParticipants: number;
   participants: Participant[];
   status: 'upcoming' | 'in-progress' | 'completed' | 'cancelled';
+  activityType: ActivityType;
+  durationMinutes?: number;
+  endLocation?: Location;
   createdAt: string;
 }
 
@@ -35,6 +40,8 @@ export interface ActivityFilters {
   latitude?: number;
   longitude?: number;
   radius?: number;
+  status?: 'upcoming' | 'in-progress' | 'completed' | 'cancelled';
+  activityType?: ActivityType;
 }
 
 export interface CreateActivityData {
@@ -45,6 +52,9 @@ export interface CreateActivityData {
   route: string;
   distance: number;
   maxParticipants: number;
+  activityType: ActivityType;
+  durationMinutes?: number;
+  endLocation?: Location;
 }
 
 export interface UpdateActivityData extends Partial<CreateActivityData> {}

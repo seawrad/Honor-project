@@ -51,7 +51,10 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
     }
   };
 
+  const isPast = new Date(activity.scheduledDate) < new Date();
+
   const getStatusLabel = (status: Activity['status']) => {
+    if (status === 'upcoming' && isPast) return '已結束';
     switch (status) {
       case 'upcoming':
         return '即將開始';
@@ -64,6 +67,11 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
       default:
         return status;
     }
+  };
+
+  const getDisplayStatusColor = () => {
+    if (activity.status === 'upcoming' && isPast) return 'default';
+    return getStatusColor(activity.status);
   };
 
   return (
@@ -96,12 +104,20 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
           >
             {activity.title}
           </Typography>
-          <Chip
-            label={getStatusLabel(activity.status)}
-            color={getStatusColor(activity.status)}
-            size="small"
-            sx={{ flexShrink: 0 }}
-          />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'flex-end' }}>
+            <Chip
+              label={(activity.activityType ?? 'route-based') === 'time-based' ? '時間導向' : '路線導向'}
+              size="small"
+              variant="outlined"
+              sx={{ flexShrink: 0 }}
+            />
+            <Chip
+              label={getStatusLabel(activity.status)}
+              color={getDisplayStatusColor()}
+              size="small"
+              sx={{ flexShrink: 0 }}
+            />
+          </Box>
         </Box>
 
         <Typography 
