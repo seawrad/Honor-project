@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Group Running App is a health-tech mobile application designed to facilitate social running activities by enabling users to create, discover, and participate in group running sessions. The system targets adults aged 18-65 who own smartphones and are interested in running with social motivation. The application leverages GPS tracking, real-time notifications, and social interaction features to build an active running community. Initially developed as a web application for cross-platform testing, the system will eventually be deployed as an iOS native application.
+The Group Running App is a health-tech web application, implemented as a responsive Progressive Web App (PWA), designed to facilitate social running activities by enabling users to create, discover, and participate in group running sessions. The system targets adults aged 18-65 who own smartphones and are interested in running with social motivation. The application leverages GPS tracking, real-time notifications, and social interaction features to build an active running community. The primary implementation and evaluation in this FYP focus on the web PWA version; a potential iOS native application is considered as future work and is **not** within the current implementation scope.
 
 ## Glossary
 

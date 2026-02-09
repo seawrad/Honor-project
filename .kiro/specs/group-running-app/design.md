@@ -812,6 +812,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 ## Migration Path to iOS
 
+> Note: This section describes **future work** only.  
+> The current FYP implementation focuses on the web Progressive Web App (PWA).  
+> A native iOS application is considered as a possible extension and is **not** part of the implemented scope.
+
 ### Phase 1: Web Application (Current Design)
 
 - Fully functional PWA with all features

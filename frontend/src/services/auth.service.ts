@@ -16,36 +16,41 @@ interface RegisterResponse {
 
 export const authService = {
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await axios.post<LoginResponse>(
+    const response = await axios.post<{ data: LoginResponse }>(
       `${API_BASE_URL}/auth/login`,
       credentials
     );
-    return response.data;
+    return response.data.data;
   },
 
   async register(data: RegisterData): Promise<RegisterResponse> {
-    const response = await axios.post<RegisterResponse>(
+    const response = await axios.post<{ data: Record<string, unknown> }>(
       `${API_BASE_URL}/auth/register`,
       data
     );
-    return response.data;
+    const d = response.data.data as { userId?: string; user?: { id: string } };
+    return { message: 'Registered', userId: d?.userId ?? d?.user?.id ?? '' };
   },
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
-    const response = await axios.post<AuthTokens>(
+    const response = await axios.post<{ data: { accessToken: string } }>(
       `${API_BASE_URL}/auth/refresh-token`,
       { refreshToken }
     );
-    return response.data;
+    const { accessToken } = response.data.data;
+    return { accessToken, refreshToken };
   },
 
   async getCurrentUser(accessToken: string): Promise<User> {
-    const response = await axios.get<User>(`${API_BASE_URL}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-    return response.data;
+    const response = await axios.get<{ data: { user: User } }>(
+      `${API_BASE_URL}/auth/me`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    return response.data.data.user;
   },
 
   async logout(): Promise<void> {

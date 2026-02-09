@@ -65,10 +65,16 @@ cp frontend/.env.example frontend/.env
 # 編輯 .env 檔案並填入你的配置
 ```
 
-3. 啟動資料庫服務（PostgreSQL 和 Redis）：
+3. 啟動資料庫服務（PostgreSQL；Redis 為選用，後端目前未使用）：
 
 ```bash
 docker-compose up -d
+```
+
+4. 執行資料庫遷移（在專案根目錄）：
+
+```bash
+npm run migrate --workspace=backend
 ```
 
 ### 開發

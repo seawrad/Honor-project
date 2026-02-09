@@ -21,7 +21,9 @@ export const reportWebVitals = (onPerfEntry?: (metric: any) => void) => {
   if (onPerfEntry && onPerfEntry instanceof Function) {
     import('web-vitals').then((webVitals) => {
       webVitals.onCLS(onPerfEntry);
-      webVitals.onFID(onPerfEntry);
+      if ('onFID' in webVitals && typeof webVitals.onFID === 'function') {
+        (webVitals as { onFID: (fn: (m: unknown) => void) => void }).onFID(onPerfEntry);
+      }
       webVitals.onFCP(onPerfEntry);
       webVitals.onLCP(onPerfEntry);
       webVitals.onTTFB(onPerfEntry);

@@ -73,7 +73,7 @@ class FrontendMonitoring {
   }
 
   // Set user context
-  setUser(userId: string, email?: string): void {
+  setUser(_userId: string, _email?: string): void {
     if (!this.initialized) {
       return
     }
@@ -95,7 +95,7 @@ class FrontendMonitoring {
   }
 
   // Add breadcrumb
-  addBreadcrumb(message: string, category: string, data?: Record<string, any>): void {
+  addBreadcrumb(_message: string, _category: string, _data?: Record<string, any>): void {
     if (!this.initialized) {
       return
     }

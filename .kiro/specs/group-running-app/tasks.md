@@ -1,5 +1,9 @@
 # Implementation Plan
 
+> Scope note (FYP): This implementation plan describes the full roadmap towards a production-ready system.  
+> For the current FYP, the primary implementation focuses on the **web PWA features** covered by the tasks that are already marked as completed (mainly 1–19).  
+> Tasks that remain unchecked (e.g. full AWS infrastructure, staging/production deployment, extensive E2E and load testing) are treated as **future work** and are not required to be fully implemented for this project.
+
 - [x] 1. Set up project structure and development environment
 
 

@@ -1,8 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import axios from 'axios'
 import App from './App.tsx'
 import './index.css'
 import { reportWebVitals } from './utils/performance'
+
+// Use VITE_API_URL when set (e.g. production or direct backend URL); otherwise
+// use same origin so Vite dev proxy works (requests to /api go to backend).
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || ''
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

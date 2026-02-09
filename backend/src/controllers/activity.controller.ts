@@ -288,6 +288,38 @@ class ActivityController {
   }
 
   /**
+   * GET /api/activities/feed - Get activity feed (from followed users)
+   */
+  async getFeed(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.userId!
+      const page = parseInt(req.query.page as string) || 1
+      const limit = parseInt(req.query.limit as string) || 20
+      const { activities, total } = await activityService.getFeedForUser(userId, page, limit)
+      res.json({
+        success: true,
+        data: activities,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      })
+    } catch (error) {
+      console.error('Error in getFeed:', error)
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
+        },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
    * GET /api/activities - Search and filter activities
    */
   async searchActivities(req: Request, res: Response): Promise<void> {

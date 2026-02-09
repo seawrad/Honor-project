@@ -5,13 +5,13 @@ const API_BASE_URL = '/api';
 
 export const userService = {
   async getUserProfile(userId: string): Promise<UserProfile> {
-    const response = await axios.get<UserProfile>(`${API_BASE_URL}/users/${userId}`);
-    return response.data;
+    const response = await axios.get<{ data: UserProfile }>(`${API_BASE_URL}/users/${userId}`);
+    return response.data.data;
   },
 
   async updateUserProfile(userId: string, data: Partial<UserProfile>): Promise<UserProfile> {
-    const response = await axios.put<UserProfile>(`${API_BASE_URL}/users/${userId}`, data);
-    return response.data;
+    const response = await axios.put<{ data: UserProfile }>(`${API_BASE_URL}/users/${userId}`, data);
+    return response.data.data;
   },
 
   async deleteAccount(userId: string): Promise<void> {
@@ -26,27 +26,34 @@ export const userService = {
     await axios.delete(`${API_BASE_URL}/users/${userId}/follow`);
   },
 
-  async getFollowers(userId: string): Promise<UserSearchResult[]> {
-    const response = await axios.get<UserSearchResult[]>(`${API_BASE_URL}/users/${userId}/followers`);
-    return response.data;
+  async getFollowers(userId: string, page = 1, limit = 20): Promise<UserSearchResult[]> {
+    const response = await axios.get<{ data: UserSearchResult[] }>(
+      `${API_BASE_URL}/users/${userId}/followers`,
+      { params: { page, limit } }
+    );
+    return response.data.data;
   },
 
-  async getFollowing(userId: string): Promise<UserSearchResult[]> {
-    const response = await axios.get<UserSearchResult[]>(`${API_BASE_URL}/users/${userId}/following`);
-    return response.data;
+  async getFollowing(userId: string, page = 1, limit = 20): Promise<UserSearchResult[]> {
+    const response = await axios.get<{ data: UserSearchResult[] }>(
+      `${API_BASE_URL}/users/${userId}/following`,
+      { params: { page, limit } }
+    );
+    return response.data.data;
   },
 
-  async searchUsers(query: string): Promise<UserSearchResult[]> {
-    const response = await axios.get<UserSearchResult[]>(`${API_BASE_URL}/users/search`, {
-      params: { q: query },
+  async searchUsers(query: string, page = 1, limit = 20): Promise<UserSearchResult[]> {
+    const response = await axios.get<{ data: UserSearchResult[] }>(`${API_BASE_URL}/users/search`, {
+      params: { q: query, page, limit },
     });
-    return response.data;
+    return response.data.data;
   },
 
   async getUserRatings(userId: string, page = 1, limit = 20): Promise<{ ratings: any[]; averageRating: number; totalRatings: number }> {
-    const response = await axios.get(`${API_BASE_URL}/users/${userId}/ratings`, {
-      params: { page, limit },
-    });
+    const response = await axios.get<{ data: { ratings: any[]; averageRating: number; totalRatings: number } }>(
+      `${API_BASE_URL}/users/${userId}/ratings`,
+      { params: { page, limit } }
+    );
     return response.data.data;
   },
 };

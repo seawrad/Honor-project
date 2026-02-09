@@ -1,21 +1,17 @@
 import axios from 'axios'
 import { ChatRoom, ChatMessage } from '../types/chat.types'
-import { getAccessToken } from '../utils/tokenStorage'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const API_BASE_URL = '/api'
 
 class ChatService {
   /**
    * Get chat room by activity ID
    */
   async getChatRoomByActivityId(activityId: string): Promise<ChatRoom> {
-    const token = getAccessToken()
-    const response = await axios.get(`${API_URL}/api/chat/rooms/${activityId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-    return response.data
+    const response = await axios.get<{ data: ChatRoom }>(
+      `${API_BASE_URL}/chat/rooms/${activityId}`
+    )
+    return response.data.data
   }
 
   /**
@@ -26,17 +22,13 @@ class ChatService {
     limit: number = 50,
     offset: number = 0
   ): Promise<{ messages: ChatMessage[]; total: number }> {
-    const token = getAccessToken()
-    const response = await axios.get(
-      `${API_URL}/api/chat/rooms/${roomId}/messages`,
-      {
-        params: { limit, offset },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    )
-    return response.data
+    const response = await axios.get<{
+      data: { messages: ChatMessage[]; pagination: { total: number } }
+    }>(`${API_BASE_URL}/chat/rooms/${roomId}/messages`, {
+      params: { limit, page: offset ? Math.floor(offset / limit) + 1 : 1 },
+    })
+    const { data } = response.data
+    return { messages: data.messages, total: data.pagination.total }
   }
 }
 

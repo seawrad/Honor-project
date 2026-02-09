@@ -671,6 +671,60 @@ class ActivityService {
   }
 
   /**
+   * Get activity feed for a user (activities from users they follow)
+   */
+  async getFeedForUser(userId: string, page: number = 1, limit: number = 20): Promise<ActivitySearchResult> {
+    try {
+      const offset = (page - 1) * limit
+      const result = await db.query(
+        `SELECT
+          a.*,
+          u.display_name as creator_name,
+          (SELECT COUNT(*) FROM activity_participants WHERE activity_id = a.id) as current_participants
+        FROM activities a
+        JOIN users u ON a.creator_id = u.id
+        WHERE a.creator_id IN (
+          SELECT following_id FROM social_connections WHERE follower_id = $1
+        )
+        AND a.status = 'upcoming'
+        ORDER BY a.scheduled_date
+        LIMIT $2 OFFSET $3`,
+        [userId, limit, offset]
+      )
+      const countResult = await db.query(
+        `SELECT COUNT(*) as count FROM activities a
+         WHERE a.creator_id IN (
+           SELECT following_id FROM social_connections WHERE follower_id = $1
+         ) AND a.status = 'upcoming'`,
+        [userId]
+      )
+      const total = parseInt(countResult.rows[0].count)
+      const activities: Activity[] = result.rows.map(row => ({
+        id: row.id,
+        creatorId: row.creator_id,
+        creatorName: row.creator_name,
+        title: row.title,
+        description: row.description || '',
+        scheduledDate: row.scheduled_date.toISOString(),
+        latitude: parseFloat(row.latitude),
+        longitude: parseFloat(row.longitude),
+        address: row.address,
+        route: row.route || '',
+        distance: parseFloat(row.distance),
+        maxParticipants: row.max_participants,
+        currentParticipants: parseInt(row.current_participants),
+        status: row.status,
+        createdAt: row.created_at.toISOString(),
+        updatedAt: row.updated_at.toISOString(),
+      }))
+      return { activities, total }
+    } catch (error) {
+      console.error('Error getting feed:', error)
+      throw new Error('Failed to get feed')
+    }
+  }
+
+  /**
    * Create a rating for an activity
    */
   async createRating(

@@ -1,5 +1,7 @@
 import { Errors } from './errors.js'
 
+export { ValidationError } from './errors.js'
+
 export function validateEmail(email: string): void {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   if (!emailRegex.test(email)) {

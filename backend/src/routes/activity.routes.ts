@@ -9,6 +9,7 @@ router.use(authenticateToken)
 
 // Activity CRUD operations
 router.post('/', activityController.createActivity.bind(activityController))
+router.get('/feed', activityController.getFeed.bind(activityController))
 router.get('/', activityController.searchActivities.bind(activityController))
 router.get('/:id', activityController.getActivity.bind(activityController))
 router.put('/:id', activityController.updateActivity.bind(activityController))

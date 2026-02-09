@@ -1,14 +1,15 @@
 import axios from 'axios';
-import { Notification, NotificationListResponse } from '../types/notification.types';
+import { NotificationListResponse } from '../types/notification.types';
 
 const API_BASE_URL = '/api';
 
 export const notificationService = {
-  async getNotifications(): Promise<NotificationListResponse> {
-    const response = await axios.get<NotificationListResponse>(
-      `${API_BASE_URL}/notifications`
+  async getNotifications(limit = 50, offset = 0): Promise<NotificationListResponse> {
+    const response = await axios.get<{ data: NotificationListResponse }>(
+      `${API_BASE_URL}/notifications`,
+      { params: { limit, offset } }
     );
-    return response.data;
+    return response.data.data;
   },
 
   async markAsRead(notificationId: string): Promise<void> {

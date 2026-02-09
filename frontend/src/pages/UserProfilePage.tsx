@@ -27,7 +27,6 @@ import { userService } from '../services/user.service';
 import { UserProfile } from '../types/user.types';
 import { FollowButton } from '../components/FollowButton';
 import { useAuth } from '../hooks/useAuth';
-import { ActivityCard } from '../components/ActivityCard';
 import { RatingsList } from '../components/RatingsList';
 
 export const UserProfilePage: React.FC = () => {
