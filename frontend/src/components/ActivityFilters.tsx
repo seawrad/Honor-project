@@ -9,9 +9,13 @@ import {
   Grid,
   Collapse,
   IconButton,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { FilterList, ExpandMore, ExpandLess } from '@mui/icons-material';
-import { ActivityFilters as ActivityFiltersType } from '../types/activity.types';
+import { ActivityFilters as ActivityFiltersType, ActivityType } from '../types/activity.types';
 
 interface ActivityFiltersProps {
   onFiltersChange: (filters: ActivityFiltersType) => void;
@@ -23,6 +27,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
   const [dateTo, setDateTo] = useState('');
   const [distanceRange, setDistanceRange] = useState<number[]>([0, 50]);
   const [radius, setRadius] = useState(10);
+  const [activityType, setActivityType] = useState<ActivityType | ''>('');
 
   const handleApplyFilters = () => {
     const filters: ActivityFiltersType = {};
@@ -40,6 +45,9 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
     if (radius < 50) {
       filters.radius = radius;
     }
+    if (activityType) {
+      filters.activityType = activityType;
+    }
 
     onFiltersChange(filters);
   };
@@ -49,6 +57,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
     setDateTo('');
     setDistanceRange([0, 50]);
     setRadius(10);
+    setActivityType('');
     onFiltersChange({});
   };
 
@@ -93,6 +102,22 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                 InputLabelProps={{ shrink: true }}
                 size="small"
               />
+            </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="activity-type-label">活動類型</InputLabel>
+                <Select
+                  labelId="activity-type-label"
+                  label="活動類型"
+                  value={activityType}
+                  onChange={(e) => setActivityType(e.target.value as ActivityType | '')}
+                >
+                  <MenuItem value="">全部</MenuItem>
+                  <MenuItem value="time-based">時間導向</MenuItem>
+                  <MenuItem value="route-based">路線導向</MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
 
             <Grid item xs={12}>

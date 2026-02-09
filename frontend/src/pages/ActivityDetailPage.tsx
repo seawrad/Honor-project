@@ -204,6 +204,11 @@ export const ActivityDetailPage = () => {
               {activity.title}
             </Typography>
             <Chip
+              label={(activity.activityType ?? 'route-based') === 'time-based' ? '時間導向' : '路線導向'}
+              variant="outlined"
+              sx={{ mr: 1 }}
+            />
+            <Chip
               label={getStatusLabel(activity.status)}
               color={getStatusColor(activity.status)}
               sx={{ mr: 1 }}
