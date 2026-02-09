@@ -754,12 +754,16 @@
     - _Requirements: 10.4_
 -
 
-- [-] 20. Implement security measures
+- [ ] 20. Implement security measures
 
 
 
 
-  - [ ] 20.1 Add rate limiting
+
+  - [x] 20.1 Add rate limiting
+
+
+
     - Implement rate limiting middleware
     - Configure limits for login attempts
     - Add rate limits for API endpoints
