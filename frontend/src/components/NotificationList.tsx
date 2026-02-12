@@ -32,6 +32,7 @@ const getNotificationIcon = (type: NotificationType) => {
     case 'activity_cancelled':
       return <CancelIcon color="error" />;
     case 'new_message':
+    case 'chat_message':
       return <MessageIcon color="info" />;
     case 'new_follower':
       return <PersonAddIcon color="success" />;
@@ -86,6 +87,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ onClose }) =
           navigate(`/activities/${notification.relatedId}`);
           break;
         case 'new_message':
+        case 'chat_message':
           navigate(`/activities/${notification.relatedId}/chat`);
           break;
         case 'new_follower':

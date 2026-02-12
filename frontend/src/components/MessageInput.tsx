@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { Box, TextField, IconButton, Alert } from '@mui/material'
+import { Box, TextField, IconButton, Alert, Popover } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
+import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
 import { socketService } from '../services/socket.service'
 
 interface MessageInputProps {
   roomId: string
+  /** Optional: called when message is sent (for optimistic update) */
+  onMessageSent?: (content: string) => void
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSent }) => {
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [emojiAnchor, setEmojiAnchor] = useState<HTMLButtonElement | null>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Handle typing indicator
@@ -71,8 +76,12 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
         clearTimeout(typingTimeoutRef.current)
       }
 
+      const content = message.trim()
       // Send message via WebSocket
-      socketService.sendMessage(roomId, message.trim())
+      socketService.sendMessage(roomId, content)
+
+      // Optimistic update: show message immediately
+      onMessageSent?.(content)
 
       // Clear input
       setMessage('')
@@ -91,6 +100,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
     }
   }
 
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setMessage((prev) => prev + emojiData.emoji)
+    handleTyping()
+  }
+
   return (
     <Box>
       {error && (
@@ -98,12 +112,29 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId }) => {
           {error}
         </Alert>
       )}
-      <Box sx={{ display: 'flex', gap: 1, p: 2, borderTop: 1, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', gap: 0.5, p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <IconButton
+          size="small"
+          onClick={(e) => setEmojiAnchor(emojiAnchor ? null : e.currentTarget)}
+          sx={{ alignSelf: 'flex-end', color: 'text.secondary' }}
+          aria-label="Insert emoji"
+        >
+          <EmojiEmotionsIcon />
+        </IconButton>
+        <Popover
+          open={Boolean(emojiAnchor)}
+          anchorEl={emojiAnchor}
+          onClose={() => setEmojiAnchor(null)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+          transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        >
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
+        </Popover>
         <TextField
           fullWidth
           multiline
           maxRows={3}
-          placeholder="Type a message..."
+          placeholder="輸入訊息，可輸入 emoji 😊..."
           value={message}
           onChange={(e) => {
             setMessage(e.target.value)

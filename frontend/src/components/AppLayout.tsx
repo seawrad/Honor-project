@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
   Divider,
+  CircularProgress,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -31,14 +32,25 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import RssFeedIcon from '@mui/icons-material/RssFeed';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
+import { FriendChatButton } from './FriendChatButton';
+import { DMChatBox } from './DMChatBox';
 import { useAuth } from '../hooks/useAuth';
+import { useDMChat } from '../contexts/DMChatContext';
+import { userService } from '../services/user.service';
+import { dmService } from '../services/dm.service';
 
 const DRAWER_WIDTH = 260;
+
+interface Friend {
+  id: string;
+  displayName: string;
+}
 
 const navItems = [
   { path: '/', label: '首頁', icon: <HomeIcon /> },
   { path: '/activities', label: '跑步活動', icon: <EventIcon /> },
   { path: '/feed', label: '動態', icon: <RssFeedIcon /> },
+  { path: '/chat-list', label: '聊天', icon: <ChatIcon /> },
   { path: '/activities/create', label: '建立活動', icon: <AddIcon /> },
   { path: '/routes/history', label: '路線紀錄', icon: <RouteIcon /> },
   { path: '/users/search', label: '搜尋用戶', icon: <PeopleIcon /> },
@@ -50,9 +62,33 @@ export const AppLayout: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { openChat } = useDMChat();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friendsLoading, setFriendsLoading] = useState(false);
+
+  useEffect(() => {
+    if (drawerOpen && isAuthenticated) {
+      let cancelled = false;
+      setFriendsLoading(true);
+      userService
+        .getFriends()
+        .then((data) => {
+          if (!cancelled) setFriends(data);
+        })
+        .catch(() => {
+          if (!cancelled) setFriends([]);
+        })
+        .finally(() => {
+          if (!cancelled) setFriendsLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [drawerOpen, isAuthenticated]);
 
   const handleDrawerToggle = () => setDrawerOpen(!drawerOpen);
   const handleDrawerClose = () => setDrawerOpen(false);
@@ -76,6 +112,16 @@ export const AppLayout: React.FC = () => {
     navigate(path);
   };
 
+  const handleDrawerFriendClick = async (friend: Friend) => {
+    try {
+      const room = await dmService.getOrCreateRoom(friend.id);
+      openChat(room);
+      handleDrawerClose();
+    } catch (err) {
+      console.error('Failed to open chat:', err);
+    }
+  };
+
   const drawer = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>
       <Typography variant="h6" sx={{ px: 2, pb: 2 }}>
@@ -95,6 +141,38 @@ export const AppLayout: React.FC = () => {
           </ListItem>
         ))}
       </List>
+      {isAuthenticated && (
+        <>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="subtitle2" color="text.secondary" sx={{ px: 2, pb: 1 }}>
+            好友
+          </Typography>
+          {friendsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress size={24} />
+            </Box>
+          ) : friends.length === 0 ? (
+            <Box sx={{ px: 2, py: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                尚無好友，互追後即可聊天
+              </Typography>
+            </Box>
+          ) : (
+            <List dense disablePadding>
+              {friends.map((friend) => (
+                <ListItem key={friend.id} disablePadding>
+                  <ListItemButton onClick={() => handleDrawerFriendClick(friend)}>
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <ChatIcon fontSize="small" color="action" />
+                    </ListItemIcon>
+                    <ListItemText primary={friend.displayName} />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </>
+      )}
     </Box>
   );
 
@@ -145,6 +223,7 @@ export const AppLayout: React.FC = () => {
           </Box>
           {isAuthenticated && (
             <>
+              <FriendChatButton />
               <NotificationBell />
               <IconButton
                 color="inherit"
@@ -196,7 +275,7 @@ export const AppLayout: React.FC = () => {
           <ListItemIcon>
             <ChatIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>聊天列表</ListItemText>
+          <ListItemText>聊天</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
@@ -234,6 +313,8 @@ export const AppLayout: React.FC = () => {
       >
         <Outlet />
       </Container>
+
+      {isAuthenticated && <DMChatBox />}
     </Box>
   );
 };

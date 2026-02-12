@@ -1,11 +1,12 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: group-running-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: group_running_app
+      TZ: Asia/Hong_Kong
     ports:
       - "5432:5432"
     volumes:
@@ -17,8 +18,10 @@ services:
       retries: 5
 
   redis:
-    image: redis:7-alpine
+    image: redis:7
     container_name: group-running-redis
+    environment:
+      TZ: Asia/Hong_Kong
     ports:
       - "6379:6379"
     volumes:

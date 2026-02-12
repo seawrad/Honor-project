@@ -8,6 +8,9 @@ const router = Router()
 // Search users (with optional auth to show follow status)
 router.get('/search', optionalAuth, (req, res) => userController.searchUsers(req, res))
 
+// Get current user's friends (mutual follow) - must be before /:id
+router.get('/me/friends', authenticateToken, (req, res) => userController.getFriends(req, res))
+
 // Get user stats summary (must be before /:id to match /:id/stats)
 router.get('/:id/stats', (req, res) => userController.getUserStats(req, res))
 

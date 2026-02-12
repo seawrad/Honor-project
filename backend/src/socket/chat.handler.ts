@@ -10,6 +10,7 @@ import {
   ErrorPayload,
 } from '../types/socket.types.js'
 import { chatService } from '../services/chat.service.js'
+import { dmService } from '../services/dm.service.js'
 import { notificationService } from '../services/notification.service.js'
 import { db } from '../database/db.js'
 
@@ -43,9 +44,9 @@ export function setupChatHandlers(io: Server): void {
           return
         }
 
-        // Check if room exists
-        const room = await chatService.getChatRoomById(roomId)
-        if (!room) {
+        // Check if room exists (activity or DM)
+        const roomType = await chatService.getRoomType(roomId)
+        if (!roomType) {
           const error: ErrorPayload = {
             code: 'ROOM_NOT_FOUND',
             message: 'Chat room not found',
@@ -54,8 +55,8 @@ export function setupChatHandlers(io: Server): void {
           return
         }
 
-        // Check access control
-        const hasAccess = await chatService.checkRoomAccess(roomId, userId)
+        // Check access control (activity or DM)
+        const hasAccess = await chatService.checkAnyRoomAccess(roomId, userId)
         if (!hasAccess) {
           const error: ErrorPayload = {
             code: 'ACCESS_DENIED',
@@ -148,9 +149,9 @@ export function setupChatHandlers(io: Server): void {
           return
         }
 
-        // Check if room exists
-        const room = await chatService.getChatRoomById(roomId)
-        if (!room) {
+        // Check if room exists and get type
+        const roomType = await chatService.getRoomType(roomId)
+        if (!roomType) {
           const error: ErrorPayload = {
             code: 'ROOM_NOT_FOUND',
             message: 'Chat room not found',
@@ -160,7 +161,7 @@ export function setupChatHandlers(io: Server): void {
         }
 
         // Check access control
-        const hasAccess = await chatService.checkRoomAccess(roomId, userId)
+        const hasAccess = await chatService.checkAnyRoomAccess(roomId, userId)
         if (!hasAccess) {
           const error: ErrorPayload = {
             code: 'ACCESS_DENIED',
@@ -170,23 +171,35 @@ export function setupChatHandlers(io: Server): void {
           return
         }
 
-        // Save message to database
-        const message = await chatService.saveMessage(roomId, userId, content)
-
-        // Broadcast message to all users in the room (including sender)
-        const messagePayload: MessageReceivedPayload = {
-          id: message.id,
-          chatRoomId: message.chatRoomId,
-          senderId: message.senderId,
-          senderName: message.senderName,
-          content: message.content,
-          timestamp: message.timestamp,
+        // Save message and broadcast
+        let messagePayload: MessageReceivedPayload
+        if (roomType === 'dm') {
+          const message = await dmService.saveMessage(roomId, userId, content)
+          messagePayload = {
+            id: message.id,
+            chatRoomId: message.dmRoomId,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            content: message.content,
+            timestamp: message.timestamp,
+          }
+        } else {
+          const message = await chatService.saveMessage(roomId, userId, content)
+          messagePayload = {
+            id: message.id,
+            chatRoomId: message.chatRoomId,
+            senderId: message.senderId,
+            senderName: message.senderName,
+            content: message.content,
+            timestamp: message.timestamp,
+          }
         }
 
         io.to(roomId).emit('message_received', messagePayload)
         console.log(`Message sent in room ${roomId} by user ${userId}`)
 
-        // Get activity ID and participants for notifications
+        // Get activity ID and participants for notifications (activity rooms only)
+        if (roomType === 'activity') {
         const activityResult = await db.query(
           'SELECT activity_id FROM chat_rooms WHERE id = $1',
           [roomId]
@@ -209,9 +222,10 @@ export function setupChatHandlers(io: Server): void {
           await notificationService.notifyNewMessage(
             activityId,
             participantIds,
-            message.senderName,
+            messagePayload.senderName,
             userId
           )
+        }
         }
       } catch (error) {
         console.error('Error handling send_message:', error)

@@ -224,14 +224,14 @@ async function seed() {
      VALUES 
        ($1, 'activity_reminder', '活動提醒', 'Morning Jog - Victoria Park 將於明日舉行', $2, false),
        ($1, 'chat_message', '新訊息', 'Bob Wong 在 Morning Jog 活動中發送了訊息', $2, false),
-       ($1, 'new_follower', '新追蹤者', 'Frank Liu 開始追蹤你', NULL, false),
+       ($1, 'new_follower', '新追蹤者', 'Frank Liu 開始追蹤你', $11, false),
        ($3, 'activity_joined', '加入成功', '你已成功加入 Evening Run - Kowloon Park', $4, true),
-       ($3, 'new_follower', '新追蹤者', 'Alice Chen 開始追蹤你', NULL, false),
+       ($3, 'new_follower', '新追蹤者', 'Alice Chen 開始追蹤你', $1, false),
        ($3, 'chat_message', '新訊息', 'Bob Wong 在 Evening Run 活動中發送了訊息', $4, false),
        ($5, 'activity_reminder', '活動提醒', 'Central Harbour Run 即將開始', $6, true),
        ($5, 'chat_message', '新訊息', 'Alice Chen 在 Central Harbour Run 活動中發送了訊息', $6, true),
        ($7, 'activity_reminder', '活動提醒', 'Sunrise Run - West Kowloon 將於三天後舉行', $8, false),
-       ($9, 'new_follower', '新追蹤者', 'Bob Wong 開始追蹤你', NULL, false),
+       ($9, 'new_follower', '新追蹤者', 'Bob Wong 開始追蹤你', $5, false),
        ($9, 'activity_joined', '加入成功', '你已成功加入 Sha Tin Riverside Run', $10, true),
        ($11, 'activity_reminder', '活動提醒', 'First Timer Friendly - 2K 將於一個月後舉行', $12, false)
      `,
@@ -291,6 +291,116 @@ async function seed() {
     ]
   )
   console.log('✓ Route records created (metrics only, no GPS track for local testing)')
+
+  // 9. Run Memory Cards (Lenticular-style post-run summary)
+  // 1-3 cards per activity, generated right after run date, topic relevant to route/view
+  console.log('Creating run memory cards...')
+  const runDate1 = lastWeek.toISOString().slice(0, 10)
+  const runDate2 = completed2Start.toISOString().slice(0, 10)
+  const runDate3 = completed3Start.toISOString().slice(0, 10)
+
+  const cardsToInsert = [
+    // Central Harbour Run - 2 cards, harbour view theme
+    {
+      activityId: completed1.id,
+      createdBy: USER_IDS.alice,
+      runDate: runDate1,
+      metrics: { dist: 7.2, speed: 9.6, dur: 2700, participants: 2 },
+      weather: { temp: 24, desc: 'Clear skies' },
+      headline: '維港晨跑 · 海港風光盡收眼底',
+      messages: [
+        { userId: USER_IDS.alice, displayName: 'Alice Chen', content: '維港景色太美了！下次再約！' },
+        { userId: USER_IDS.bob, displayName: 'Bob Wong', content: '謝謝大家，一起跑真好' },
+      ],
+      seed: 1,
+    },
+    {
+      activityId: completed1.id,
+      createdBy: USER_IDS.bob,
+      runDate: runDate1,
+      metrics: { dist: 6.8, speed: 9.1, dur: 2680, participants: 2 },
+      weather: { temp: 24, desc: 'Clear skies' },
+      headline: '中環海濱 · 跑步路線推薦',
+      messages: [
+        { userId: USER_IDS.bob, displayName: 'Bob Wong', content: '海風吹著很舒服' },
+      ],
+      seed: 2,
+    },
+    // Tai Tam Reservoir Trail - 1 card, trail nature theme
+    {
+      activityId: completed2.id,
+      createdBy: USER_IDS.carol,
+      runDate: runDate2,
+      metrics: { dist: 8.1, speed: 8.5, dur: 3600, participants: 2 },
+      weather: { temp: 22, desc: 'Partly cloudy' },
+      headline: '大潭水塘 · 山徑越野跑紀錄',
+      messages: [
+        { userId: USER_IDS.carol, displayName: 'Carol Lee', content: '第一次跑山徑，風景超棒！' },
+        { userId: USER_IDS.dave, displayName: 'Dave Lam', content: '歡迎加入，下次再來' },
+      ],
+      seed: 3,
+    },
+    // Sha Tin Riverside Run - 2 cards, riverside theme
+    {
+      activityId: completed3.id,
+      createdBy: USER_IDS.eva,
+      runDate: runDate3,
+      metrics: { dist: 10.2, speed: 9.2, dur: 3960, participants: 3 },
+      weather: { temp: 26, desc: 'Sunny' },
+      headline: '城門河畔 · 十公里平路跑',
+      messages: [
+        { userId: USER_IDS.eva, displayName: 'Eva Tang', content: '河畔跑風景好，天氣完美' },
+        { userId: USER_IDS.frank, displayName: 'Frank Liu', content: '今天 PB 了！' },
+      ],
+      seed: 4,
+    },
+    {
+      activityId: completed3.id,
+      createdBy: USER_IDS.frank,
+      runDate: runDate3,
+      metrics: { dist: 9.8, speed: 8.9, dur: 3980, participants: 3 },
+      weather: { temp: 26, desc: 'Sunny' },
+      headline: '沙田城門河 · 沿河跑步路線',
+      messages: [
+        { userId: USER_IDS.frank, displayName: 'Frank Liu', content: '謝謝大家鼓勵' },
+      ],
+      seed: 5,
+    },
+  ]
+
+  for (let i = 0; i < cardsToInsert.length; i++) {
+    const c = cardsToInsert[i]
+    await db.query(
+      `INSERT INTO run_memory_cards (
+        activity_id, route_id, created_by, run_date, participant_count,
+        total_distance, average_speed, duration_seconds, weather_temp, weather_desc,
+        news_headline, ai_image_url, group_photo_url, messages, route_summary
+      ) VALUES ($1, NULL, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb)`,
+      [
+        c.activityId,
+        c.createdBy,
+        c.runDate,
+        c.metrics.participants,
+        c.metrics.dist,
+        c.metrics.speed,
+        c.metrics.dur,
+        c.weather.temp,
+        c.weather.desc,
+        c.headline,
+        `https://picsum.photos/seed/run${c.seed}/400/300`,
+        `https://picsum.photos/seed/group${c.seed}/400/300`,
+        JSON.stringify(c.messages),
+        JSON.stringify({ pointCount: 60 + i * 5, pathPreview: [[22.28, 114.15], [22.29, 114.16], [22.30, 114.17]] }),
+      ]
+    )
+  }
+  console.log(`✓ ${cardsToInsert.length} run memory cards created (1-3 per activity)`)
+
+  const cardsResult = await db.query(
+    `SELECT id FROM run_memory_cards ORDER BY created_at DESC LIMIT ${cardsToInsert.length}`
+  )
+  const cardIds = cardsResult.rows.map((r: { id: string }) => r.id)
+  console.log('  Memory card IDs (for testing):', cardIds.join(', '))
 
   console.log('')
   console.log('✅ Seed completed!')

@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { db } from './database/db.js'
+import { runMigrations } from './database/migrate.js'
 import { socketAuthMiddleware } from './middleware/socket.middleware.js'
 import { setupChatHandlers } from './socket/chat.handler.js'
 import { monitoring } from './utils/monitoring.js'
@@ -54,6 +55,7 @@ import authRoutes from './routes/auth.routes.js'
 import userRoutes from './routes/user.routes.js'
 import activityRoutes from './routes/activity.routes.js'
 import routeRoutes from './routes/route.routes.js'
+import memoryCardRoutes from './routes/memoryCard.routes.js'
 import chatRoutes from './routes/chat.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 
@@ -73,6 +75,9 @@ app.use('/api/activities', activityRoutes)
 
 // Route routes
 app.use('/api/routes', routeRoutes)
+
+// Memory card routes
+app.use('/api/memory-cards', memoryCardRoutes)
 
 // Chat routes
 app.use('/api/chat', chatRoutes)
@@ -99,6 +104,11 @@ async function startServer() {
     const isConnected = await db.testConnection()
     if (!isConnected) {
       throw new Error('Failed to connect to database')
+    }
+
+    // Run pending migrations before starting (set SKIP_AUTO_MIGRATE=1 to disable)
+    if (process.env.SKIP_AUTO_MIGRATE !== '1') {
+      await runMigrations()
     }
 
     // Start HTTP server

@@ -1,8 +1,39 @@
 import { db } from '../database/db.js'
 import { ValidationError } from '../utils/validation.js'
 import { ChatRoom, ChatMessage } from '../types/chat.types.js'
+import { dmService } from './dm.service.js'
+
+export type RoomType = 'activity' | 'dm'
 
 class ChatService {
+  /**
+   * Check if room exists and return type
+   */
+  async getRoomType(roomId: string): Promise<RoomType | null> {
+    const activityRoom = await db.query(
+      'SELECT 1 FROM chat_rooms WHERE id = $1',
+      [roomId]
+    )
+    if (activityRoom.rows.length > 0) return 'activity'
+
+    const dmRoom = await db.query(
+      'SELECT 1 FROM dm_chat_rooms WHERE id = $1',
+      [roomId]
+    )
+    if (dmRoom.rows.length > 0) return 'dm'
+
+    return null
+  }
+
+  /**
+   * Check room access (activity or DM)
+   */
+  async checkAnyRoomAccess(roomId: string, userId: string): Promise<boolean> {
+    const type = await this.getRoomType(roomId)
+    if (type === 'activity') return this.checkRoomAccess(roomId, userId)
+    if (type === 'dm') return dmService.checkDMRoomAccess(roomId, userId)
+    return false
+  }
   /**
    * Get chat room by activity ID
    */

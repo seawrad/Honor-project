@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Save, Schedule, Route } from '@mui/icons-material';
 import { LocationPicker } from '../components/LocationPicker';
+import { RouteDrawerMap } from '../components/RouteDrawerMap';
 import { activityService } from '../services/activity.service';
 import { CreateActivityData, ActivityType, Location } from '../types/activity.types';
 
@@ -53,7 +54,12 @@ interface FormErrors {
 export const CreateActivityPage = () => {
   const navigate = useNavigate();
   const [activityType, setActivityType] = useState<ActivityType>('time-based');
-  const [formData, setFormData] = useState<Partial<CreateActivityData>>({
+  const [formData, setFormData] = useState<
+    Partial<CreateActivityData> & {
+      routeWaypoints?: [number, number][];
+      routePath?: [number, number][];
+    }
+  >({
     title: '',
     description: '',
     scheduledDate: '',
@@ -79,6 +85,7 @@ export const CreateActivityPage = () => {
           endLocation: undefined,
           route: '',
           distance: Math.round(dist * 10) / 10,
+          routeWaypoints: undefined,
         }));
       } else {
         setFormData((prev) => ({
@@ -86,8 +93,8 @@ export const CreateActivityPage = () => {
           durationMinutes: undefined,
           route: prev.location && prev.endLocation
             ? `從 ${prev.location.address} 至 ${prev.endLocation.address}`
-            : '',
-          distance: 0,
+            : prev.route || '',
+          distance: prev.distance ?? 0,
         }));
       }
     }
@@ -121,6 +128,34 @@ export const CreateActivityPage = () => {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     },
     [activityType]
+  );
+
+  const handleRouteDrawn = useCallback(
+    (result: import('../components/RouteDrawerMap').RouteDrawerResult | null) => {
+      if (result) {
+        setFormData((prev) => ({
+          ...prev,
+          location: result.location,
+          endLocation: result.endLocation,
+          route: result.route,
+          distance: result.distance,
+          routeWaypoints: result.waypoints,
+          routePath: result.routePath,
+        }));
+        setErrors((prev) => ({ ...prev, location: undefined, endLocation: undefined }));
+      } else {
+        setFormData((prev) => ({
+          ...prev,
+          location: undefined,
+          endLocation: undefined,
+          route: '',
+          distance: 0,
+          routeWaypoints: undefined,
+          routePath: undefined,
+        }));
+      }
+    },
+    []
   );
 
   const validateForm = (): boolean => {
@@ -225,7 +260,7 @@ export const CreateActivityPage = () => {
             </ToggleButton>
             <ToggleButton value="route-based" aria-label="route-based">
               <Route sx={{ mr: 1 }} />
-              路線導向（設起點 + 終點）
+              路線導向（地圖繪製）
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
@@ -329,35 +364,49 @@ export const CreateActivityPage = () => {
                 error={!!errors.route}
                 helperText={
                   activityType === 'route-based'
-                    ? '設定起點與終點後將自動產生'
+                    ? '繪製路線後將自動產生'
                     : errors.route
                 }
                 disabled={activityType === 'route-based'}
               />
             </Grid>
 
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                起點
-              </Typography>
-              <LocationPicker
-                value={formData.location || null}
-                onChange={(location) => handleChange('location', location)}
-                error={!!errors.location}
-                helperText={errors.location}
-              />
-            </Grid>
-
-            {activityType === 'route-based' && (
+            {activityType === 'route-based' ? (
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  終點
+                  繪製路線
+                </Typography>
+                <RouteDrawerMap
+                  value={
+                    formData.location && formData.endLocation
+                      ? {
+                          location: formData.location,
+                          endLocation: formData.endLocation,
+                          waypoints: formData.routeWaypoints || [
+                            [formData.location.latitude, formData.location.longitude],
+                            [formData.endLocation.latitude, formData.endLocation.longitude],
+                          ],
+                          routePath: formData.routePath,
+                          distance: formData.distance || 0,
+                          route: formData.route || '',
+                        }
+                      : null
+                  }
+                  onChange={handleRouteDrawn}
+                  error={!!errors.location || !!errors.endLocation}
+                  helperText={errors.location || errors.endLocation}
+                />
+              </Grid>
+            ) : (
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  起點
                 </Typography>
                 <LocationPicker
-                  value={formData.endLocation || null}
-                  onChange={(location) => handleChange('endLocation', location)}
-                  error={!!errors.endLocation}
-                  helperText={errors.endLocation}
+                  value={formData.location || null}
+                  onChange={(location) => handleChange('location', location)}
+                  error={!!errors.location}
+                  helperText={errors.location}
                 />
               </Grid>
             )}

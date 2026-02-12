@@ -303,6 +303,31 @@ class UserController {
   }
 
   /**
+   * GET /api/users/me/friends - Get current user's friends (mutual follow)
+   */
+  async getFriends(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.userId!
+      const friends = await userService.getFriends(userId)
+
+      res.json({
+        success: true,
+        data: friends,
+      })
+    } catch (error) {
+      console.error('Error in getFriends:', error)
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'An unexpected error occurred',
+        },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
    * GET /api/users/search - Search users by display name
    */
   async searchUsers(req: Request, res: Response): Promise<void> {

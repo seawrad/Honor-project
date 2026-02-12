@@ -438,6 +438,29 @@ class UserService {
   }
 
   /**
+   * Get user's friends (mutual follow - both follow each other)
+   */
+  async getFriends(userId: string): Promise<{ id: string; displayName: string }[]> {
+    try {
+      const result = await db.query(
+        `SELECT u.id, u.display_name
+         FROM users u
+         JOIN social_connections sc1 ON sc1.following_id = u.id AND sc1.follower_id = $1
+         JOIN social_connections sc2 ON sc2.follower_id = u.id AND sc2.following_id = $1
+         ORDER BY u.display_name`,
+        [userId]
+      )
+      return result.rows.map(row => ({
+        id: row.id,
+        displayName: row.display_name,
+      }))
+    } catch (error) {
+      console.error('Error fetching friends:', error)
+      throw new Error('Failed to fetch friends')
+    }
+  }
+
+  /**
    * Get user's followers
    */
   async getFollowers(userId: string, page: number = 1, limit: number = 20): Promise<{ users: UserSearchResult[], total: number }> {

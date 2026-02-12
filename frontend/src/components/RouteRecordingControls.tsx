@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -14,8 +15,11 @@ import {
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopIcon from '@mui/icons-material/Stop';
 import SaveIcon from '@mui/icons-material/Save';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { GPSPosition, PerformanceMetrics } from '../types/gps.types';
 import { gpsService } from '../services/gps.service';
+import { memoryCardService } from '../services/memoryCard.service';
+import { weatherService } from '../services/weather.service';
 
 interface RouteRecordingControlsProps {
   activityId: string;
@@ -36,10 +40,21 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
   onStopTracking,
   onClearPositions,
 }) => {
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [savedRouteId, setSavedRouteId] = useState<string | null>(null);
+  const [savedRouteData, setSavedRouteData] = useState<{
+    activityId: string;
+    routeId?: string;
+    totalDistance: number;
+    averageSpeed: number;
+    duration: number;
+    runDate: string;
+    pointCount: number;
+  } | null>(null);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
 
   const handleStart = async () => {
     setSaveError(null);
@@ -75,6 +90,15 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
 
       const savedRoute = await gpsService.createRoute(routeData);
       setSavedRouteId(savedRoute.id);
+      setSavedRouteData({
+        activityId,
+        routeId: savedRoute.id,
+        totalDistance: metrics.distance,
+        averageSpeed: metrics.averageSpeed,
+        duration: metrics.elapsedTime,
+        runDate: new Date(startTime).toISOString().slice(0, 10),
+        pointCount: positions.length,
+      });
       setShowSuccessDialog(true);
       onClearPositions();
     } catch (error: any) {
@@ -88,6 +112,33 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false);
     setSavedRouteId(null);
+    setSavedRouteData(null);
+  };
+
+  const handleCreateMemoryCard = async () => {
+    if (!savedRouteData) return;
+    setIsCreatingCard(true);
+    try {
+      const weather = await weatherService.getCurrentWeather();
+      const card = await memoryCardService.create({
+        activityId: savedRouteData.activityId,
+        routeId: savedRouteData.routeId,
+        runDate: savedRouteData.runDate,
+        participantCount: 1,
+        totalDistance: savedRouteData.totalDistance,
+        averageSpeed: savedRouteData.averageSpeed,
+        durationSeconds: savedRouteData.duration,
+        weatherTemp: weather?.temperature,
+        weatherDesc: weather?.weatherDesc,
+        routeSummary: { pointCount: savedRouteData.pointCount },
+      });
+      handleCloseSuccessDialog();
+      navigate(`/memory-cards/${card.id}`);
+    } catch (err) {
+      console.error('Create memory card failed:', err);
+    } finally {
+      setIsCreatingCard(false);
+    }
   };
 
   return (
@@ -166,10 +217,21 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
               路線 ID: {savedRouteId}
             </Typography>
           )}
+          <Typography variant="body2" sx={{ mt: 2 }}>
+            建立跑步記憶卡，捕捉跑步瞬間！
+          </Typography>
         </DialogContent>
         <DialogActions>
+          <Button
+            variant="contained"
+            startIcon={isCreatingCard ? <CircularProgress size={20} color="inherit" /> : <PhotoCameraIcon />}
+            onClick={handleCreateMemoryCard}
+            disabled={isCreatingCard}
+          >
+            {isCreatingCard ? '建立中...' : '建立跑步記憶卡'}
+          </Button>
           <Button onClick={handleCloseSuccessDialog} color="primary">
-            確定
+            稍後
           </Button>
         </DialogActions>
       </Dialog>

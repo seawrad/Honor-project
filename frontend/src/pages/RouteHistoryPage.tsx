@@ -155,27 +155,27 @@ export const RouteHistoryPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <RouteIcon color="action" />
                     <Typography variant="body1">
-                      <strong>{route.totalDistance.toFixed(2)}</strong> 公里
+                      <strong>{(Number(route.totalDistance) || 0).toFixed(2)}</strong> 公里
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <SpeedIcon color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      平均速度: {route.averageSpeed.toFixed(2)} 公里/小時
+                      平均速度: {(Number(route.averageSpeed) || 0).toFixed(2)} 公里/小時
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TimelapseIcon color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      持續時間: {formatTime(route.duration)}
+                      持續時間: {formatTime(Number(route.duration) || 0)}
                     </Typography>
                   </Box>
 
                   <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary">
-                      GPS 位置點: {route.positions.length}
+                      GPS 位置點: {route.positions?.length ?? '—'}
                     </Typography>
                   </Box>
                 </CardContent>

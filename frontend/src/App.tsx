@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { CircularProgress, Box } from '@mui/material'
 import { AuthProvider } from './contexts/AuthContext'
 import { SettingsProvider } from './contexts/SettingsContext'
+import { DMChatProvider } from './contexts/DMChatContext'
 import { AppThemeWrapper } from './components/AppThemeWrapper'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AppLayout } from './components/AppLayout'
@@ -35,6 +36,7 @@ const ActivityFeedPage = lazy(() => import('./pages/ActivityFeedPage').then(m =>
 const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.ChatPage })))
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ChatListPage = lazy(() => import('./pages/ChatListPage').then(m => ({ default: m.ChatListPage })))
+const RunMemoryCardPage = lazy(() => import('./pages/RunMemoryCardPage').then(m => ({ default: m.RunMemoryCardPage })))
 
 // Loading component
 const LoadingFallback = () => (
@@ -72,7 +74,9 @@ function AppContent() {
                 path="/"
                 element={
                   <ProtectedRoute>
-                    <AppLayout />
+                    <DMChatProvider>
+                      <AppLayout />
+                    </DMChatProvider>
                   </ProtectedRoute>
                 }
               >
@@ -85,6 +89,7 @@ function AppContent() {
                 <Route path="activities/:activityId/tracking" element={<GPSTrackingPage />} />
                 <Route path="activities/:activityId/chat" element={<ChatPage />} />
                 <Route path="routes/history" element={<RouteHistoryPage />} />
+                <Route path="memory-cards/:cardId" element={<RunMemoryCardPage />} />
                 <Route path="users/:userId" element={<UserProfilePage />} />
                 <Route path="users/search" element={<UserSearchPage />} />
                 <Route path="users/:userId/followers" element={<FollowersPage />} />

@@ -13,6 +13,7 @@ const dbConfig = {
   max: parseInt(process.env.DB_POOL_MAX || '20'),
   idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT || '30000'),
   connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT || '2000'),
+  options: process.env.DB_TIMEZONE ? `-c timezone=${process.env.DB_TIMEZONE}` : '-c timezone=Asia/Hong_Kong',
 }
 
 // Create connection pool

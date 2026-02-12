@@ -58,6 +58,25 @@ function getMigrationFiles(): string[] {
 }
 
 /**
+ * Mark a migration as executed without running it (for bootstrap/recovery)
+ */
+async function markMigrationExecuted(filename: string): Promise<void> {
+  await db.query(
+    `INSERT INTO ${MIGRATIONS_TABLE} (name) VALUES ($1)`,
+    [filename]
+  )
+  console.log(`✓ Migration marked as applied (schema already exists): ${filename}`)
+}
+
+/**
+ * Check if error is "relation/object already exists"
+ */
+function isAlreadyExistsError(error: unknown): boolean {
+  const err = error as { code?: string; message?: string }
+  return err?.code === '42P07' || (err?.message?.includes('already exists') ?? false)
+}
+
+/**
  * Execute a single migration file
  */
 async function executeMigration(filename: string): Promise<void> {
@@ -80,6 +99,12 @@ async function executeMigration(filename: string): Promise<void> {
     
     console.log(`✓ Migration completed: ${filename}`)
   } catch (error) {
+    // Recovery: if 001 fails because tables already exist, mark it applied and continue
+    if (filename === '001_initial_schema.sql' && isAlreadyExistsError(error)) {
+      console.log('Schema already exists, marking 001 as applied...')
+      await markMigrationExecuted(filename)
+      return
+    }
     console.error(`✗ Migration failed: ${filename}`)
     throw error
   }

@@ -46,6 +46,13 @@ export const userService = {
     return response.data.data;
   },
 
+  async getFriends(): Promise<{ id: string; displayName: string }[]> {
+    const response = await axios.get<{ data: { id: string; displayName: string }[] }>(
+      `${API_BASE_URL}/users/me/friends`
+    );
+    return response.data.data;
+  },
+
   async searchUsers(query: string, page = 1, limit = 20): Promise<UserSearchResult[]> {
     const response = await axios.get<{ data: UserSearchResult[] }>(`${API_BASE_URL}/users/search`, {
       params: { q: query, page, limit },
