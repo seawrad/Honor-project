@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import { Box, Paper, Typography, Alert } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
@@ -32,12 +33,13 @@ interface UserLocationMapProps {
 }
 
 export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
+  const { t } = useTranslation();
   const [position, setPosition] = useState<{
     latitude: number;
     longitude: number;
     accuracy?: number;
   } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<'no_geolocation' | 'permission_denied' | 'position_unavailable' | 'timeout' | null>(null);
   const [loading, setLoading] = useState(true);
   const watchIdRef = useRef<number | null>(null);
 
@@ -47,11 +49,11 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
     : defaultCenter;
 
   useEffect(() => {
-    setError(null);
+    setErrorCode(null);
     setLoading(true);
 
     if (!navigator.geolocation) {
-      setError('您的瀏覽器不支援定位功能');
+      setErrorCode('no_geolocation');
       setLoading(false);
       return;
     }
@@ -63,17 +65,17 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
           longitude: pos.coords.longitude,
           accuracy: pos.coords.accuracy,
         });
-        setError(null);
+        setErrorCode(null);
         setLoading(false);
       },
       (err) => {
         setLoading(false);
         if (err.code === 1) {
-          setError('請允許存取位置以顯示您的位置');
+          setErrorCode('permission_denied');
         } else if (err.code === 2) {
-          setError('無法取得位置資訊');
+          setErrorCode('position_unavailable');
         } else {
-          setError('定位失敗，請稍後再試');
+          setErrorCode('timeout');
         }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 }
@@ -88,16 +90,19 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
 
   return (
     <Paper elevation={1} sx={{ overflow: 'hidden', mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.5, bgcolor: 'grey.50' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1.5, bgcolor: 'action.hover' }}>
         <LocationOn color="primary" />
         <Typography variant="subtitle1" fontWeight={600}>
-          我的即時位置
+          {t('myRealtimeLocation')}
         </Typography>
       </Box>
 
-      {error && (
+      {errorCode && (
         <Alert severity="warning" sx={{ mx: 1.5, mb: 1 }}>
-          {error}
+          {errorCode === 'no_geolocation' && t('browserNoGeolocation')}
+          {errorCode === 'permission_denied' && t('allowLocationAccess')}
+          {errorCode === 'position_unavailable' && t('unableToGetPosition')}
+          {errorCode === 'timeout' && t('locationFailedTryAgain')}
         </Alert>
       )}
 
@@ -130,7 +135,7 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
               zIndex: 1000,
             }}
           >
-            <Typography color="text.secondary">取得位置中...</Typography>
+            <Typography color="text.secondary">{t('gettingLocation')}</Typography>
           </Box>
         )}
       </Box>

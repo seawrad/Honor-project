@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from './ErrorToast';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -13,9 +14,11 @@ import {
   Alert,
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
 import StopIcon from '@mui/icons-material/Stop';
 import SaveIcon from '@mui/icons-material/Save';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import { useTranslation } from 'react-i18next';
 import { GPSPosition, PerformanceMetrics } from '../types/gps.types';
 import { gpsService } from '../services/gps.service';
 import { memoryCardService } from '../services/memoryCard.service';
@@ -24,19 +27,25 @@ import { weatherService } from '../services/weather.service';
 interface RouteRecordingControlsProps {
   activityId: string;
   isTracking: boolean;
+  isPaused?: boolean;
   positions: GPSPosition[];
   metrics: PerformanceMetrics;
-  onStartTracking: () => Promise<void>;
+  onStartTracking: (isResume?: boolean) => void | Promise<void>;
+  onPauseTracking?: () => void;
   onStopTracking: () => void;
   onClearPositions: () => void;
+  showCountdown?: boolean;
+  isCountdown?: boolean;
 }
 
 export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
   activityId,
   isTracking,
+  isPaused = false,
   positions,
   metrics,
   onStartTracking,
+  onPauseTracking,
   onStopTracking,
   onClearPositions,
 }) => {
@@ -55,10 +64,12 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
     pointCount: number;
   } | null>(null);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
+  const { t } = useTranslation();
+  const { showToast } = useToast();
 
-  const handleStart = async () => {
+  const handleStart = async (isResume?: boolean) => {
     setSaveError(null);
-    await onStartTracking();
+    await onStartTracking(isResume);
   };
 
   const handleStop = () => {
@@ -67,7 +78,7 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
 
   const handleSave = async () => {
     if (positions.length < 2) {
-      setSaveError('需要至少 2 個 GPS 位置點才能儲存路線');
+      setSaveError(t('minTwoPointsRequired'));
       return;
     }
 
@@ -103,7 +114,7 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
       onClearPositions();
     } catch (error: any) {
       console.error('Failed to save route:', error);
-      setSaveError(error.response?.data?.error?.message || '儲存路線失敗');
+      setSaveError(error.response?.data?.error?.message || t('saveRouteFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -132,6 +143,10 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
         weatherDesc: weather?.weatherDesc,
         routeSummary: { pointCount: savedRouteData.pointCount },
       });
+      const newlyUnlocked = (card as any).newlyUnlockedAchievements as string[] | undefined;
+      if (newlyUnlocked?.length) {
+        showToast(`🎉 ${t('newAchievementsUnlocked', { count: newlyUnlocked.length })}`, 'success');
+      }
       handleCloseSuccessDialog();
       navigate(`/memory-cards/${card.id}`);
     } catch (err) {
@@ -145,7 +160,7 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
     <>
       <Paper elevation={3} sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom>
-          路線記錄控制
+          {t('routeRecordingControls')}
         </Typography>
 
         {saveError && (
@@ -155,70 +170,109 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
         )}
 
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          {!isTracking ? (
+          {!isTracking && !isPaused ? (
             <Button
               variant="contained"
               color="primary"
               startIcon={<PlayArrowIcon />}
-              onClick={handleStart}
+              onClick={() => handleStart()}
               size="large"
             >
-              開始追蹤
+              {t('startTrackingBtn')}
             </Button>
-          ) : (
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<StopIcon />}
-              onClick={handleStop}
-              size="large"
-            >
-              停止追蹤
-            </Button>
-          )}
+          ) : isTracking ? (
+            <>
+              {onPauseTracking && (
+                <Button
+                  variant="contained"
+                  color="warning"
+                  startIcon={<PauseIcon />}
+                  onClick={onPauseTracking}
+                  size="large"
+                >
+                  {t('pause')}
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<StopIcon />}
+                onClick={handleStop}
+                size="large"
+              >
+                {t('stopTracking')}
+              </Button>
+            </>
+          ) : isPaused ? (
+            <>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<PlayArrowIcon />}
+                onClick={() => handleStart(true)}
+                size="large"
+              >
+                {t('resume')}
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<StopIcon />}
+                onClick={handleStop}
+                size="large"
+              >
+                {t('stopTracking')}
+              </Button>
+            </>
+          ) : null}
 
           <Button
             variant="contained"
             color="success"
             startIcon={isSaving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />}
             onClick={handleSave}
-            disabled={isTracking || positions.length < 2 || isSaving}
+            disabled={(isTracking || isPaused) || positions.length < 2 || isSaving}
             size="large"
           >
-            {isSaving ? '儲存中...' : '儲存路線'}
+            {isSaving ? t('saving') : t('saveRoute')}
           </Button>
         </Box>
 
         <Box sx={{ mt: 2 }}>
           <Typography variant="body2" color="text.secondary">
-            記錄的位置點數: {positions.length}
+            {t('recordedPoints')}: {positions.length}
           </Typography>
-          {!isTracking && positions.length > 0 && (
+          {!isTracking && !isPaused && positions.length > 0 && (
             <Typography variant="body2" color="success.main">
-              追蹤已停止，可以儲存路線
+              {t('trackingStoppedCanSave')}
+            </Typography>
+          )}
+          {isPaused && (
+            <Typography variant="body2" color="warning.main">
+              {t('paused')}
             </Typography>
           )}
           {isTracking && (
             <Typography variant="body2" color="primary.main">
-              正在追蹤中...
+              {t('trackingInProgress')}
             </Typography>
           )}
         </Box>
       </Paper>
 
       <Dialog open={showSuccessDialog} onClose={handleCloseSuccessDialog}>
-        <DialogTitle>路線儲存成功</DialogTitle>
+        <DialogTitle>{t('routeSavedSuccess')}</DialogTitle>
         <DialogContent>
           <Typography>
-            您的路線已成功儲存！
+            {t('routeSavedMessage')}
           </Typography>
           {savedRouteId && (
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              路線 ID: {savedRouteId}
+              {t('routeId')}: {savedRouteId}
             </Typography>
           )}
           <Typography variant="body2" sx={{ mt: 2 }}>
-            建立跑步記憶卡，捕捉跑步瞬間！
+            {t('createMemoryCardHint')}
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -228,10 +282,10 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
             onClick={handleCreateMemoryCard}
             disabled={isCreatingCard}
           >
-            {isCreatingCard ? '建立中...' : '建立跑步記憶卡'}
+            {isCreatingCard ? t('creating') : t('createMemoryCard')}
           </Button>
           <Button onClick={handleCloseSuccessDialog} color="primary">
-            稍後
+            {t('later')}
           </Button>
         </DialogActions>
       </Dialog>

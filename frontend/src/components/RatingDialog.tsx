@@ -12,6 +12,7 @@ import {
   Alert,
 } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
+import { useTranslation } from 'react-i18next';
 
 interface RatingDialogProps {
   open: boolean;
@@ -26,6 +27,7 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
   onSubmit,
   activityTitle,
 }) => {
+  const { t } = useTranslation();
   const [rating, setRating] = useState<number | null>(null);
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +35,7 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
 
   const handleSubmit = async () => {
     if (rating === null || rating === 0) {
-      setError('請選擇評分');
+      setError(t('selectRating'));
       return;
     }
 
@@ -44,7 +46,7 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
       await onSubmit(rating, feedback.trim() || undefined);
       handleClose();
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '提交評分失敗');
+      setError(err.response?.data?.error?.message || t('submitRatingFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +61,7 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>評價活動</DialogTitle>
+      <DialogTitle>{t('rateActivityTitle')}</DialogTitle>
       <DialogContent>
         <Box sx={{ py: 2 }}>
           <Typography variant="subtitle1" gutterBottom>
@@ -68,7 +70,7 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
 
           <Box sx={{ mt: 3, mb: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Typography component="legend" sx={{ mb: 1 }}>
-              您的評分
+              {t('yourRating')}
             </Typography>
             <Rating
               name="activity-rating"
@@ -80,13 +82,13 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
           </Box>
 
           <TextField
-            label="回饋意見（選填）"
+            label={t('feedbackOptional')}
             multiline
             rows={4}
             fullWidth
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
-            placeholder="分享您的跑步體驗..."
+            placeholder={t('shareExperience')}
             inputProps={{ maxLength: 500 }}
             helperText={`${feedback.length}/500`}
             sx={{ mt: 2 }}
@@ -101,14 +103,14 @@ export const RatingDialog: React.FC<RatingDialogProps> = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} disabled={isSubmitting}>
-          取消
+          {t('cancel')}
         </Button>
         <Button
           onClick={handleSubmit}
           variant="contained"
           disabled={isSubmitting || rating === null || rating === 0}
         >
-          {isSubmitting ? '提交中...' : '提交評分'}
+          {isSubmitting ? t('submitting') : t('submitRating')}
         </Button>
       </DialogActions>
     </Dialog>

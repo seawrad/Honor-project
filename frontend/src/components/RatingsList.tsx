@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Typography,
@@ -20,9 +21,10 @@ export const RatingsList: React.FC<RatingsListProps> = ({
   averageRating,
   totalRatings,
 }) => {
+  const { t, i18n } = useTranslation();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-TW', {
+    return date.toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -38,14 +40,14 @@ export const RatingsList: React.FC<RatingsListProps> = ({
         </Typography>
         <Rating value={averageRating} precision={0.1} readOnly size="large" />
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          基於 {totalRatings} 則評價
+          {t('basedOnRatings', { count: totalRatings })}
         </Typography>
       </Paper>
 
       {/* Individual Ratings */}
       {ratings.length === 0 ? (
         <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-          尚無評價
+          {t('noRatingsYet')}
         </Typography>
       ) : (
         <Box>

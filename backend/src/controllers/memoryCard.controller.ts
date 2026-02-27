@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { MemoryCardService } from '../services/memoryCard.service.js'
+import { AchievementService } from '../services/achievement.service.js'
 
 export class MemoryCardController {
   static async create(req: Request, res: Response): Promise<void> {
@@ -20,7 +21,12 @@ export class MemoryCardController {
         messages: data.messages,
         routeSummary: data.routeSummary,
       })
-      res.status(201).json({ success: true, data: card })
+      // Check for new achievements (e.g. memory_card badge)
+      const newlyUnlocked = await AchievementService.checkAndAwardAchievements(userId)
+      res.status(201).json({
+        success: true,
+        data: { ...card, newlyUnlockedAchievements: newlyUnlocked },
+      })
     } catch (error) {
       console.error('Create memory card error:', error)
       res.status(500).json({

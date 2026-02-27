@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Box, Avatar, Rating } from '@mui/material';
 import { DirectionsRun } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { UserSearchResult } from '../types/user.types';
 import { FollowButton } from './FollowButton';
 import { useAuth } from '../hooks/useAuth';
@@ -12,6 +13,7 @@ interface UserCardProps {
 }
 
 export const UserCard: React.FC<UserCardProps> = ({ user, onFollowChange }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const isOwnProfile = currentUser?.id === user.id;
@@ -46,7 +48,7 @@ export const UserCard: React.FC<UserCardProps> = ({ user, onFollowChange }) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <DirectionsRun fontSize="small" color="action" />
                 <Typography variant="body2" color="text.secondary">
-                  {user.totalRuns} 次跑步
+                  {t('runsCount', { count: user.totalRuns })}
                 </Typography>
               </Box>
               {user.averageRating > 0 && (

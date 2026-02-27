@@ -15,10 +15,12 @@ import {
   DialogActions,
 } from '@mui/material';
 import { ArrowBack, Cancel } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { activityService } from '../services/activity.service';
 import { Activity } from '../types/activity.types';
 
 export const CancelActivityPage = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -36,7 +38,7 @@ export const CancelActivityPage = () => {
         const data = await activityService.getActivityById(id);
         setActivity(data);
       } catch (err: any) {
-        setError(err.response?.data?.error?.message || '載入活動失敗');
+        setError(err.response?.data?.error?.message || t('loadActivityFailed'));
       } finally {
         setLoading(false);
       }
@@ -53,44 +55,45 @@ export const CancelActivityPage = () => {
       setError(null);
       await activityService.deleteActivity(id);
       navigate('/activities', { 
-        state: { message: '活動已成功取消，所有參加者已收到通知' } 
+        state: { message: t('activityCancelledSuccess') } 
       });
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '取消活動失敗');
+      setError(err.response?.data?.error?.message || t('cancelActivityFailed'));
       setConfirmOpen(false);
     } finally {
       setCancelling(false);
     }
   };
 
-  if (loading) {
+  if (!loading && !activity) {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (!activity) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Alert severity="error">找不到活動</Alert>
+        <Alert severity="error">{t('activityNotFound')}</Alert>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/activities')}
           sx={{ mt: 2 }}
         >
-          返回列表
+          {t('backToList')}
         </Button>
       </Container>
     );
   }
 
+  if (loading || !activity) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/activities')} sx={{ mb: 3 }}>
+          {t('backToList')}
+        </Button>
+      </Container>
+    );
+  }
+
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-TW', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -106,12 +109,12 @@ export const CancelActivityPage = () => {
         onClick={() => navigate(`/activities/${id}`)}
         sx={{ mb: 3 }}
       >
-        返回活動詳情
+        {t('backToActivityDetail')}
       </Button>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom color="error">
-          取消活動
+          {t('cancelActivityTitle')}
         </Typography>
 
         {error && (
@@ -122,28 +125,28 @@ export const CancelActivityPage = () => {
 
         <Alert severity="warning" sx={{ mb: 3 }}>
           <Typography variant="body1" gutterBottom>
-            <strong>警告：此操作無法復原</strong>
+            <strong>{t('warningIrreversible')}</strong>
           </Typography>
           <Typography variant="body2">
-            取消活動後，所有已報名的參加者將會收到通知。
+            {t('cancelWarningDesc')}
           </Typography>
         </Alert>
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="h6" gutterBottom>
-            活動資訊
+            {t('activityInfo')}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>標題：</strong>{activity.title}
+            <strong>{t('titleLabel')}：</strong>{activity.title}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>時間：</strong>{formatDate(activity.scheduledDate)}
+            <strong>{t('timeLabel')}：</strong>{formatDate(activity.scheduledDate)}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>地點：</strong>{activity.location.address}
+            <strong>{t('locationLabel')}：</strong>{activity.location.address}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>參加人數：</strong>{activity.currentParticipants} / {activity.maxParticipants} 人
+            <strong>{t('participants')}：</strong>{activity.currentParticipants} / {activity.maxParticipants} {t('people')}
           </Typography>
         </Box>
 
@@ -156,7 +159,7 @@ export const CancelActivityPage = () => {
             fullWidth
             disabled={cancelling}
           >
-            確認取消活動
+            {t('confirmCancelActivity')}
           </Button>
           <Button
             variant="outlined"
@@ -164,7 +167,7 @@ export const CancelActivityPage = () => {
             fullWidth
             disabled={cancelling}
           >
-            返回
+            {t('back')}
           </Button>
         </Box>
       </Paper>
@@ -173,13 +176,13 @@ export const CancelActivityPage = () => {
         open={confirmOpen}
         onClose={() => !cancelling && setConfirmOpen(false)}
       >
-        <DialogTitle>確認取消活動</DialogTitle>
+        <DialogTitle>{t('confirmCancelActivity')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            您確定要取消「{activity.title}」嗎？
+            {t('confirmCancelQuestion', { title: activity.title })}
             <br />
             <br />
-            此操作無法復原，所有 {activity.currentParticipants} 位參加者將會收到取消通知。
+            {t('confirmCancelDesc', { count: activity.currentParticipants })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -187,7 +190,7 @@ export const CancelActivityPage = () => {
             onClick={() => setConfirmOpen(false)}
             disabled={cancelling}
           >
-            返回
+            {t('back')}
           </Button>
           <Button
             onClick={handleCancelActivity}
@@ -195,7 +198,7 @@ export const CancelActivityPage = () => {
             variant="contained"
             disabled={cancelling}
           >
-            {cancelling ? <CircularProgress size={24} /> : '確認取消'}
+            {cancelling ? <CircularProgress size={24} /> : t('confirmCancel')}
           </Button>
         </DialogActions>
       </Dialog>

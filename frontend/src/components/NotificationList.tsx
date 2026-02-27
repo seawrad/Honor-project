@@ -17,6 +17,8 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import MessageIcon from '@mui/icons-material/Message';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import i18n from 'i18next';
+import { useTranslation } from 'react-i18next';
 import { useNotifications } from '../hooks/useNotifications';
 import { Notification, NotificationType } from '../types/notification.types';
 import { useNavigate } from 'react-router-dom';
@@ -50,19 +52,21 @@ const formatTimestamp = (timestamp: string): string => {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
   const diffDays = Math.floor(diffMs / 86400000);
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
 
-  if (diffMins < 1) return '剛剛';
-  if (diffMins < 60) return `${diffMins} 分鐘前`;
-  if (diffHours < 24) return `${diffHours} 小時前`;
-  if (diffDays < 7) return `${diffDays} 天前`;
+  if (diffMins < 1) return i18n.t('justNow');
+  if (diffMins < 60) return i18n.t('minutesAgo', { count: diffMins });
+  if (diffHours < 24) return i18n.t('hoursAgo', { count: diffHours });
+  if (diffDays < 7) return i18n.t('daysAgo', { count: diffDays });
   
-  return date.toLocaleDateString('zh-TW', {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     day: 'numeric',
   });
 };
 
 export const NotificationList: React.FC<NotificationListProps> = ({ onClose }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     notifications,
@@ -133,7 +137,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ onClose }) =
   if (notifications.length === 0) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">沒有通知</Typography>
+        <Typography color="text.secondary">{t('noNotifications')}</Typography>
       </Box>
     );
   }
@@ -151,7 +155,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ onClose }) =
               fullWidth
               variant="outlined"
             >
-              全部標記為已讀
+              {t('markAllAsRead')}
             </Button>
           </Box>
           <Divider />

@@ -17,8 +17,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* RunCrew: Soft White background */
-  background-color: #F7FBFF;
+  /* Background set by MUI CssBaseline from theme (adapts to light/dark mode) */
   /* Prevent horizontal scroll on mobile */
   overflow-x: hidden;
   /* Improve touch scrolling on iOS */

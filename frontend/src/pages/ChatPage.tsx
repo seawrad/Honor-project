@@ -1,10 +1,12 @@
 import React from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Container, Box, Button, Typography } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { ChatRoom } from '../components/ChatRoom'
 
 export const ChatPage: React.FC = () => {
+  const { t } = useTranslation()
   const { activityId } = useParams<{ activityId: string }>()
   const navigate = useNavigate()
 
@@ -12,7 +14,7 @@ export const ChatPage: React.FC = () => {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Typography variant="h6" color="error">
-          Activity ID is required
+          {t('activityIdRequired')}
         </Typography>
       </Container>
     )
@@ -25,7 +27,7 @@ export const ChatPage: React.FC = () => {
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate(`/activities/${activityId}`)}
         >
-          Back to Activity
+          {t('backToActivity')}
         </Button>
       </Box>
 

@@ -14,6 +14,8 @@ import {
   ListItem,
   ListItemText,
   Grid,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   LocationOn,
@@ -26,24 +28,33 @@ import {
   Cancel,
   Chat,
   Star,
+  PlayArrow,
+  Bookmark,
+  BookmarkBorder,
 } from '@mui/icons-material';
 import { ActivityMap } from '../components/ActivityMap';
 import { RatingDialog } from '../components/RatingDialog';
 import { ActivityRatings } from '../components/ActivityRatings';
+import { ActivityDetailSkeleton } from '../components/skeletons';
 import { activityService } from '../services/activity.service';
 import { Activity } from '../types/activity.types';
 import { useAuth } from '../hooks/useAuth';
+import { useTranslation } from 'react-i18next';
+import { useToast } from '../components/ErrorToast';
 
 export const ActivityDetailPage = () => {
+  const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
   const loadActivity = async () => {
     if (!id) return;
@@ -54,7 +65,7 @@ export const ActivityDetailPage = () => {
       const data = await activityService.getActivityById(id);
       setActivity(data);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '載入活動失敗');
+      setError(err.response?.data?.error?.message || t('loadActivityFailed'));
     } finally {
       setLoading(false);
     }
@@ -63,6 +74,19 @@ export const ActivityDetailPage = () => {
   useEffect(() => {
     loadActivity();
   }, [id]);
+
+  useEffect(() => {
+    const checkBookmark = async () => {
+      if (!id || !user) return;
+      try {
+        const ids = await activityService.getBookmarkedIds();
+        setIsBookmarked(ids.includes(id));
+      } catch {
+        setIsBookmarked(false);
+      }
+    };
+    checkBookmark();
+  }, [id, user]);
 
   useEffect(() => {
     // Check if user has already rated this activity
@@ -89,7 +113,7 @@ export const ActivityDetailPage = () => {
       await activityService.joinActivity(id);
       await loadActivity();
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '加入活動失敗');
+      setError(err.response?.data?.error?.message || t('joinActivityFailed'));
     } finally {
       setActionLoading(false);
     }
@@ -103,7 +127,7 @@ export const ActivityDetailPage = () => {
       await activityService.leaveActivity(id);
       await loadActivity();
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '離開活動失敗');
+      setError(err.response?.data?.error?.message || t('leaveActivityFailed'));
     } finally {
       setActionLoading(false);
     }
@@ -116,34 +140,36 @@ export const ActivityDetailPage = () => {
     setHasRated(true);
   };
 
-  if (loading) {
+  if (!loading && (error || !activity)) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  if (error || !activity) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error">{error || '找不到活動'}</Alert>
+        <Alert severity="error">{error || t('activityNotFound')}</Alert>
         <Button
           startIcon={<ArrowBack />}
           onClick={() => navigate('/activities')}
           sx={{ mt: 2 }}
         >
-          返回列表
+          {t('backToList')}
         </Button>
       </Container>
     );
   }
 
+  if (loading || !activity) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/activities')} sx={{ mb: 3 }}>
+          {t('backToList')}
+        </Button>
+        <ActivityDetailSkeleton />
+      </Container>
+    );
+  }
+
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-TW', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -172,16 +198,33 @@ export const ActivityDetailPage = () => {
     }
   };
 
+  const handleBookmarkToggle = async () => {
+    if (!id) return;
+    try {
+      if (isBookmarked) {
+        await activityService.unbookmarkActivity(id);
+        setIsBookmarked(false);
+        showToast(t('unbookmark'), 'info');
+      } else {
+        await activityService.bookmarkActivity(id);
+        setIsBookmarked(true);
+        showToast(t('saved'), 'success');
+      }
+    } catch {
+      showToast(t('loadFailed'), 'error');
+    }
+  };
+
   const getStatusLabel = (status: Activity['status']) => {
     switch (status) {
       case 'upcoming':
-        return '即將開始';
+        return t('statusUpcoming');
       case 'in-progress':
-        return '進行中';
+        return t('statusInProgress');
       case 'completed':
-        return '已完成';
+        return t('statusCompleted');
       case 'cancelled':
-        return '已取消';
+        return t('statusCancelled');
       default:
         return status;
     }
@@ -194,17 +237,24 @@ export const ActivityDetailPage = () => {
         onClick={() => navigate('/activities')}
         sx={{ mb: 3 }}
       >
-        返回列表
+        {t('backToList')}
       </Button>
 
       <Paper sx={{ p: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
           <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
-              {activity.title}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Typography variant="h4" component="h1">
+                {activity.title}
+              </Typography>
+              <Tooltip title={isBookmarked ? t('unbookmark') : t('bookmark')}>
+                <IconButton onClick={handleBookmarkToggle} color={isBookmarked ? 'primary' : 'default'} size="small">
+                  {isBookmarked ? <Bookmark /> : <BookmarkBorder />}
+                </IconButton>
+              </Tooltip>
+            </Box>
             <Chip
-              label={(activity.activityType ?? 'route-based') === 'time-based' ? '時間導向' : '路線導向'}
+              label={(activity.activityType ?? 'route-based') === 'time-based' ? t('timeBased') : t('routeBased')}
               variant="outlined"
               sx={{ mr: 1 }}
             />
@@ -213,7 +263,7 @@ export const ActivityDetailPage = () => {
               color={getStatusColor(activity.status)}
               sx={{ mr: 1 }}
             />
-            {isFull && <Chip label="已滿" color="error" />}
+            {isFull && <Chip label={t('full')} color="error" />}
           </Box>
           {isCreator && canEdit && (
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -222,7 +272,7 @@ export const ActivityDetailPage = () => {
                 startIcon={<Edit />}
                 onClick={() => navigate(`/activities/${id}/edit`)}
               >
-                編輯
+                {t('edit')}
               </Button>
               <Button
                 variant="outlined"
@@ -230,7 +280,7 @@ export const ActivityDetailPage = () => {
                 startIcon={<Cancel />}
                 onClick={() => navigate(`/activities/${id}/cancel`)}
               >
-                取消活動
+                {t('cancelActivity')}
               </Button>
             </Box>
           )}
@@ -246,7 +296,7 @@ export const ActivityDetailPage = () => {
               <CalendarToday sx={{ mr: 2, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  活動時間
+                  {t('activityTime')}
                 </Typography>
                 <Typography variant="body1">
                   {formatDate(activity.scheduledDate)}
@@ -258,7 +308,7 @@ export const ActivityDetailPage = () => {
               <LocationOn sx={{ mr: 2, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  集合地點
+                  {t('meetingPoint')}
                 </Typography>
                 <Typography variant="body1">
                   {activity.location.address}
@@ -270,10 +320,10 @@ export const ActivityDetailPage = () => {
               <DirectionsRun sx={{ mr: 2, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  距離
+                  {t('distance')}
                 </Typography>
                 <Typography variant="body1">
-                  {activity.distance} 公里
+                  {activity.distance} {t('kmShort')}
                 </Typography>
               </Box>
             </Box>
@@ -282,10 +332,10 @@ export const ActivityDetailPage = () => {
               <People sx={{ mr: 2, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  參加人數
+                  {t('participants')}
                 </Typography>
                 <Typography variant="body1">
-                  {activity.currentParticipants} / {activity.maxParticipants} 人
+                  {activity.currentParticipants} / {activity.maxParticipants} {t('people')}
                 </Typography>
               </Box>
             </Box>
@@ -294,7 +344,7 @@ export const ActivityDetailPage = () => {
               <Person sx={{ mr: 2, color: 'text.secondary' }} />
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  主辦人
+                  {t('organizer')}
                 </Typography>
                 <Typography variant="body1">
                   {activity.creatorName}
@@ -305,7 +355,7 @@ export const ActivityDetailPage = () => {
 
           <Grid item xs={12} md={6}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              路線說明
+              {t('routeDescription')}
             </Typography>
             <Typography variant="body1" paragraph>
               {activity.route}
@@ -316,21 +366,21 @@ export const ActivityDetailPage = () => {
         <Divider sx={{ my: 3 }} />
 
         <Typography variant="h6" gutterBottom>
-          活動地點
+          {t('activityLocation')}
         </Typography>
         <ActivityMap location={activity.location} height={300} />
 
         <Divider sx={{ my: 3 }} />
 
         <Typography variant="h6" gutterBottom>
-          參加者名單 ({activity.currentParticipants})
+          {t('participantList')} ({activity.currentParticipants})
         </Typography>
         <List>
           {activity.participants.map((participant) => (
             <ListItem key={participant.userId}>
               <ListItemText
                 primary={participant.displayName}
-                secondary={`加入時間：${new Date(participant.joinedAt).toLocaleDateString('zh-TW')}`}
+                secondary={`${t('joinedAt')}: ${new Date(participant.joinedAt).toLocaleDateString(locale)}`}
               />
             </ListItem>
           ))}
@@ -346,7 +396,7 @@ export const ActivityDetailPage = () => {
                 onClick={handleLeaveActivity}
                 disabled={actionLoading}
               >
-                {actionLoading ? <CircularProgress size={24} /> : '離開活動'}
+                {actionLoading ? <CircularProgress size={24} /> : t('leaveActivity')}
               </Button>
             ) : (
               <Button
@@ -355,21 +405,36 @@ export const ActivityDetailPage = () => {
                 onClick={handleJoinActivity}
                 disabled={actionLoading || isFull}
               >
-                {actionLoading ? <CircularProgress size={24} /> : isFull ? '活動已滿' : '加入活動'}
+                {actionLoading ? <CircularProgress size={24} /> : isFull ? t('activityFull') : t('joinActivity')}
               </Button>
             )}
           </Box>
         )}
 
-        {(isCreator || isParticipant) && activity.status === 'upcoming' && (
-          <Box sx={{ mt: 2 }}>
+        {(isCreator || isParticipant) && (activity.status === 'upcoming' || activity.status === 'in-progress') && (
+          <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Button
+              variant="contained"
+              fullWidth
+              startIcon={<PlayArrow />}
+              onClick={() => navigate(`/activities/${id}/tracking`)}
+              color={isCreator ? 'primary' : 'secondary'}
+            >
+              {isCreator
+                ? activity.status === 'in-progress'
+                  ? t('continueRun')
+                  : t('startRun')
+                : activity.status === 'in-progress'
+                  ? t('monitorRun')
+                  : t('joinRun')}
+            </Button>
             <Button
               variant="outlined"
               fullWidth
               startIcon={<Chat />}
               onClick={() => navigate(`/activities/${id}/chat`)}
             >
-              開啟聊天室
+              {t('openChatRoom')}
             </Button>
           </Box>
         )}
@@ -377,7 +442,7 @@ export const ActivityDetailPage = () => {
         {isParticipant && activity.status === 'completed' && !hasRated && (
           <Box sx={{ mt: 3 }}>
             <Alert severity="info" sx={{ mb: 2 }}>
-              活動已完成！請為這次跑步體驗評分
+              {t('activityCompletedRate')}
             </Alert>
             <Button
               variant="contained"
@@ -385,7 +450,7 @@ export const ActivityDetailPage = () => {
               startIcon={<Star />}
               onClick={() => setRatingDialogOpen(true)}
             >
-              評價活動
+              {t('rateActivity')}
             </Button>
           </Box>
         )}
@@ -393,7 +458,7 @@ export const ActivityDetailPage = () => {
         {isParticipant && activity.status === 'completed' && hasRated && (
           <Box sx={{ mt: 3 }}>
             <Alert severity="success">
-              感謝您的評價！
+              {t('thanksForRating')}
             </Alert>
           </Box>
         )}

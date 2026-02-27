@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   IconButton,
   Badge,
@@ -12,6 +13,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import { NotificationList } from './NotificationList';
 
 export const NotificationBell: React.FC = () => {
+  const { t } = useTranslation();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { unreadCount, isLoading } = useNotifications();
   const open = Boolean(anchorEl);
@@ -57,9 +59,12 @@ export const NotificationBell: React.FC = () => {
         }}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          root: { sx: { zIndex: 1400 } },
+        }}
       >
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography variant="h6">通知</Typography>
+          <Typography variant="h6">{t('notifications')}</Typography>
         </Box>
         <NotificationList onClose={handleClose} />
       </Menu>

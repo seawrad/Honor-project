@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import type { UserStatsSummary as UserStatsSummaryType } from '../types/user.types';
 
@@ -7,6 +8,7 @@ interface UserStatsSummaryProps {
 }
 
 export const UserStatsSummary: React.FC<UserStatsSummaryProps> = ({ stats }) => {
+  const { t, i18n } = useTranslation();
   if (!stats) return null;
 
   return (
@@ -20,13 +22,13 @@ export const UserStatsSummary: React.FC<UserStatsSummaryProps> = ({ stats }) => 
       }}
     >
       <Typography variant="body1" sx={{ mb: 0.5 }}>
-        🏃‍♂️ 本週總里數：{stats.weeklyDistanceKm} km
+        🏃‍♂️ {t('weeklyTotalKm', { km: stats.weeklyDistanceKm })}
       </Typography>
       <Typography variant="body1" sx={{ mb: 0.5 }}>
-        🔥 本月已完成：{stats.monthlyCompletedActivities} 次活動
+        🔥 {t('monthlyCompletedActivities', { count: stats.monthlyCompletedActivities })}
       </Typography>
       <Typography variant="body1" fontWeight={600}>
-        🏅 RunCrew 等級：{stats.level.name}
+        🏅 {t('runcrewLevelLabel')}: {i18n.language === 'zh-TW' ? stats.level.nameZh : stats.level.name}
       </Typography>
     </Box>
   );

@@ -263,10 +263,10 @@ class UserService {
             'VALIDATION_INVALID_FORMAT'
           )
         }
-        // Limit size (e.g. 500KB for base64)
-        if (updates.avatarUrl.length > 700000) {
+        // Limit size (5MB file ≈ 6.7MB base64)
+        if (updates.avatarUrl.length > 7000000) {
           throw new ValidationError(
-            'Avatar image is too large. Please use a smaller image.',
+            'Avatar image is too large. Please use an image under 5MB.',
             'VALIDATION_INVALID_FORMAT'
           )
         }

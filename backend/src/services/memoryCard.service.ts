@@ -32,7 +32,7 @@ export class MemoryCardService {
         route_summary as "routeSummary"
     `
     const values = [
-      data.activityId,
+      data.activityId ?? null,
       data.routeId || null,
       userId,
       data.runDate,

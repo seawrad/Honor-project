@@ -30,21 +30,29 @@ async function seed() {
 
   const passwordHash = await bcrypt.hash(TEST_PASSWORD, SALT_ROUNDS)
 
-  // 1. Users
+  // 1. Users (with distinct avatar URLs from ui-avatars.com)
   console.log('Creating users...')
+  const avatarUrls = [
+    'https://ui-avatars.com/api/?name=Alice+Chen&size=150&background=00B8D4&color=fff',
+    'https://ui-avatars.com/api/?name=Bob+Wong&size=150&background=0097A7&color=fff',
+    'https://ui-avatars.com/api/?name=Carol+Lee&size=150&background=6EE0FF&color=0A2640',
+    'https://ui-avatars.com/api/?name=Dave+Lam&size=150&background=FFD34E&color=0A2640',
+    'https://ui-avatars.com/api/?name=Eva+Tang&size=150&background=4DD4ED&color=0A2640',
+    'https://ui-avatars.com/api/?name=Frank+Liu&size=150&background=18c9e8&color=fff',
+  ]
   await db.query(
-    `INSERT INTO users (id, email, password_hash, display_name, age, agreed_to_terms)
+    `INSERT INTO users (id, email, password_hash, display_name, age, agreed_to_terms, avatar_url)
      VALUES 
-       ($1, 'alice@test.com', $2, 'Alice Chen', 28, true),
-       ($3, 'bob@test.com', $2, 'Bob Wong', 35, true),
-       ($4, 'carol@test.com', $2, 'Carol Lee', 24, true),
-       ($5, 'dave@test.com', $2, 'Dave Lam', 42, true),
-       ($6, 'eva@test.com', $2, 'Eva Tang', 31, true),
-       ($7, 'frank@test.com', $2, 'Frank Liu', 26, true)
+       ($1, 'alice@test.com', $2, 'Alice Chen', 28, true, $8),
+       ($3, 'bob@test.com', $2, 'Bob Wong', 35, true, $9),
+       ($4, 'carol@test.com', $2, 'Carol Lee', 24, true, $10),
+       ($5, 'dave@test.com', $2, 'Dave Lam', 42, true, $11),
+       ($6, 'eva@test.com', $2, 'Eva Tang', 31, true, $12),
+       ($7, 'frank@test.com', $2, 'Frank Liu', 26, true, $13)
      `,
-    [USER_IDS.alice, passwordHash, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank]
+    [USER_IDS.alice, passwordHash, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank, ...avatarUrls]
   )
-  console.log('✓ 6 users created (alice, bob, carol, dave, eva, frank)')
+  console.log('✓ 6 users created (alice, bob, carol, dave, eva, frank) with distinct avatars')
 
   // 2. Activities (mix of upcoming, completed, cancelled; varied edge cases)
   const now = new Date()

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMapEvents } from 'react-l
 import { Box, Button, Typography } from '@mui/material';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslation } from 'react-i18next';
 import { Location } from '../types/activity.types';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -126,6 +127,7 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
   error,
   helperText,
 }) => {
+  const { t } = useTranslation();
   const [waypoints, setWaypoints] = useState<[number, number][]>(
     value?.waypoints || []
   );
@@ -333,7 +335,7 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
         color={error ? 'error' : 'text.secondary'}
         sx={{ mb: 1 }}
       >
-        {helperText || '點擊地圖繪製路線，第一點為起點、最後一點為終點'}
+        {helperText || t('clickMapToDraw')}
       </Typography>
       <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
         <Button
@@ -342,7 +344,7 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
           onClick={handleUndo}
           disabled={waypoints.length === 0 || isGeocoding || isRouting}
         >
-          撤銷上一步
+          {t('undoLast')}
         </Button>
         <Button
           variant="outlined"
@@ -351,12 +353,12 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
           onClick={handleClear}
           disabled={waypoints.length === 0 || isGeocoding || isRouting}
         >
-          清除路線
+          {t('clearRoute')}
         </Button>
         {waypoints.length >= 2 && (
           <Typography variant="body2" sx={{ alignSelf: 'center' }}>
-            共 {waypoints.length} 個點 · {displayDistanceKm} km
-            {isRouting && ' · 計算路線中...'}
+            {t('pointsAndDistance', { count: waypoints.length, distance: displayDistanceKm })}
+            {isRouting && ` · ${t('calculatingRoute')}`}
           </Typography>
         )}
       </Box>

@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import { Container, Box, Typography, Button, Paper } from '@mui/material';
 import { WifiOff } from '@mui/icons-material';
 
 export const OfflinePage = () => {
+  const { t } = useTranslation();
   const handleRetry = () => {
     window.location.reload();
   };
@@ -20,15 +22,15 @@ export const OfflinePage = () => {
           <WifiOff sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
           
           <Typography variant="h4" gutterBottom>
-            無網路連線
+            {t('noConnection')}
           </Typography>
           
           <Typography variant="body1" color="text.secondary" paragraph>
-            您目前處於離線狀態。某些功能可能無法使用。
+            {t('offlineDesc')}
           </Typography>
           
           <Typography variant="body2" color="text.secondary" paragraph>
-            請檢查您的網路連線，然後重試。
+            {t('checkConnection')}
           </Typography>
 
           <Button
@@ -36,7 +38,7 @@ export const OfflinePage = () => {
             onClick={handleRetry}
             sx={{ mt: 2 }}
           >
-            重新連線
+            {t('reconnect')}
           </Button>
         </Paper>
       </Box>

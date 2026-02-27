@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { ChatMessage, MessageReceivedPayload } from '../types/chat.types'
 import { chatService } from '../services/chat.service'
 import { socketService } from '../services/socket.service'
@@ -21,6 +22,7 @@ interface ChatRoomProps {
 }
 
 export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountChange }) => {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -89,7 +91,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
         setHasMoreMessages(chatMessages.length < total)
       } catch (err) {
         console.error('Failed to load chat room:', err)
-        setError('Failed to load chat room')
+        setError(t('loadChatFailed'))
       } finally {
         setLoading(false)
       }
@@ -227,7 +229,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
       } catch (err) {
         if (mounted) {
           console.error('Failed to setup socket connection:', err)
-          setError('Failed to connect to chat')
+          setError(t('connectChatFailed'))
         }
       }
     }
@@ -272,7 +274,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
     <Paper elevation={2} sx={{ height: '500px', display: 'flex', flexDirection: 'column' }}>
       {/* Chat header */}
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography variant="h6">Activity Chat</Typography>
+        <Typography variant="h6">{t('activityChatTitle')}</Typography>
       </Box>
 
       {/* Messages list */}
@@ -288,7 +290,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
         )}
         {messages.length === 0 ? (
           <Typography variant="body2" color="text.secondary" textAlign="center">
-            No messages yet. Start the conversation!
+            {t('noMessagesYet')}
           </Typography>
         ) : (
           <List>
@@ -308,7 +310,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
                     <Box
                       sx={{
                         maxWidth: '70%',
-                        bgcolor: isOwnMessage ? 'primary.main' : 'grey.200',
+                        bgcolor: isOwnMessage ? 'primary.main' : 'action.hover',
                         color: isOwnMessage ? 'white' : 'text.primary',
                         borderRadius: 2,
                         p: 1.5,
@@ -348,7 +350,7 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ activityId, onUnreadCountCha
       {typingUsers.size > 0 && (
         <Box sx={{ px: 2, py: 1, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="caption" color="text.secondary">
-            {Array.from(typingUsers.values()).join(', ')} {typingUsers.size === 1 ? 'is' : 'are'} typing...
+            {Array.from(typingUsers.values()).join(', ')} {t('typing')}...
           </Typography>
         </Box>
       )}

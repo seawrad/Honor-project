@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, LinearProgress } from '@mui/material';
 import type { UserStatsSummary } from '../types/user.types';
 
@@ -7,9 +8,11 @@ interface LevelProgressBarProps {
 }
 
 export const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ stats }) => {
+  const { t, i18n } = useTranslation();
   if (!stats) return null;
 
   const { level } = stats;
+  const levelName = i18n.language === 'zh-TW' ? level.nameZh : level.name;
   const kmToNext = level.nextLevelKm != null ? level.nextLevelKm - level.currentKm : 0;
 
   return (
@@ -23,16 +26,16 @@ export const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ stats }) => 
       }}
     >
       <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
-        🏅 RunCrew 等級：{level.name}
+        🏅 {t('runcrewLevelLabel')}: {levelName}
       </Typography>
       {level.nextLevelKm != null ? (
         <>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
             <Typography variant="caption" color="text.secondary">
-              本月累計 {level.currentKm} km
+              {t('monthlyAccumulatedKm', { km: level.currentKm })}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              再 {kmToNext.toFixed(1)} km 升級
+              {t('runMoreToLevelUp', { km: kmToNext.toFixed(1) })}
             </Typography>
           </Box>
           <LinearProgress
@@ -51,7 +54,7 @@ export const LevelProgressBar: React.FC<LevelProgressBarProps> = ({ stats }) => 
         </>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          已達最高等級！
+          {t('maxLevelReached')}
         </Typography>
       )}
     </Box>

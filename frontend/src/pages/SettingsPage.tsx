@@ -22,12 +22,12 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { useTranslation } from 'react-i18next'
 import { useSettings } from '../contexts/SettingsContext'
 import { useAuth } from '../hooks/useAuth'
-import type { Language, DistanceUnit } from '../contexts/SettingsContext'
+import type { Language, DistanceUnit, ThemeMode } from '../contexts/SettingsContext'
 
 export const SettingsPage: React.FC = () => {
   const { t } = useTranslation()
   const { isAuthenticated } = useAuth()
-  const { settings, setLanguage, setDistanceUnit, setActivityReminders, setChatNotifications } =
+  const { settings, setLanguage, setDistanceUnit, setThemeMode, setActivityReminders, setChatNotifications } =
     useSettings()
   const [savedSnack, setSavedSnack] = useState(false)
 
@@ -39,6 +39,11 @@ export const SettingsPage: React.FC = () => {
 
   const handleUnitChange = (e: SelectChangeEvent<string>) => {
     setDistanceUnit(e.target.value as DistanceUnit)
+    setSavedSnack(true)
+  }
+
+  const handleThemeChange = (e: SelectChangeEvent<string>) => {
+    setThemeMode(e.target.value as ThemeMode)
     setSavedSnack(true)
   }
 
@@ -80,8 +85,8 @@ export const SettingsPage: React.FC = () => {
             label={t('language')}
             onChange={handleLanguageChange}
           >
-            <MenuItem value="en">English</MenuItem>
-            <MenuItem value="zh-TW">繁體中文</MenuItem>
+            <MenuItem value="en">{t('english')}</MenuItem>
+            <MenuItem value="zh-TW">{t('traditionalChinese')}</MenuItem>
           </Select>
         </FormControl>
         <FormControl fullWidth sx={{ mb: 3 }}>
@@ -93,6 +98,18 @@ export const SettingsPage: React.FC = () => {
           >
             <MenuItem value="km">{t('km')}</MenuItem>
             <MenuItem value="miles">{t('miles')}</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth sx={{ mb: 3 }}>
+          <InputLabel>{t('theme')}</InputLabel>
+          <Select
+            value={settings.themeMode}
+            label={t('theme')}
+            onChange={handleThemeChange}
+          >
+            <MenuItem value="light">{t('light')}</MenuItem>
+            <MenuItem value="dark">{t('dark')}</MenuItem>
+            <MenuItem value="system">{t('system')}</MenuItem>
           </Select>
         </FormControl>
 

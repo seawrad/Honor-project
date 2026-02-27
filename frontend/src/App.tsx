@@ -28,6 +28,7 @@ const CreateActivityPage = lazy(() => import('./pages/CreateActivityPage').then(
 const EditActivityPage = lazy(() => import('./pages/EditActivityPage').then(m => ({ default: m.EditActivityPage })))
 const CancelActivityPage = lazy(() => import('./pages/CancelActivityPage').then(m => ({ default: m.CancelActivityPage })))
 const GPSTrackingPage = lazy(() => import('./pages/GPSTrackingPage').then(m => ({ default: m.GPSTrackingPage })))
+const SoloRunPage = lazy(() => import('./pages/SoloRunPage').then(m => ({ default: m.SoloRunPage })))
 const RouteHistoryPage = lazy(() => import('./pages/RouteHistoryPage').then(m => ({ default: m.RouteHistoryPage })))
 const UserProfilePage = lazy(() => import('./pages/UserProfilePage').then(m => ({ default: m.UserProfilePage })))
 const UserSearchPage = lazy(() => import('./pages/UserSearchPage').then(m => ({ default: m.UserSearchPage })))
@@ -37,6 +38,9 @@ const ChatPage = lazy(() => import('./pages/ChatPage').then(m => ({ default: m.C
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })))
 const ChatListPage = lazy(() => import('./pages/ChatListPage').then(m => ({ default: m.ChatListPage })))
 const RunMemoryCardPage = lazy(() => import('./pages/RunMemoryCardPage').then(m => ({ default: m.RunMemoryCardPage })))
+const AchievementsPage = lazy(() => import('./pages/AchievementsPage').then(m => ({ default: m.AchievementsPage })))
+const StatsPage = lazy(() => import('./pages/StatsPage').then(m => ({ default: m.StatsPage })))
+const LeaderboardPage = lazy(() => import('./pages/LeaderboardPage').then(m => ({ default: m.LeaderboardPage })))
 
 // Loading component
 const LoadingFallback = () => (
@@ -87,6 +91,7 @@ function AppContent() {
                 <Route path="activities/:id/edit" element={<EditActivityPage />} />
                 <Route path="activities/:id/cancel" element={<CancelActivityPage />} />
                 <Route path="activities/:activityId/tracking" element={<GPSTrackingPage />} />
+                <Route path="run-now" element={<SoloRunPage />} />
                 <Route path="activities/:activityId/chat" element={<ChatPage />} />
                 <Route path="routes/history" element={<RouteHistoryPage />} />
                 <Route path="memory-cards/:cardId" element={<RunMemoryCardPage />} />
@@ -96,6 +101,9 @@ function AppContent() {
                 <Route path="users/:userId/following" element={<FollowersPage />} />
                 <Route path="feed" element={<ActivityFeedPage />} />
                 <Route path="chat-list" element={<ChatListPage />} />
+                <Route path="achievements" element={<AchievementsPage />} />
+                <Route path="stats" element={<StatsPage />} />
+                <Route path="leaderboard" element={<LeaderboardPage />} />
               </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

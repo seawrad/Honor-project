@@ -110,6 +110,7 @@ class ActivityController {
         route: req.body.route,
         distance: req.body.distance,
         maxParticipants: req.body.maxParticipants,
+        status: req.body.status,
       }
 
       const activity = await activityService.updateActivity(id, userId, updates)
@@ -333,6 +334,7 @@ class ActivityController {
       const limit = parseInt(req.query.limit as string) || 20
 
       const filters: ActivitySearchFilters = {
+        keyword: (req.query.keyword as string)?.trim() || undefined,
         latitude: req.query.latitude ? parseFloat(req.query.latitude as string) : undefined,
         longitude: req.query.longitude ? parseFloat(req.query.longitude as string) : undefined,
         radius: req.query.radius ? parseFloat(req.query.radius as string) : undefined,
@@ -451,6 +453,88 @@ class ActivityController {
           timestamp: new Date().toISOString(),
         })
       }
+    }
+  }
+
+  /**
+   * POST /api/activities/:id/bookmark - Bookmark an activity
+   */
+  async bookmarkActivity(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params
+      const userId = req.userId!
+      await activityService.bookmarkActivity(userId, id)
+      res.json({ success: true })
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        res.status(404).json({
+          success: false,
+          error: { code: error.code, message: error.message },
+          timestamp: new Date().toISOString(),
+        })
+      } else {
+        console.error('Error in bookmarkActivity:', error)
+        res.status(500).json({
+          success: false,
+          error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' },
+          timestamp: new Date().toISOString(),
+        })
+      }
+    }
+  }
+
+  /**
+   * DELETE /api/activities/:id/bookmark - Remove bookmark
+   */
+  async unbookmarkActivity(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params
+      const userId = req.userId!
+      await activityService.unbookmarkActivity(userId, id)
+      res.json({ success: true })
+    } catch (error) {
+      console.error('Error in unbookmarkActivity:', error)
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
+   * GET /api/activities/bookmarked - Get bookmarked activities
+   */
+  async getBookmarkedActivities(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.userId!
+      const activities = await activityService.getBookmarkedActivities(userId)
+      res.json({ success: true, data: activities })
+    } catch (error) {
+      console.error('Error in getBookmarkedActivities:', error)
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  /**
+   * GET /api/activities/bookmarked/ids - Get bookmarked activity IDs
+   */
+  async getBookmarkedIds(req: Request, res: Response): Promise<void> {
+    try {
+      const userId = req.userId!
+      const ids = await activityService.getBookmarkedActivityIds(userId)
+      res.json({ success: true, data: { ids } })
+    } catch (error) {
+      console.error('Error in getBookmarkedIds:', error)
+      res.status(500).json({
+        success: false,
+        error: { code: 'INTERNAL_SERVER_ERROR', message: 'An unexpected error occurred' },
+        timestamp: new Date().toISOString(),
+      })
     }
   }
 }

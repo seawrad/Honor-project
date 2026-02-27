@@ -232,15 +232,18 @@ class ActivityService {
         )
       }
 
-      // Check 1-hour edit deadline
-      const scheduledDate = new Date(activity.scheduled_date)
-      const oneHourBeforeStart = new Date(scheduledDate.getTime() - 60 * 60 * 1000)
+      // Check 1-hour edit deadline (skip for status-only updates)
+      const isStatusOnlyUpdate = Object.keys(updates).length === 1 && updates.status !== undefined
+      if (!isStatusOnlyUpdate) {
+        const scheduledDate = new Date(activity.scheduled_date)
+        const oneHourBeforeStart = new Date(scheduledDate.getTime() - 60 * 60 * 1000)
 
-      if (new Date() >= oneHourBeforeStart) {
-        throw new ValidationError(
-          'Cannot edit activity within 1 hour of scheduled start time',
-          'ACTIVITY_PAST_EDIT_DEADLINE'
-        )
+        if (new Date() >= oneHourBeforeStart) {
+          throw new ValidationError(
+            'Cannot edit activity within 1 hour of scheduled start time',
+            'ACTIVITY_PAST_EDIT_DEADLINE'
+          )
+        }
       }
 
       // Validate updates
@@ -266,6 +269,20 @@ class ActivityService {
           'Maximum participants must be greater than 0',
           'VALIDATION_INVALID_FORMAT'
         )
+      }
+
+      if (updates.status !== undefined) {
+        const validTransitions: Record<string, string[]> = {
+          upcoming: ['in-progress'],
+          'in-progress': ['completed'],
+        }
+        const allowed = validTransitions[activity.status]
+        if (!allowed || !allowed.includes(updates.status)) {
+          throw new ValidationError(
+            `Cannot change status from ${activity.status} to ${updates.status}`,
+            'VALIDATION_INVALID_FORMAT'
+          )
+        }
       }
 
       // Build update query
@@ -324,6 +341,12 @@ class ActivityService {
       if (updates.maxParticipants !== undefined) {
         updateFields.push(`max_participants = $${paramCount}`)
         values.push(updates.maxParticipants)
+        paramCount++
+      }
+
+      if (updates.status !== undefined) {
+        updateFields.push(`status = $${paramCount}`)
+        values.push(updates.status)
         paramCount++
       }
 
@@ -563,6 +586,18 @@ class ActivityService {
       conditions.push(`a.status = $${paramCount}`)
       values.push(filters.status || 'upcoming')
       paramCount++
+
+      // Keyword search (title, description, address)
+      if (filters.keyword && filters.keyword.trim()) {
+        const searchPattern = `%${filters.keyword.trim().replace(/%/g, '\\%').replace(/_/g, '\\_')}%`
+        conditions.push(`(
+          a.title ILIKE $${paramCount} OR
+          COALESCE(a.description, '') ILIKE $${paramCount} OR
+          COALESCE(a.address, '') ILIKE $${paramCount}
+        )`)
+        values.push(searchPattern)
+        paramCount++
+      }
 
       // Date range filter
       if (filters.startDate) {
@@ -899,6 +934,73 @@ class ActivityService {
       console.error('Error fetching user average rating:', error)
       throw new Error('Failed to fetch user average rating')
     }
+  }
+
+  /**
+   * Bookmark an activity
+   */
+  async bookmarkActivity(userId: string, activityId: string): Promise<void> {
+    const activity = await db.query('SELECT id FROM activities WHERE id = $1', [activityId])
+    if (activity.rows.length === 0) {
+      throw new ValidationError('Activity not found', 'ACTIVITY_NOT_FOUND')
+    }
+    await db.query(
+      `INSERT INTO activity_bookmarks (user_id, activity_id)
+       VALUES ($1, $2)
+       ON CONFLICT (user_id, activity_id) DO NOTHING`,
+      [userId, activityId]
+    )
+  }
+
+  /**
+   * Remove bookmark from an activity
+   */
+  async unbookmarkActivity(userId: string, activityId: string): Promise<void> {
+    await db.query(
+      'DELETE FROM activity_bookmarks WHERE user_id = $1 AND activity_id = $2',
+      [userId, activityId]
+    )
+  }
+
+  /**
+   * Get bookmarked activity IDs for a user
+   */
+  async getBookmarkedActivityIds(userId: string): Promise<string[]> {
+    const result = await db.query(
+      'SELECT activity_id FROM activity_bookmarks WHERE user_id = $1',
+      [userId]
+    )
+    return result.rows.map((r) => r.activity_id)
+  }
+
+  /**
+   * Get bookmarked activities for a user
+   */
+  async getBookmarkedActivities(userId: string): Promise<Activity[]> {
+    const result = await db.query(
+      `SELECT a.*, u.display_name as creator_name,
+        (SELECT COUNT(*) FROM activity_participants WHERE activity_id = a.id) as current_participants
+       FROM activities a
+       JOIN users u ON a.creator_id = u.id
+       JOIN activity_bookmarks ab ON ab.activity_id = a.id AND ab.user_id = $1
+       WHERE a.status != 'cancelled'
+       ORDER BY ab.saved_at DESC`,
+      [userId]
+    )
+    return result.rows.map((row) =>
+      mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+    )
+  }
+
+  /**
+   * Check if user has bookmarked an activity
+   */
+  async isBookmarked(userId: string, activityId: string): Promise<boolean> {
+    const result = await db.query(
+      'SELECT 1 FROM activity_bookmarks WHERE user_id = $1 AND activity_id = $2',
+      [userId, activityId]
+    )
+    return result.rows.length > 0
   }
 }
 

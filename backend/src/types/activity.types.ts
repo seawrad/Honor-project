@@ -55,6 +55,7 @@ export interface UpdateActivityRequest {
   route?: string
   distance?: number
   maxParticipants?: number
+  status?: ActivityStatus
 }
 
 export interface ActivityParticipant {
@@ -68,6 +69,7 @@ export interface ActivityWithParticipants extends Activity {
 }
 
 export interface ActivitySearchFilters {
+  keyword?: string
   latitude?: number
   longitude?: number
   radius?: number // in kilometers

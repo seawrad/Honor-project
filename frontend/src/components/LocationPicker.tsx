@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import { Box, TextField, Button } from '@mui/material';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslation } from 'react-i18next';
 import { Location } from '../types/activity.types';
 
 // Fix for default marker icon
@@ -35,6 +36,7 @@ const MapClickHandler = ({ onClick }: { onClick: (lat: number, lng: number) => v
 };
 
 export const LocationPicker = ({ value, onChange, error, helperText }: LocationPickerProps) => {
+  const { t } = useTranslation();
   const [address, setAddress] = useState(value?.address || '');
   const [position, setPosition] = useState<[number, number]>(
     value ? [value.latitude, value.longitude] : [25.0330, 121.5654] // Default to Taipei
@@ -89,12 +91,12 @@ export const LocationPicker = ({ value, onChange, error, helperText }: LocationP
   return (
     <Box>
       <TextField
-        label="地址"
+        label={t('address')}
         value={address}
         onChange={(e) => handleAddressChange(e.target.value)}
         fullWidth
         error={error}
-        helperText={helperText || '點擊地圖選擇位置，或輸入地址'}
+        helperText={helperText || t('clickMapOrEnterAddress')}
         sx={{ mb: 2 }}
       />
       <Button
@@ -103,7 +105,7 @@ export const LocationPicker = ({ value, onChange, error, helperText }: LocationP
         fullWidth
         sx={{ mb: 2 }}
       >
-        使用目前位置
+        {t('useCurrentLocation')}
       </Button>
       <Box sx={{ height: 400, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
         <MapContainer

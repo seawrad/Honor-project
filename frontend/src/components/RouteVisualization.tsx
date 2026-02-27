@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Grid, Button, CircularProgress } from '@mui/material';
+import { Box, Paper, Typography, Grid, Button, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import { MapContainer, TileLayer, Polyline, Marker } from 'react-leaflet';
 import { LatLngExpression, Icon } from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import StyleIcon from '@mui/icons-material/Style';
+import ShareIcon from '@mui/icons-material/Share';
+import { useTranslation } from 'react-i18next';
+import { useToast } from './ErrorToast';
 import { RouteData } from '../types/gps.types';
 import { memoryCardService } from '../services/memoryCard.service';
 import L from 'leaflet';
@@ -41,9 +44,47 @@ interface RouteVisualizationProps {
 }
 
 export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route }) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [memoryCards, setMemoryCards] = useState<{ id: string; runDate: string }[]>([]);
   const [cardsLoading, setCardsLoading] = useState(false);
+
+  const formatTimeForShare = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes} min`;
+  };
+
+  const handleShare = async () => {
+    const dist = (Number(route.totalDistance) || 0).toFixed(1);
+    const speed = (Number(route.averageSpeed) || 0).toFixed(1);
+    const dur = formatTimeForShare(Number(route.duration) || 0);
+    const dateStr = new Date(route.startTime).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+    const text = `${t('runCrewMemoryCard')}: ${dist} ${t('kmShort')} · ${dur} · ${speed} ${t('kmPerHour')} · ${dateStr}`;
+    const url = memoryCards.length > 0
+      ? `${window.location.origin}/memory-cards/${memoryCards[0].id}`
+      : `${window.location.origin}/routes/history`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: t('runCrewMemoryCard'), text, url });
+        showToast(t('shareSuccess') || 'Shared!', 'success');
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          navigator.clipboard?.writeText(`${text}\n${url}`);
+          showToast(t('copiedToClipboard') || 'Copied to clipboard', 'success');
+        }
+      }
+    } else {
+      navigator.clipboard?.writeText(`${text}\n${url}`);
+      showToast(t('copiedToClipboard') || 'Copied to clipboard', 'success');
+    }
+  };
 
   useEffect(() => {
     if (!route.activityId) return;
@@ -88,7 +129,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
   };
 
   const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleString('zh-TW', {
+    return new Date(date).toLocaleString(i18n.language === 'en' ? 'en-US' : 'zh-TW', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -99,9 +140,16 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
 
   return (
     <Paper elevation={3} sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        路線視覺化
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">
+          {t('routeVisualization')}
+        </Typography>
+        <Tooltip title={t('share')}>
+          <IconButton onClick={handleShare} color="primary" size="small">
+            <ShareIcon />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
       <Box sx={{ height: 400, width: '100%', mb: 3 }}>
         {positions.length === 0 && (
@@ -111,12 +159,12 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              bgcolor: 'grey.100',
+              bgcolor: 'action.hover',
               borderRadius: 1,
             }}
           >
             <Typography color="text.secondary">
-              無路線軌跡資料可顯示
+              {t('noRouteData')}
             </Typography>
           </Box>
         )}
@@ -138,58 +186,58 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
       </Box>
 
       <Typography variant="h6" gutterBottom>
-        路線統計
+        {t('routeStats')}
       </Typography>
 
       <Grid container spacing={2}>
         <Grid item xs={6} sm={3}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="h5" color="primary" fontWeight="bold">
               {(Number(route.totalDistance) || 0).toFixed(2)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              總距離 (公里)
+              {t('totalDistanceKm')}
             </Typography>
           </Box>
         </Grid>
 
         <Grid item xs={6} sm={3}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="h5" color="secondary" fontWeight="bold">
               {(Number(route.averageSpeed) || 0).toFixed(2)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              平均速度 (公里/小時)
+              {t('avgSpeedKmh')}
             </Typography>
           </Box>
         </Grid>
 
         <Grid item xs={6} sm={3}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="h5" color="success.main" fontWeight="bold">
               {formatTime(Number(route.duration) || 0)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              持續時間
+              {t('duration')}
             </Typography>
           </Box>
         </Grid>
 
         <Grid item xs={6} sm={3}>
-          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="h5" color="info.main" fontWeight="bold">
               {route.positions?.length ?? '—'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              GPS 位置點
+              {t('gpsPoints')}
             </Typography>
           </Box>
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              開始時間
+              {t('startTime')}
             </Typography>
             <Typography variant="body1" fontWeight="medium">
               {formatDate(route.startTime)}
@@ -198,9 +246,9 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+          <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="body2" color="text.secondary">
-              結束時間
+              {t('endTime')}
             </Typography>
             <Typography variant="body1" fontWeight="medium">
               {formatDate(route.endTime)}
@@ -212,12 +260,12 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
       {route.activityId && (
         <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
-            跑步記憶卡
+            {t('runMemoryCard')}
           </Typography>
           {cardsLoading ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">載入中...</Typography>
+              <Typography variant="body2" color="text.secondary">{t('loading')}</Typography>
             </Box>
           ) : memoryCards.length > 0 ? (
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -229,13 +277,13 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
                   startIcon={<StyleIcon />}
                   onClick={() => navigate(`/memory-cards/${card.id}`)}
                 >
-                  查看 {new Date(card.runDate).toLocaleDateString('zh-TW')} 記憶卡
+                  {t('viewMemoryCard', { date: new Date(card.runDate).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW') })}
                 </Button>
               ))}
             </Box>
           ) : (
             <Typography variant="body2" color="text.secondary">
-              此路線尚無跑步記憶卡
+              {t('noMemoryCardsForRoute')}
             </Typography>
           )}
         </Box>

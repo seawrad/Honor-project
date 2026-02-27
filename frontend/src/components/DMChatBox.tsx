@@ -12,11 +12,13 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useDMChat } from '../contexts/DMChatContext';
 import { dmService, DMMessage } from '../services/dm.service';
 import { socketService } from '../services/socket.service';
+import { useTranslation } from 'react-i18next';
 import { MessageInput } from './MessageInput';
 import { useAuth } from '../hooks/useAuth';
 import { MessageReceivedPayload } from '../types/chat.types';
 
 export const DMChatBox: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { activeRoom, closeChat } = useDMChat();
   const { user } = useAuth();
   const [messages, setMessages] = useState<DMMessage[]>([]);
@@ -63,7 +65,7 @@ export const DMChatBox: React.FC = () => {
         if (mounted) setMessages(msgs);
       } catch (err) {
         if (mounted) {
-          setError('無法載入訊息');
+          setError(t('loadMessagesFailed'));
           setMessages([]);
         }
       } finally {
@@ -86,7 +88,7 @@ export const DMChatBox: React.FC = () => {
             senderId: payload.senderId,
             senderName: payload.senderName,
             content: payload.content,
-            timestamp: payload.timestamp,
+            timestamp: typeof payload.timestamp === 'string' ? payload.timestamp : new Date(payload.timestamp).toISOString(),
           };
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
@@ -129,7 +131,7 @@ export const DMChatBox: React.FC = () => {
   const formatTime = (ts: string) => {
     if (!ts) return '';
     const d = new Date(ts);
-    return d.toLocaleTimeString('zh-TW', {
+    return d.toLocaleTimeString(i18n.language === 'en' ? 'en-US' : 'zh-TW', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -149,7 +151,7 @@ export const DMChatBox: React.FC = () => {
         flexDirection: 'column',
         borderRadius: 2,
         overflow: 'hidden',
-        zIndex: 1300,
+        zIndex: 1200,
       }}
     >
       <Box
@@ -179,7 +181,7 @@ export const DMChatBox: React.FC = () => {
           size="small"
           onClick={closeChat}
           sx={{ color: 'inherit' }}
-          aria-label="關閉"
+          aria-label={t('close')}
         >
           <CloseIcon fontSize="small" />
         </IconButton>
@@ -221,7 +223,7 @@ export const DMChatBox: React.FC = () => {
                     sx={{
                       p: 1.5,
                       borderRadius: 2,
-                      bgcolor: isOwn ? 'primary.main' : 'grey.200',
+                      bgcolor: isOwn ? 'primary.main' : 'action.hover',
                       color: isOwn ? 'primary.contrastText' : 'text.primary',
                     }}
                   >

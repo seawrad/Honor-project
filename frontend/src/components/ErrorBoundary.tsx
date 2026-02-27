@@ -1,6 +1,7 @@
 import { Component, ErrorInfo, ReactNode } from 'react'
 import { Box, Button, Container, Typography, Paper } from '@mui/material'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
+import i18n from 'i18next'
 
 interface Props {
   children: ReactNode
@@ -80,22 +81,22 @@ class ErrorBoundary extends Component<Props, State> {
           <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
             <ErrorOutlineIcon sx={{ fontSize: 80, color: 'error.main', mb: 2 }} />
             <Typography variant="h4" gutterBottom>
-              糟糕！發生了一些錯誤
+              {i18n.t('oopsError')}
             </Typography>
             <Typography variant="body1" color="text.secondary" paragraph>
-              我們遇到了一個意外的問題。請嘗試重新載入頁面或返回首頁。
+              {i18n.t('unexpectedError')}
             </Typography>
 
             {process.env.NODE_ENV === 'development' && this.state.error && (
               <Box sx={{ mt: 3, mb: 3, textAlign: 'left' }}>
                 <Typography variant="subtitle2" color="error" gutterBottom>
-                  錯誤詳情（僅開發環境顯示）：
+                  {i18n.t('errorDetails')}
                 </Typography>
                 <Paper
                   variant="outlined"
                   sx={{
                     p: 2,
-                    bgcolor: 'grey.100',
+                    bgcolor: 'action.hover',
                     maxHeight: 200,
                     overflow: 'auto',
                   }}
@@ -114,13 +115,13 @@ class ErrorBoundary extends Component<Props, State> {
 
             <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 3 }}>
               <Button variant="contained" onClick={this.handleReset}>
-                重試
+                {i18n.t('retry')}
               </Button>
               <Button variant="outlined" onClick={this.handleReload}>
-                重新載入頁面
+                {i18n.t('reloadPage')}
               </Button>
               <Button variant="text" href="/">
-                返回首頁
+                {i18n.t('backToHome')}
               </Button>
             </Box>
           </Paper>

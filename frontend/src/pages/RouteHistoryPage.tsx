@@ -6,7 +6,6 @@ import {
   Card,
   CardContent,
   Grid,
-  CircularProgress,
   Alert,
   Button,
   Dialog,
@@ -22,10 +21,14 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import TimelapseIcon from '@mui/icons-material/Timelapse';
 import { gpsService } from '../services/gps.service';
 import { RouteData } from '../types/gps.types';
+import { useTranslation } from 'react-i18next';
 import { RouteVisualization } from '../components/RouteVisualization';
+import { RouteItemSkeleton } from '../components/skeletons';
+import { EmptyState } from '../components/EmptyState';
 import { useAuth } from '../hooks/useAuth';
 
 export const RouteHistoryPage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [routes, setRoutes] = useState<RouteData[]>([]);
@@ -45,7 +48,7 @@ export const RouteHistoryPage: React.FC = () => {
         setRoutes(data);
       } catch (err: any) {
         console.error('Failed to fetch routes:', err);
-        setError(err.response?.data?.error?.message || '載入路線歷史失敗');
+        setError(err.response?.data?.error?.message || t('loadRouteHistoryFailed'));
       } finally {
         setLoading(false);
       }
@@ -64,8 +67,9 @@ export const RouteHistoryPage: React.FC = () => {
     setSelectedRoute(null);
   };
 
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
   const formatDate = (date: Date): string => {
-    return new Date(date).toLocaleString('zh-TW', {
+    return new Date(date).toLocaleString(locale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -79,20 +83,10 @@ export const RouteHistoryPage: React.FC = () => {
     const minutes = Math.floor((seconds % 3600) / 60);
 
     if (hours > 0) {
-      return `${hours} 小時 ${minutes} 分鐘`;
+      return `${hours} ${t('hours')} ${minutes} ${t('minutes')}`;
     }
-    return `${minutes} 分鐘`;
+    return `${minutes} ${t('minutes')}`;
   };
-
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -102,10 +96,10 @@ export const RouteHistoryPage: React.FC = () => {
           onClick={() => navigate('/')}
           variant="outlined"
         >
-          返回
+          {t('back')}
         </Button>
         <Typography variant="h4" component="h1">
-          路線歷史
+          {t('routeHistory')}
         </Typography>
       </Box>
 
@@ -115,23 +109,20 @@ export const RouteHistoryPage: React.FC = () => {
         </Alert>
       )}
 
-      {routes.length === 0 ? (
-        <Box
-          sx={{
-            textAlign: 'center',
-            py: 8,
-            bgcolor: 'grey.50',
-            borderRadius: 2,
-          }}
-        >
-          <RouteIcon sx={{ fontSize: 80, color: 'grey.400', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary">
-            尚無路線記錄
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            開始追蹤您的跑步活動以建立路線歷史
-          </Typography>
-        </Box>
+      {!loading && routes.length === 0 ? (
+        <EmptyState
+          variant="no-routes"
+          title={t('noRouteRecords')}
+          description={t('startTrackingToBuildHistory')}
+        />
+      ) : loading ? (
+        <Grid container spacing={3}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <RouteItemSkeleton />
+            </Grid>
+          ))}
+        </Grid>
       ) : (
         <Grid container spacing={3}>
           {routes.map((route) => (
@@ -155,27 +146,27 @@ export const RouteHistoryPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <RouteIcon color="action" />
                     <Typography variant="body1">
-                      <strong>{(Number(route.totalDistance) || 0).toFixed(2)}</strong> 公里
+                      <strong>{(Number(route.totalDistance) || 0).toFixed(2)}</strong> {t('kmShort')}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     <SpeedIcon color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      平均速度: {(Number(route.averageSpeed) || 0).toFixed(2)} 公里/小時
+                      {t('avgSpeed')}: {(Number(route.averageSpeed) || 0).toFixed(2)} {t('kmPerHour')}
                     </Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <TimelapseIcon color="action" />
                     <Typography variant="body2" color="text.secondary">
-                      持續時間: {formatTime(Number(route.duration) || 0)}
+                      {t('duration')}: {formatTime(Number(route.duration) || 0)}
                     </Typography>
                   </Box>
 
                   <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
                     <Typography variant="caption" color="text.secondary">
-                      GPS 位置點: {route.positions?.length ?? '—'}
+                      {t('gpsPoints')}: {route.positions?.length ?? '—'}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -193,7 +184,7 @@ export const RouteHistoryPage: React.FC = () => {
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">路線詳情</Typography>
+            <Typography variant="h6">{t('routeDetails')}</Typography>
             <IconButton onClick={handleCloseDialog}>
               <CloseIcon />
             </IconButton>

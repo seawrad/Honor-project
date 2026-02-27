@@ -6,11 +6,11 @@ import {
   Typography,
   Box,
   Grid,
-  CircularProgress,
   Alert,
   Tabs,
   Tab,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services/user.service';
 import { UserSearchResult } from '../types/user.types';
 import { UserCard } from '../components/UserCard';
@@ -30,6 +30,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 export const FollowersPage: React.FC = () => {
+  const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const [tabValue, setTabValue] = useState(0);
   const [followers, setFollowers] = useState<UserSearchResult[]>([]);
@@ -49,7 +50,7 @@ export const FollowersPage: React.FC = () => {
         const data = await userService.getFollowers(userId);
         setFollowers(data);
       } catch (err: any) {
-        setFollowersError(err.response?.data?.error?.message || '無法載入追蹤者列表');
+        setFollowersError(err.response?.data?.error?.message || t('loadFollowersFailed'));
       } finally {
         setIsLoadingFollowers(false);
       }
@@ -62,7 +63,7 @@ export const FollowersPage: React.FC = () => {
         const data = await userService.getFollowing(userId);
         setFollowing(data);
       } catch (err: any) {
-        setFollowingError(err.response?.data?.error?.message || '無法載入追蹤中列表');
+        setFollowingError(err.response?.data?.error?.message || t('loadFollowingFailed'));
       } finally {
         setIsLoadingFollowing(false);
       }
@@ -92,26 +93,22 @@ export const FollowersPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          社交連結
+          {t('socialConnections')}
         </Typography>
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
-            <Tab label={`追蹤者 (${followers.length})`} />
-            <Tab label={`追蹤中 (${following.length})`} />
+            <Tab label={t('followersCount', { count: followers.length })} />
+            <Tab label={t('followingCount', { count: following.length })} />
           </Tabs>
         </Box>
 
         {/* Followers Tab */}
         <TabPanel value={tabValue} index={0}>
-          {isLoadingFollowers ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : followersError ? (
+          {!isLoadingFollowers && followersError ? (
             <Alert severity="error">{followersError}</Alert>
-          ) : followers.length === 0 ? (
-            <Alert severity="info">尚無追蹤者</Alert>
+          ) : !isLoadingFollowers && followers.length === 0 ? (
+            <Alert severity="info">{t('noFollowers')}</Alert>
           ) : (
             <Grid container spacing={2}>
               {followers.map((user) => (
@@ -125,14 +122,10 @@ export const FollowersPage: React.FC = () => {
 
         {/* Following Tab */}
         <TabPanel value={tabValue} index={1}>
-          {isLoadingFollowing ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : followingError ? (
+          {!isLoadingFollowing && followingError ? (
             <Alert severity="error">{followingError}</Alert>
-          ) : following.length === 0 ? (
-            <Alert severity="info">尚未追蹤任何人</Alert>
+          ) : !isLoadingFollowing && following.length === 0 ? (
+            <Alert severity="info">{t('notFollowingAnyone')}</Alert>
           ) : (
             <Grid container spacing={2}>
               {following.map((user) => (

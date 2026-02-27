@@ -13,6 +13,7 @@ import {
   ToggleButtonGroup,
 } from '@mui/material';
 import { ArrowBack, Save, Schedule, Route } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { LocationPicker } from '../components/LocationPicker';
 import { RouteDrawerMap } from '../components/RouteDrawerMap';
 import { activityService } from '../services/activity.service';
@@ -52,6 +53,7 @@ interface FormErrors {
 }
 
 export const CreateActivityPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [activityType, setActivityType] = useState<ActivityType>('time-based');
   const [formData, setFormData] = useState<
@@ -111,7 +113,7 @@ export const CreateActivityPage = () => {
           const loc = value as Location | undefined;
           const end = next.endLocation;
           if (loc && end) {
-            next.route = `從 ${loc.address} 至 ${end.address}`;
+            next.route = `${loc.address} → ${end.address}`;
             next.distance = Math.round(haversineDistanceKm(loc.latitude, loc.longitude, end.latitude, end.longitude) * 10) / 10;
           }
         }
@@ -119,7 +121,7 @@ export const CreateActivityPage = () => {
           const end = value as Location | undefined;
           const start = next.location;
           if (start && end) {
-            next.route = `從 ${start.address} 至 ${end.address}`;
+            next.route = `${start.address} → ${end.address}`;
             next.distance = Math.round(haversineDistanceKm(start.latitude, start.longitude, end.latitude, end.longitude) * 10) / 10;
           }
         }
@@ -162,32 +164,32 @@ export const CreateActivityPage = () => {
     const newErrors: FormErrors = {};
 
     if (!formData.title || formData.title.trim().length === 0) {
-      newErrors.title = '請輸入活動標題';
+      newErrors.title = t('titleRequired');
     }
     if (!formData.description || formData.description.trim().length === 0) {
-      newErrors.description = '請輸入活動描述';
+      newErrors.description = t('descriptionRequired');
     }
     if (!formData.scheduledDate) {
-      newErrors.scheduledDate = '請選擇活動時間';
+      newErrors.scheduledDate = t('scheduledDateRequired');
     } else if (new Date(formData.scheduledDate) <= new Date()) {
-      newErrors.scheduledDate = '活動時間必須在未來';
+      newErrors.scheduledDate = t('scheduledDateFuture');
     }
     if (!formData.location) {
-      newErrors.location = '請選擇起點';
+      newErrors.location = t('selectStartPoint');
     }
     if (activityType === 'route-based' && !formData.endLocation) {
-      newErrors.endLocation = '請選擇終點';
+      newErrors.endLocation = t('selectEndPoint');
     }
     if (activityType === 'time-based') {
       if (!formData.durationMinutes || formData.durationMinutes <= 0) {
-        newErrors.durationMinutes = '請輸入預計跑步時間（分鐘）';
+        newErrors.durationMinutes = t('durationRequired');
       }
     }
     if (!formData.distance || formData.distance <= 0) {
-      newErrors.distance = '距離需大於 0';
+      newErrors.distance = t('distanceMustBePositive');
     }
     if (!formData.maxParticipants || formData.maxParticipants < 2) {
-      newErrors.maxParticipants = '參加人數上限至少為 2 人';
+      newErrors.maxParticipants = t('maxParticipantsMin');
     }
 
     setErrors(newErrors);
@@ -227,7 +229,7 @@ export const CreateActivityPage = () => {
       const message = err && typeof err === 'object' && 'response' in err
         ? (err as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message
         : null;
-      setSubmitError(message || '建立活動失敗');
+      setSubmitError(message || t('createActivityFailed'));
     } finally {
       setLoading(false);
     }
@@ -236,17 +238,17 @@ export const CreateActivityPage = () => {
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Button startIcon={<ArrowBack />} onClick={() => navigate('/activities')} sx={{ mb: 3 }}>
-        返回列表
+        {t('backToList')}
       </Button>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          建立跑步活動
+          {t('createRunningActivity')}
         </Typography>
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle1" gutterBottom>
-            活動類型
+            {t('activityType')}
           </Typography>
           <ToggleButtonGroup
             value={activityType}
@@ -256,11 +258,11 @@ export const CreateActivityPage = () => {
           >
             <ToggleButton value="time-based" aria-label="time-based">
               <Schedule sx={{ mr: 1 }} />
-              時間導向（設起點 + 跑步時長）
+              {t('timeBasedDesc')}
             </ToggleButton>
             <ToggleButton value="route-based" aria-label="route-based">
               <Route sx={{ mr: 1 }} />
-              路線導向（地圖繪製）
+              {t('routeBasedDesc')}
             </ToggleButton>
           </ToggleButtonGroup>
         </Box>
@@ -275,7 +277,7 @@ export const CreateActivityPage = () => {
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
-                label="活動標題"
+                label={t('activityTitle')}
                 value={formData.title}
                 onChange={(e) => handleChange('title', e.target.value)}
                 fullWidth
@@ -286,7 +288,7 @@ export const CreateActivityPage = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label="活動描述"
+                label={t('activityDescription')}
                 value={formData.description}
                 onChange={(e) => handleChange('description', e.target.value)}
                 fullWidth
@@ -299,7 +301,7 @@ export const CreateActivityPage = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="活動時間"
+                label={t('scheduledDate')}
                 type="datetime-local"
                 value={formData.scheduledDate}
                 onChange={(e) => handleChange('scheduledDate', e.target.value)}
@@ -312,7 +314,7 @@ export const CreateActivityPage = () => {
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
-                label="參加人數上限"
+                label={t('maxParticipants')}
                 type="number"
                 value={formData.maxParticipants}
                 onChange={(e) => handleChange('maxParticipants', parseInt(e.target.value) || 0)}
@@ -327,7 +329,7 @@ export const CreateActivityPage = () => {
             {activityType === 'time-based' && (
               <Grid item xs={12} sm={6}>
                 <TextField
-                  label="預計跑步時間（分鐘）"
+                  label={t('durationMinutes')}
                   type="number"
                   value={formData.durationMinutes ?? ''}
                   onChange={(e) => handleChange('durationMinutes', parseInt(e.target.value) || 0)}
@@ -335,14 +337,14 @@ export const CreateActivityPage = () => {
                   required
                   inputProps={{ min: 5, max: 300 }}
                   error={!!errors.durationMinutes}
-                  helperText={errors.durationMinutes || '距離會依約 10 km/h 自動估算'}
+                  helperText={errors.durationMinutes || t('distanceAutoEstimate')}
                 />
               </Grid>
             )}
 
             <Grid item xs={12} sm={6}>
               <TextField
-                label="距離（公里）"
+                label={`${t('distance')} (${t('kmShort')})`}
                 type="number"
                 value={formData.distance ?? ''}
                 onChange={(e) => handleChange('distance', parseFloat(e.target.value) || 0)}
@@ -356,7 +358,7 @@ export const CreateActivityPage = () => {
             </Grid>
             <Grid item xs={12}>
               <TextField
-                label={activityType === 'time-based' ? '路線說明（選填）' : '路線說明'}
+                label={activityType === 'time-based' ? t('routeDescriptionOptional') : t('routeDescriptionLabel')}
                 value={formData.route}
                 onChange={(e) => handleChange('route', e.target.value)}
                 fullWidth
@@ -364,7 +366,7 @@ export const CreateActivityPage = () => {
                 error={!!errors.route}
                 helperText={
                   activityType === 'route-based'
-                    ? '繪製路線後將自動產生'
+                    ? t('routeAutoGenerated')
                     : errors.route
                 }
                 disabled={activityType === 'route-based'}
@@ -374,7 +376,7 @@ export const CreateActivityPage = () => {
             {activityType === 'route-based' ? (
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  繪製路線
+                  {t('drawRoute')}
                 </Typography>
                 <RouteDrawerMap
                   value={
@@ -400,7 +402,7 @@ export const CreateActivityPage = () => {
             ) : (
               <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                  起點
+                  {t('startPoint')}
                 </Typography>
                 <LocationPicker
                   value={formData.location || null}
@@ -420,7 +422,7 @@ export const CreateActivityPage = () => {
                   fullWidth
                   disabled={loading}
                 >
-                  {loading ? '建立中...' : '建立活動'}
+                  {loading ? t('creating') : t('createActivityBtn')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -428,7 +430,7 @@ export const CreateActivityPage = () => {
                   fullWidth
                   disabled={loading}
                 >
-                  取消
+                  {t('cancel')}
                 </Button>
               </Box>
             </Grid>

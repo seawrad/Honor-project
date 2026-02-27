@@ -3,17 +3,20 @@ import { GPSPosition, PerformanceMetrics } from '../types/gps.types';
 
 interface UseGPSTrackerReturn {
   isTracking: boolean;
+  isPaused: boolean;
   positions: GPSPosition[];
   currentPosition: GPSPosition | null;
   metrics: PerformanceMetrics;
   error: string | null;
-  startTracking: () => Promise<void>;
+  startTracking: (isResume?: boolean) => Promise<void>;
+  pauseTracking: () => void;
   stopTracking: () => void;
   clearPositions: () => void;
 }
 
 export const useGPSTracker = (): UseGPSTrackerReturn => {
   const [isTracking, setIsTracking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [positions, setPositions] = useState<GPSPosition[]>([]);
   const [currentPosition, setCurrentPosition] = useState<GPSPosition | null>(null);
   const [metrics, setMetrics] = useState<PerformanceMetrics>({
@@ -78,7 +81,7 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
   }, [positions, calculateTotalDistance, calculateDistance]);
 
   // Start GPS tracking
-  const startTracking = useCallback(async () => {
+  const startTracking = useCallback(async (isResume = false) => {
     setError(null);
 
     if (!navigator.geolocation) {
@@ -87,39 +90,49 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
     }
 
     try {
-      // Request permission first
-      const permission = await navigator.permissions.query({ name: 'geolocation' });
-      
-      if (permission.state === 'denied') {
-        setError('Location permission denied. Please enable location access.');
-        return;
+      // Request permission first (skip on resume). Permissions API not supported in Firefox/Safari.
+      if (!isResume) {
+        try {
+          const permission = await navigator.permissions.query({ name: 'geolocation' });
+          if (permission.state === 'denied') {
+            setError('Location permission denied. Please enable location access.');
+            return;
+          }
+        } catch {
+          // Permissions API not supported - proceed anyway, watchPosition will prompt
+        }
       }
 
       setIsTracking(true);
-      startTimeRef.current = new Date();
+      setIsPaused(false);
+      if (!isResume) startTimeRef.current = new Date();
 
-      // Start watching position
+      // Start watching position. Use relaxed options for better compatibility.
       watchIdRef.current = navigator.geolocation.watchPosition(
         (position) => {
           const newPosition: GPSPosition = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
             timestamp: new Date(position.timestamp),
-            accuracy: position.coords.accuracy,
+            accuracy: position.coords.accuracy ?? 0,
           };
 
           setCurrentPosition(newPosition);
           setPositions((prev) => [...prev, newPosition]);
         },
-        (error) => {
-          console.error('GPS Error:', error);
-          setError(`GPS Error: ${error.message}`);
+        (err) => {
+          console.error('GPS Error:', err);
+          const msg = err.code === 1 ? 'Location permission denied. Please enable location access.'
+            : err.code === 2 ? 'Location unavailable. Please check your device.'
+            : err.code === 3 ? 'Location request timed out. Please try again.'
+            : `GPS Error: ${err.message}`;
+          setError(msg);
           setIsTracking(false);
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0,
+          timeout: 10000,
+          maximumAge: 5000,
         }
       );
 
@@ -133,19 +146,32 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
     }
   }, [updateMetrics]);
 
-  // Stop GPS tracking
+  // Pause GPS tracking (keeps positions, can resume)
+  const pauseTracking = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+    if (intervalIdRef.current !== null) {
+      clearInterval(intervalIdRef.current);
+      intervalIdRef.current = null;
+    }
+    setIsTracking(false);
+    setIsPaused(true);
+  }, []);
+
+  // Stop GPS tracking (full stop)
   const stopTracking = useCallback(() => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
-
     if (intervalIdRef.current !== null) {
       clearInterval(intervalIdRef.current);
       intervalIdRef.current = null;
     }
-
     setIsTracking(false);
+    setIsPaused(false);
   }, []);
 
   // Clear positions
@@ -170,11 +196,13 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
 
   return {
     isTracking,
+    isPaused,
     positions,
     currentPosition,
     metrics,
     error,
     startTracking,
+    pauseTracking,
     stopTracking,
     clearPositions,
   };

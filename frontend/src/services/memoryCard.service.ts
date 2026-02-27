@@ -5,7 +5,7 @@ const API_BASE_URL = '/api';
 
 export interface RunMemoryCard {
   id: string;
-  activityId: string;
+  activityId: string | null;
   routeId?: string;
   createdBy: string;
   createdAt: string;
@@ -24,7 +24,7 @@ export interface RunMemoryCard {
 }
 
 export interface CreateMemoryCardData {
-  activityId: string;
+  activityId?: string | null;
   routeId?: string;
   runDate: string;
   participantCount: number;

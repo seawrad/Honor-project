@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Snackbar, Button, Alert } from '@mui/material';
 
 export const PWAUpdatePrompt = () => {
+  const { t } = useTranslation();
   const [showPrompt, setShowPrompt] = useState(false);
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
@@ -63,19 +65,19 @@ export const PWAUpdatePrompt = () => {
         action={
           updateAvailable ? (
             <Button color="inherit" size="small" onClick={handleUpdate}>
-              更新
+              {t('update')}
             </Button>
           ) : (
             <Button color="inherit" size="small" onClick={handleClose}>
-              關閉
+              {t('close')}
             </Button>
           )
         }
         sx={{ width: '100%' }}
       >
         {updateAvailable
-          ? '有新版本可用，點擊更新以獲取最新功能'
-          : '應用程式已可離線使用'}
+          ? t('updateAvailable')
+          : t('appReadyOffline')}
       </Alert>
     </Snackbar>
   );

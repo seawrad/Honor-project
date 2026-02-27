@@ -3,6 +3,7 @@ import { Box, Paper, Typography, Alert } from '@mui/material';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import { LatLngExpression } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useTranslation } from 'react-i18next';
 import { GPSPosition } from '../types/gps.types';
 import L from 'leaflet';
 
@@ -38,6 +39,7 @@ export const GPSTracker: React.FC<GPSTrackerProps> = ({
   positions,
   error,
 }) => {
+  const { t } = useTranslation();
   const defaultCenter: LatLngExpression = [25.0330, 121.5654]; // Taipei
   const center: LatLngExpression = currentPosition
     ? [currentPosition.latitude, currentPosition.longitude]
@@ -51,7 +53,7 @@ export const GPSTracker: React.FC<GPSTrackerProps> = ({
   return (
     <Paper elevation={3} sx={{ p: 2, height: '100%' }}>
       <Typography variant="h6" gutterBottom>
-        即時位置追蹤
+        {t('livePositionTracking')}
       </Typography>
 
       {error && (

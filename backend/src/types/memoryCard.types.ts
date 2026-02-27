@@ -1,6 +1,6 @@
 export interface RunMemoryCard {
   id: string
-  activityId: string
+  activityId: string | null
   routeId?: string
   createdBy: string
   createdAt: string
@@ -19,7 +19,7 @@ export interface RunMemoryCard {
 }
 
 export interface CreateMemoryCardRequest {
-  activityId: string
+  activityId?: string | null
   routeId?: string
   runDate: string
   participantCount: number

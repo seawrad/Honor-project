@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, CircularProgress } from '@mui/material';
 import { PersonAdd, PersonRemove } from '@mui/icons-material';
 import { userService } from '../services/user.service';
@@ -14,6 +15,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
   isFollowing: initialIsFollowing,
   onFollowChange,
 }) => {
+  const { t } = useTranslation();
   const [isFollowing, setIsFollowing] = useState(initialIsFollowing);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -52,7 +54,7 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
       onClick={handleFollowToggle}
       disabled={isLoading}
     >
-      {isFollowing ? '取消追蹤' : '追蹤'}
+      {isFollowing ? t('unfollow') : t('follow')}
     </Button>
   );
 };

@@ -6,16 +6,17 @@ import {
   TextField,
   Box,
   Grid,
-  CircularProgress,
   Alert,
   InputAdornment,
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services/user.service';
 import { UserSearchResult } from '../types/user.types';
 import { UserCard } from '../components/UserCard';
 
 export const UserSearchPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +47,7 @@ export const UserSearchPage: React.FC = () => {
       const results = await userService.searchUsers(searchQuery);
       setSearchResults(results);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '搜尋失敗');
+      setError(err.response?.data?.error?.message || t('searchFailed'));
       setSearchResults([]);
     } finally {
       setIsLoading(false);
@@ -65,13 +66,13 @@ export const UserSearchPage: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          搜尋使用者
+          {t('searchUsers')}
         </Typography>
 
         <Box sx={{ mb: 4 }}>
           <TextField
             fullWidth
-            placeholder="輸入使用者名稱..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -84,12 +85,6 @@ export const UserSearchPage: React.FC = () => {
           />
         </Box>
 
-        {isLoading && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        )}
-
         {error && (
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
@@ -97,7 +92,7 @@ export const UserSearchPage: React.FC = () => {
         )}
 
         {!isLoading && hasSearched && searchResults.length === 0 && (
-          <Alert severity="info">找不到符合的使用者</Alert>
+          <Alert severity="info">{t('noMatchingUsers')}</Alert>
         )}
 
         {!isLoading && searchResults.length > 0 && (
@@ -113,7 +108,7 @@ export const UserSearchPage: React.FC = () => {
         {!hasSearched && !isLoading && (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="body1" color="text.secondary">
-              輸入名稱開始搜尋使用者
+              {t('enterSearch')}
             </Typography>
           </Box>
         )}

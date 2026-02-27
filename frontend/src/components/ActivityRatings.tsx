@@ -5,11 +5,12 @@ import {
   Paper,
   Rating,
   LinearProgress,
-  CircularProgress,
+  Skeleton,
   Alert,
   Grid,
 } from '@mui/material';
 import { Star } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { activityService } from '../services/activity.service';
 import { RatingsList } from './RatingsList';
 
@@ -18,6 +19,7 @@ interface ActivityRatingsProps {
 }
 
 export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [ratingsData, setRatingsData] = useState<{
@@ -35,19 +37,23 @@ export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) 
         const data = await activityService.getActivityRatings(activityId);
         setRatingsData(data);
       } catch (err: any) {
-        setError(err.response?.data?.error?.message || '無法載入評分');
+        setError(err.response?.data?.error?.message || t('loadRatingsFailed'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchRatings();
-  }, [activityId]);
+  }, [activityId, t]);
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-        <CircularProgress />
+      <Box sx={{ py: 2 }}>
+        <Skeleton variant="text" width={120} height={28} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 2, mb: 2 }} />
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} variant="text" width="100%" height={24} sx={{ mb: 0.5 }} />
+        ))}
       </Box>
     );
   }
@@ -59,7 +65,7 @@ export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) 
   if (!ratingsData || ratingsData.totalRatings === 0) {
     return (
       <Alert severity="info">
-        此活動尚無評價
+        {t('noRatingsForActivity')}
       </Alert>
     );
   }
@@ -76,7 +82,7 @@ export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) 
     <Box>
       <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Star sx={{ color: 'warning.main' }} />
-        活動評價
+        {t('activityRatings')}
       </Typography>
 
       {/* Rating Distribution */}
@@ -89,7 +95,7 @@ export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) 
               </Typography>
               <Rating value={ratingsData.averageRating} precision={0.1} readOnly size="large" />
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                基於 {ratingsData.totalRatings} 則評價
+                {t('basedOnRatings', { count: ratingsData.totalRatings })}
               </Typography>
             </Box>
           </Grid>
@@ -105,7 +111,7 @@ export const ActivityRatings: React.FC<ActivityRatingsProps> = ({ activityId }) 
                 return (
                   <Box key={stars} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                     <Typography variant="body2" sx={{ minWidth: 60 }}>
-                      {stars} 星
+                      {stars} {t('stars')}
                     </Typography>
                     <LinearProgress
                       variant="determinate"

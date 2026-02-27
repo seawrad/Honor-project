@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import { Box, Typography, Skeleton } from '@mui/material';
 import { weatherService, WeatherData } from '../services/weather.service';
 
 const getWeatherEmoji = (code: number): string => {
@@ -14,7 +15,30 @@ const getWeatherEmoji = (code: number): string => {
   return '🌤'
 }
 
+const getWeatherDescKey = (code: number): string => {
+  if (code === 0) return 'weatherClear'
+  if (code === 1) return 'weatherMainlyClear'
+  if (code === 2) return 'weatherPartlyCloudy'
+  if (code === 3) return 'weatherOvercast'
+  if ([45, 48].includes(code)) return 'weatherFog'
+  if (code >= 51 && code <= 55) return 'weatherDrizzle'
+  if ([56, 57].includes(code)) return 'weatherFreezingDrizzle'
+  if (code === 61) return 'weatherLightRain'
+  if (code === 63) return 'weatherRain'
+  if (code === 65) return 'weatherHeavyRain'
+  if ([66, 67].includes(code)) return 'weatherFreezingRain'
+  if (code === 71) return 'weatherLightSnow'
+  if ([73, 85].includes(code)) return 'weatherSnow'
+  if ([75, 86].includes(code)) return 'weatherHeavySnow'
+  if (code === 77) return 'weatherSnowGrains'
+  if ([80, 81].includes(code)) return 'weatherShower'
+  if (code === 82) return 'weatherHeavyShower'
+  if ([95, 96, 99].includes(code)) return 'weatherThunderstorm'
+  return 'weatherCloudy'
+}
+
 export const WeatherModule: React.FC = () => {
+  const { t } = useTranslation();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,8 +55,17 @@ export const WeatherModule: React.FC = () => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 2 }}>
-        <CircularProgress size={24} />
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          bgcolor: 'rgba(0, 184, 212, 0.08)',
+          border: '1px solid rgba(0, 184, 212, 0.2)',
+          minWidth: { xs: '100%', sm: 200 },
+        }}
+      >
+        <Skeleton variant="text" width="80%" height={28} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width="60%" height={20} />
       </Box>
     )
   }
@@ -54,13 +87,13 @@ export const WeatherModule: React.FC = () => {
       }}
     >
       <Typography variant="body1" fontWeight={600} sx={{ mb: 0.5 }}>
-        {emoji} 今日天氣：{weather.temperature}°C｜{weather.weatherDesc}
+        {emoji} {t('todayWeather')}: {weather.temperature}°C｜{t(getWeatherDescKey(weather.weatherCode))}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-        💨 風速：{weather.windSpeed} km/h — {weather.runSuitable ? '適合跑步' : '不太適合跑步'}
+        💨 {t('windSpeed')}: {weather.windSpeed} km/h — {weather.runSuitable ? t('suitableForRun') : t('notSuitableForRun')}
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        📍 地區：{weather.location}
+        📍 {t('weatherLocation')}: {weather.location}
       </Typography>
     </Box>
   )

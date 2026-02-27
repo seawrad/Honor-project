@@ -19,7 +19,7 @@ export interface Route {
 }
 
 export interface CreateRouteRequest {
-  activityId: string
+  activityId?: string | null
   startTime: Date
 }
 

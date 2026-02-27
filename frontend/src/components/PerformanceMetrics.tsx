@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Box, Paper, Typography, Grid } from '@mui/material';
 import { PerformanceMetrics as MetricsType } from '../types/gps.types';
 import SpeedIcon from '@mui/icons-material/Speed';
@@ -10,6 +11,7 @@ interface PerformanceMetricsProps {
 }
 
 export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics }) => {
+  const { t } = useTranslation();
   const formatTime = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -32,7 +34,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics 
   return (
     <Paper elevation={3} sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>
-        效能指標
+        {t('performanceMetrics')}
       </Typography>
 
       <Grid container spacing={2}>
@@ -52,7 +54,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics 
             <Typography variant="h5" fontWeight="bold">
               {formatDistance(metrics.distance)}
             </Typography>
-            <Typography variant="body2">公里</Typography>
+            <Typography variant="body2">{t('kmUnit')}</Typography>
           </Box>
         </Grid>
 
@@ -72,7 +74,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics 
             <Typography variant="h5" fontWeight="bold">
               {formatSpeed(metrics.currentSpeed)}
             </Typography>
-            <Typography variant="body2">公里/小時</Typography>
+            <Typography variant="body2">{t('kmPerHour')}</Typography>
           </Box>
         </Grid>
 
@@ -92,7 +94,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics 
             <Typography variant="h5" fontWeight="bold">
               {formatSpeed(metrics.averageSpeed)}
             </Typography>
-            <Typography variant="body2">平均速度</Typography>
+            <Typography variant="body2">{t('avgSpeed')}</Typography>
           </Box>
         </Grid>
 
@@ -112,7 +114,7 @@ export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ metrics 
             <Typography variant="h5" fontWeight="bold">
               {formatTime(metrics.elapsedTime)}
             </Typography>
-            <Typography variant="body2">經過時間</Typography>
+            <Typography variant="body2">{t('elapsedTime')}</Typography>
           </Box>
         </Grid>
       </Grid>

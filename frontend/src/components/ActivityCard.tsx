@@ -6,26 +6,35 @@ import {
   Button,
   Chip,
   Box,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   LocationOn,
   CalendarToday,
   DirectionsRun,
   People,
+  Bookmark,
+  BookmarkBorder,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { Activity } from '../types/activity.types';
 import { useNavigate } from 'react-router-dom';
 
 interface ActivityCardProps {
   activity: Activity;
+  isBookmarked?: boolean;
+  onBookmarkToggle?: (activityId: string, bookmarked: boolean) => void;
 }
 
-export const ActivityCard = ({ activity }: ActivityCardProps) => {
+export const ActivityCard = ({ activity, isBookmarked = false, onBookmarkToggle }: ActivityCardProps) => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-TW', {
+    return date.toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -54,16 +63,16 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
   const isPast = new Date(activity.scheduledDate) < new Date();
 
   const getStatusLabel = (status: Activity['status']) => {
-    if (status === 'upcoming' && isPast) return '已結束';
+    if (status === 'upcoming' && isPast) return t('ended');
     switch (status) {
       case 'upcoming':
-        return '即將開始';
+        return t('statusUpcoming');
       case 'in-progress':
-        return '進行中';
+        return t('statusInProgress');
       case 'completed':
-        return '已完成';
+        return t('statusCompleted');
       case 'cancelled':
-        return '已取消';
+        return t('statusCancelled');
       default:
         return status;
     }
@@ -104,9 +113,24 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
           >
             {activity.title}
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'flex-end' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'flex-end', alignItems: 'center' }}>
+            {onBookmarkToggle && (
+              <Tooltip title={isBookmarked ? t('unbookmark') : t('bookmark')}>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onBookmarkToggle(activity.id, !isBookmarked);
+                  }}
+                  color={isBookmarked ? 'primary' : 'default'}
+                  sx={{ p: 0.5 }}
+                >
+                  {isBookmarked ? <Bookmark /> : <BookmarkBorder />}
+                </IconButton>
+              </Tooltip>
+            )}
             <Chip
-              label={(activity.activityType ?? 'route-based') === 'time-based' ? '時間導向' : '路線導向'}
+              label={(activity.activityType ?? 'route-based') === 'time-based' ? t('timeBased') : t('routeBased')}
               size="small"
               variant="outlined"
               sx={{ flexShrink: 0 }}
@@ -161,7 +185,7 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <DirectionsRun sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-            {activity.distance} 公里
+            {activity.distance} {t('kmShort')}
           </Typography>
         </Box>
 
@@ -169,11 +193,11 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <People sx={{ fontSize: { xs: 16, sm: 18 }, mr: 1, color: 'text.secondary', flexShrink: 0 }} />
             <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-              {activity.currentParticipants} / {activity.maxParticipants} 人
+              {activity.currentParticipants} / {activity.maxParticipants} {t('people')}
             </Typography>
           </Box>
           {isFull && (
-            <Chip label="已滿" color="error" size="small" />
+            <Chip label={t('full')} color="error" size="small" />
           )}
         </Box>
 
@@ -186,7 +210,7 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
             fontSize: { xs: '0.7rem', sm: '0.75rem' },
           }}
         >
-          主辦人：{activity.creatorName}
+          {t('creator')}：{activity.creatorName}
         </Typography>
       </CardContent>
 
@@ -197,7 +221,7 @@ export const ActivityCard = ({ activity }: ActivityCardProps) => {
           fullWidth
           sx={{ minHeight: 44 }}
         >
-          查看詳情
+          {t('viewDetails')}
         </Button>
       </CardActions>
     </Card>

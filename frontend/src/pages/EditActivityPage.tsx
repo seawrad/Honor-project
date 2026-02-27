@@ -9,9 +9,9 @@ import {
   Box,
   Alert,
   Grid,
-  CircularProgress,
 } from '@mui/material';
 import { ArrowBack, Save } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { LocationPicker } from '../components/LocationPicker';
 import { activityService } from '../services/activity.service';
 import { UpdateActivityData } from '../types/activity.types';
@@ -27,6 +27,7 @@ interface FormErrors {
 }
 
 export const EditActivityPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [formData, setFormData] = useState<Partial<UpdateActivityData>>({});
@@ -46,7 +47,7 @@ export const EditActivityPage = () => {
         // Check if editing is allowed (1 hour before start)
         const timeUntilStart = new Date(activity.scheduledDate).getTime() - Date.now();
         if (timeUntilStart < 3600000) {
-          setSubmitError('無法編輯：活動開始前 1 小時內不可編輯');
+          setSubmitError(t('cannotEditWithinHour'));
         }
 
         // Format date for datetime-local input
@@ -63,7 +64,7 @@ export const EditActivityPage = () => {
           maxParticipants: activity.maxParticipants,
         });
       } catch (err: any) {
-        setSubmitError(err.response?.data?.error?.message || '載入活動失敗');
+        setSubmitError(err.response?.data?.error?.message || t('loadActivityFailed'));
       } finally {
         setLoading(false);
       }
@@ -76,33 +77,33 @@ export const EditActivityPage = () => {
     const newErrors: FormErrors = {};
 
     if (formData.title !== undefined && formData.title.trim().length === 0) {
-      newErrors.title = '請輸入活動標題';
+      newErrors.title = t('titleRequired');
     }
 
     if (formData.description !== undefined && formData.description.trim().length === 0) {
-      newErrors.description = '請輸入活動描述';
+      newErrors.description = t('descriptionRequired');
     }
 
     if (formData.scheduledDate) {
       const scheduledTime = new Date(formData.scheduledDate).getTime();
       if (scheduledTime <= Date.now()) {
-        newErrors.scheduledDate = '活動時間必須在未來';
+        newErrors.scheduledDate = t('scheduledDateFuture');
       }
       if (scheduledTime - Date.now() < 3600000) {
-        newErrors.scheduledDate = '活動時間必須在 1 小時後';
+        newErrors.scheduledDate = t('scheduledDateOneHour');
       }
     }
 
     if (formData.route !== undefined && formData.route.trim().length === 0) {
-      newErrors.route = '請輸入路線說明';
+      newErrors.route = t('routeRequired');
     }
 
     if (formData.distance !== undefined && formData.distance <= 0) {
-      newErrors.distance = '請輸入有效的距離';
+      newErrors.distance = t('validDistanceRequired');
     }
 
     if (formData.maxParticipants !== undefined && formData.maxParticipants < 2) {
-      newErrors.maxParticipants = '參加人數上限至少為 2 人';
+      newErrors.maxParticipants = t('maxParticipantsMin');
     }
 
     setErrors(newErrors);
@@ -123,7 +124,7 @@ export const EditActivityPage = () => {
       await activityService.updateActivity(id, formData);
       navigate(`/activities/${id}`);
     } catch (err: any) {
-      setSubmitError(err.response?.data?.error?.message || '更新活動失敗');
+      setSubmitError(err.response?.data?.error?.message || t('updateActivityFailed'));
     } finally {
       setSaving(false);
     }
@@ -137,17 +138,7 @@ export const EditActivityPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  const isEditingDisabled = submitError?.includes('無法編輯');
+  const isEditingDisabled = !!submitError && (submitError.includes('無法編輯') || submitError.includes('Cannot edit'));
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -156,12 +147,12 @@ export const EditActivityPage = () => {
         onClick={() => navigate(`/activities/${id}`)}
         sx={{ mb: 3 }}
       >
-        返回活動詳情
+        {t('backToActivityDetail')}
       </Button>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" component="h1" gutterBottom>
-          編輯活動
+          {t('editActivity')}
         </Typography>
 
         {submitError && (
@@ -171,10 +162,11 @@ export const EditActivityPage = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit}>
+          {loading ? null : (
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
-                label="活動標題"
+                label={t('activityTitle')}
                 value={formData.title || ''}
                 onChange={(e) => handleChange('title', e.target.value)}
                 fullWidth
@@ -186,7 +178,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12}>
               <TextField
-                label="活動描述"
+                label={t('activityDescription')}
                 value={formData.description || ''}
                 onChange={(e) => handleChange('description', e.target.value)}
                 fullWidth
@@ -200,7 +192,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12} sm={6}>
               <TextField
-                label="活動時間"
+                label={t('scheduledDate')}
                 type="datetime-local"
                 value={formData.scheduledDate || ''}
                 onChange={(e) => handleChange('scheduledDate', e.target.value)}
@@ -214,7 +206,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12} sm={6}>
               <TextField
-                label="參加人數上限"
+                label={t('maxParticipants')}
                 type="number"
                 value={formData.maxParticipants || ''}
                 onChange={(e) => handleChange('maxParticipants', parseInt(e.target.value))}
@@ -228,7 +220,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12} sm={6}>
               <TextField
-                label="距離（公里）"
+                label={`${t('distance')} (${t('kmShort')})`}
                 type="number"
                 value={formData.distance || ''}
                 onChange={(e) => handleChange('distance', parseFloat(e.target.value))}
@@ -242,7 +234,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12} sm={6}>
               <TextField
-                label="路線說明"
+                label={t('routeDescriptionLabel')}
                 value={formData.route || ''}
                 onChange={(e) => handleChange('route', e.target.value)}
                 fullWidth
@@ -254,7 +246,7 @@ export const EditActivityPage = () => {
 
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom>
-                活動地點
+                {t('activityLocationLabel')}
               </Typography>
               <LocationPicker
                 value={formData.location || null}
@@ -273,7 +265,7 @@ export const EditActivityPage = () => {
                   fullWidth
                   disabled={saving || isEditingDisabled}
                 >
-                  {saving ? '儲存中...' : '儲存變更'}
+                  {saving ? t('saving') : t('saveChanges')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -281,11 +273,12 @@ export const EditActivityPage = () => {
                   fullWidth
                   disabled={saving}
                 >
-                  取消
+                  {t('cancel')}
                 </Button>
               </Box>
             </Grid>
-          </Grid>
+            </Grid>
+          )}
         </Box>
       </Paper>
     </Container>

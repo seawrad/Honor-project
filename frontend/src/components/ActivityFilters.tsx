@@ -14,7 +14,8 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import { FilterList, ExpandMore, ExpandLess } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
+import { FilterList, ExpandMore, ExpandLess, Search } from '@mui/icons-material';
 import { ActivityFilters as ActivityFiltersType, ActivityType } from '../types/activity.types';
 
 interface ActivityFiltersProps {
@@ -22,16 +23,22 @@ interface ActivityFiltersProps {
 }
 
 export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [distanceRange, setDistanceRange] = useState<number[]>([0, 50]);
   const [radius, setRadius] = useState(10);
   const [activityType, setActivityType] = useState<ActivityType | ''>('');
 
-  const handleApplyFilters = () => {
+  const handleApplyFilters = (keywordOverride?: string) => {
     const filters: ActivityFiltersType = {};
+    const kw = (keywordOverride ?? keyword).trim();
 
+    if (kw) {
+      filters.keyword = kw;
+    }
     if (dateFrom) {
       filters.dateFrom = new Date(dateFrom).toISOString();
     }
@@ -53,6 +60,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
   };
 
   const handleResetFilters = () => {
+    setKeyword('');
     setDateFrom('');
     setDateTo('');
     setDistanceRange([0, 50]);
@@ -67,7 +75,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <FilterList sx={{ mr: 1, fontSize: { xs: 20, sm: 24 } }} />
           <Typography variant="h6" sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-            篩選條件
+            {t('filterConditions')}
           </Typography>
         </Box>
         <IconButton 
@@ -78,12 +86,31 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
         </IconButton>
       </Box>
 
+      <TextField
+        fullWidth
+        size="small"
+        placeholder={t('activitySearchPlaceholder')}
+        value={keyword}
+        onChange={(e) => setKeyword(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const value = (e.target as HTMLInputElement).value;
+            setKeyword(value);
+            handleApplyFilters(value);
+          }
+        }}
+        InputProps={{
+          startAdornment: <Search sx={{ mr: 1, color: 'action.active', fontSize: 20 }} />,
+        }}
+        sx={{ mt: 2 }}
+      />
+
       <Collapse in={expanded}>
         <Box sx={{ mt: { xs: 2, sm: 3 } }}>
           <Grid container spacing={{ xs: 2, sm: 3 }}>
             <Grid item xs={12} md={6}>
               <TextField
-                label="開始日期"
+                label={t('startDate')}
                 type="date"
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
@@ -94,7 +121,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
-                label="結束日期"
+                label={t('endDate')}
                 type="date"
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
@@ -106,23 +133,23 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
 
             <Grid item xs={12} md={6}>
               <FormControl fullWidth size="small">
-                <InputLabel id="activity-type-label">活動類型</InputLabel>
+                <InputLabel id="activity-type-label">{t('activityType')}</InputLabel>
                 <Select
                   labelId="activity-type-label"
-                  label="活動類型"
+                  label={t('activityType')}
                   value={activityType}
                   onChange={(e) => setActivityType(e.target.value as ActivityType | '')}
                 >
-                  <MenuItem value="">全部</MenuItem>
-                  <MenuItem value="time-based">時間導向</MenuItem>
-                  <MenuItem value="route-based">路線導向</MenuItem>
+                  <MenuItem value="">{t('all')}</MenuItem>
+                  <MenuItem value="time-based">{t('timeBased')}</MenuItem>
+                  <MenuItem value="route-based">{t('routeBased')}</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
 
             <Grid item xs={12}>
               <Typography gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                距離範圍：{distanceRange[0]} - {distanceRange[1]} 公里
+                {t('distanceRange', { min: distanceRange[0], max: distanceRange[1] })}
               </Typography>
               <Slider
                 value={distanceRange}
@@ -142,7 +169,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
 
             <Grid item xs={12}>
               <Typography gutterBottom sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-                搜尋半徑：{radius} 公里
+                {t('searchRadius', { radius })}
               </Typography>
               <Slider
                 value={radius}
@@ -164,11 +191,11 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
               <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
                 <Button
                   variant="contained"
-                  onClick={handleApplyFilters}
+                  onClick={() => handleApplyFilters()}
                   fullWidth
                   sx={{ minHeight: 44 }}
                 >
-                  套用篩選
+                  {t('applyFilters')}
                 </Button>
                 <Button
                   variant="outlined"
@@ -176,7 +203,7 @@ export const ActivityFilters = ({ onFiltersChange }: ActivityFiltersProps) => {
                   fullWidth
                   sx={{ minHeight: 44 }}
                 >
-                  重置
+                  {t('resetFilters')}
                 </Button>
               </Box>
             </Grid>

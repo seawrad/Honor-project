@@ -29,7 +29,7 @@ export class RouteService {
         created_at as "createdAt"
     `
 
-    const values = [data.activityId, userId, data.startTime]
+    const values = [data.activityId ?? null, userId, data.startTime]
 
     try {
       const result = await db.query<Route>(query, values)

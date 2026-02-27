@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography, Paper } from '@mui/material';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
@@ -6,7 +7,7 @@ import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 
 export interface LenticularCardData {
   id?: string;
-  activityId: string;
+  activityId?: string | null;
   participantCount: number;
   totalDistance: number;
   averageSpeed: number;
@@ -26,18 +27,20 @@ interface LenticularCardProps {
   activityTitle?: string;
 }
 
-function formatDuration(seconds: number): string {
-  const n = Number(seconds) || 0;
-  const m = Math.floor(n / 60);
-  const s = Math.floor(n % 60);
-  return `${m}分${s}秒`;
-}
 
 export const LenticularCard: React.FC<LenticularCardProps> = ({
   data,
   activityTitle,
 }) => {
+  const { t, i18n } = useTranslation();
   const cardRef = useRef<HTMLDivElement>(null);
+
+  const formatDuration = (seconds: number): string => {
+    const n = Number(seconds) || 0;
+    const m = Math.floor(n / 60);
+    const s = Math.floor(n % 60);
+    return t('durationFormat', { m, s });
+  };
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [usePointer, setUsePointer] = useState(false);
 
@@ -152,7 +155,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               >
                 <DirectionsRunIcon sx={{ fontSize: 64 }} />
                 <Typography variant="h6">
-                  {Number(data.participantCount) || 0} 位跑者 · {(Number(data.totalDistance) || 0).toFixed(1)} km
+                  {t('runnersCount', { count: Number(data.participantCount) || 0 })} · {(Number(data.totalDistance) || 0).toFixed(1)} {t('kmShort')}
                 </Typography>
               </Box>
             )}
@@ -167,10 +170,10 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
             }}
           >
             <Typography variant="overline" sx={{ opacity: 0.9 }}>
-              {activityTitle || '跑步活動'}
+              {activityTitle || t('runActivity')}
             </Typography>
             <Typography variant="h5" fontWeight={700} sx={{ mt: 0.5 }}>
-              {new Date(data.runDate).toLocaleDateString('zh-TW', {
+              {new Date(data.runDate).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric',
@@ -181,7 +184,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <DirectionsRunIcon fontSize="small" />
                 <Typography variant="body2">
-                  {(Number(data.totalDistance) || 0).toFixed(1)} km · {(Number(data.averageSpeed) || 0).toFixed(1)} km/h
+                  {(Number(data.totalDistance) || 0).toFixed(1)} {t('kmShort')} · {(Number(data.averageSpeed) || 0).toFixed(1)} km/h
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -210,7 +213,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid rgba(255,255,255,0.3)' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
                   <ChatBubbleIcon fontSize="small" />
-                  <Typography variant="subtitle2">跑者留言</Typography>
+                  <Typography variant="subtitle2">{t('runnerMessages')}</Typography>
                 </Box>
                 {data.messages.slice(0, 3).map((m, i) => (
                   <Typography key={i} variant="body2" sx={{ opacity: 0.95, mb: 0.5 }}>
@@ -231,7 +234,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               transform: `translateZ(10px)`,
             }}
           >
-            {usePointer ? '移動滑鼠體驗立體效果' : '傾斜手機體驗立體效果'}
+            {usePointer ? t('tiltHintMouse') : t('tiltHintPhone')}
           </Typography>
         </Box>
       </Paper>

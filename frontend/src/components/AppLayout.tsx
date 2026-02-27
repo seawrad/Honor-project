@@ -27,6 +27,9 @@ import AddIcon from '@mui/icons-material/Add';
 import RouteIcon from '@mui/icons-material/Route';
 import PeopleIcon from '@mui/icons-material/People';
 import ChatIcon from '@mui/icons-material/Chat';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import RssFeedIcon from '@mui/icons-material/RssFeed';
@@ -34,6 +37,9 @@ import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { NotificationBell } from './NotificationBell';
 import { FriendChatButton } from './FriendChatButton';
 import { DMChatBox } from './DMChatBox';
+import { OfflineIndicator } from './OfflineIndicator';
+import { BackToTop } from './BackToTop';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useDMChat } from '../contexts/DMChatContext';
 import { userService } from '../services/user.service';
@@ -46,17 +52,36 @@ interface Friend {
   displayName: string;
 }
 
-const navItems = [
-  { path: '/', label: '首頁', icon: <HomeIcon /> },
-  { path: '/activities', label: '跑步活動', icon: <EventIcon /> },
-  { path: '/feed', label: '動態', icon: <RssFeedIcon /> },
-  { path: '/chat-list', label: '聊天', icon: <ChatIcon /> },
-  { path: '/activities/create', label: '建立活動', icon: <AddIcon /> },
-  { path: '/routes/history', label: '路線紀錄', icon: <RouteIcon /> },
-  { path: '/users/search', label: '搜尋用戶', icon: <PeopleIcon /> },
+const navGroups = [
+  {
+    labelKey: 'explore' as const,
+    items: [
+      { path: '/', key: 'home', icon: <HomeIcon /> },
+      { path: '/activities', key: 'activities', icon: <EventIcon /> },
+      { path: '/feed', key: 'feed', icon: <RssFeedIcon /> },
+    ],
+  },
+  {
+    labelKey: 'myActivity' as const,
+    items: [
+      { path: '/chat-list', key: 'chat', icon: <ChatIcon /> },
+      { path: '/achievements', key: 'achievements', icon: <EmojiEventsIcon /> },
+      { path: '/stats', key: 'stats', icon: <TrendingUpIcon /> },
+      { path: '/leaderboard', key: 'leaderboard', icon: <LeaderboardIcon /> },
+      { path: '/routes/history', key: 'routeHistory', icon: <RouteIcon /> },
+    ],
+  },
+  {
+    labelKey: 'actions' as const,
+    items: [
+      { path: '/activities/create', key: 'createActivity', icon: <AddIcon /> },
+      { path: '/users/search', key: 'searchUsers', icon: <PeopleIcon /> },
+    ],
+  },
 ];
 
 export const AppLayout: React.FC = () => {
+  const { t } = useTranslation();
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -125,27 +150,34 @@ export const AppLayout: React.FC = () => {
   const drawer = (
     <Box sx={{ width: DRAWER_WIDTH, pt: 2 }}>
       <Typography variant="h6" sx={{ px: 2, pb: 2 }}>
-        選單
+        {t('menu')}
       </Typography>
       <Divider />
-      <List>
-        {navItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => handleNavClick(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
+      {navGroups.map((group) => (
+        <Box key={group.labelKey} sx={{ mb: 1 }}>
+          <Typography variant="caption" color="text.secondary" sx={{ px: 2, py: 1, display: 'block' }}>
+            {t(group.labelKey)}
+          </Typography>
+          <List disablePadding>
+            {group.items.map((item) => (
+              <ListItem key={item.path} disablePadding>
+                <ListItemButton
+                  selected={location.pathname === item.path}
+                  onClick={() => handleNavClick(item.path)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={t(item.key)} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      ))}
       {isAuthenticated && (
         <>
           <Divider sx={{ my: 2 }} />
           <Typography variant="subtitle2" color="text.secondary" sx={{ px: 2, pb: 1 }}>
-            好友
+            {t('friends')}
           </Typography>
           {friendsLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
@@ -154,7 +186,7 @@ export const AppLayout: React.FC = () => {
           ) : friends.length === 0 ? (
             <Box sx={{ px: 2, py: 2 }}>
               <Typography variant="body2" color="text.secondary">
-                尚無好友，互追後即可聊天
+                {t('noFriendsYet')}
               </Typography>
             </Box>
           ) : (
@@ -177,7 +209,7 @@ export const AppLayout: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#F7FBFF' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppBar position="sticky" sx={{ zIndex: theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
           <IconButton
@@ -246,6 +278,9 @@ export const AppLayout: React.FC = () => {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         PaperProps={{ sx: { minWidth: 200 } }}
+        slotProps={{
+          root: { sx: { zIndex: 1400 } },
+        }}
       >
         <Box sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle2" color="text.secondary">
@@ -263,26 +298,26 @@ export const AppLayout: React.FC = () => {
           <ListItemIcon>
             <AccountCircleIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>個人檔案</ListItemText>
+          <ListItemText>{t('profile')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleUserMenuItem('/settings')}>
           <ListItemIcon>
             <SettingsIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>設定</ListItemText>
+          <ListItemText>{t('settings')}</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleUserMenuItem('/chat-list')}>
           <ListItemIcon>
             <ChatIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>聊天</ListItemText>
+          <ListItemText>{t('chat')}</ListItemText>
         </MenuItem>
         <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <LogoutIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>登出</ListItemText>
+          <ListItemText>{t('logout')}</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -315,6 +350,8 @@ export const AppLayout: React.FC = () => {
       </Container>
 
       {isAuthenticated && <DMChatBox />}
+      <OfflineIndicator />
+      <BackToTop />
     </Box>
   );
 };

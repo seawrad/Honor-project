@@ -56,6 +56,9 @@ import userRoutes from './routes/user.routes.js'
 import activityRoutes from './routes/activity.routes.js'
 import routeRoutes from './routes/route.routes.js'
 import memoryCardRoutes from './routes/memoryCard.routes.js'
+import achievementRoutes from './routes/achievement.routes.js'
+import goalRoutes from './routes/goal.routes.js'
+import leaderboardRoutes from './routes/leaderboard.routes.js'
 import chatRoutes from './routes/chat.routes.js'
 import notificationRoutes from './routes/notification.routes.js'
 
@@ -78,6 +81,15 @@ app.use('/api/routes', routeRoutes)
 
 // Memory card routes
 app.use('/api/memory-cards', memoryCardRoutes)
+
+// Achievement routes
+app.use('/api/achievements', achievementRoutes)
+
+// Goal routes
+app.use('/api/goals', goalRoutes)
+
+// Leaderboard routes (public)
+app.use('/api/leaderboard', leaderboardRoutes)
 
 // Chat routes
 app.use('/api/chat', chatRoutes)

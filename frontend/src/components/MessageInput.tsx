@@ -3,6 +3,7 @@ import { Box, TextField, IconButton, Alert, Popover } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions'
 import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react'
+import { useTranslation } from 'react-i18next'
 import { socketService } from '../services/socket.service'
 
 interface MessageInputProps {
@@ -12,6 +13,7 @@ interface MessageInputProps {
 }
 
 export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSent }) => {
+  const { t } = useTranslation()
   const [message, setMessage] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
@@ -59,7 +61,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSen
     }
 
     if (!socketService.isConnected()) {
-      setError('Not connected to chat. Please refresh the page.')
+      setError(t('notConnected'))
       return
     }
 
@@ -87,7 +89,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSen
       setMessage('')
     } catch (err) {
       console.error('Failed to send message:', err)
-      setError('Failed to send message. Please try again.')
+      setError(t('sendFailed'))
     } finally {
       setIsSending(false)
     }
@@ -134,7 +136,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSen
           fullWidth
           multiline
           maxRows={3}
-          placeholder="輸入訊息，可輸入 emoji 😊..."
+          placeholder={t('messagePlaceholder')}
           value={message}
           onChange={(e) => {
             setMessage(e.target.value)

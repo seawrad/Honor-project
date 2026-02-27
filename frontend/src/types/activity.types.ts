@@ -30,9 +30,11 @@ export interface Activity {
   durationMinutes?: number;
   endLocation?: Location;
   createdAt: string;
+  isBookmarked?: boolean;
 }
 
 export interface ActivityFilters {
+  keyword?: string;
   dateFrom?: string;
   dateTo?: string;
   distanceMin?: number;

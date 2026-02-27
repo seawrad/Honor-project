@@ -8,7 +8,6 @@ import {
   Grid,
   Card,
   CardContent,
-  CircularProgress,
   Alert,
   Divider,
   Chip,
@@ -18,6 +17,7 @@ import {
   TextField,
   Avatar,
   IconButton,
+  Skeleton,
 } from '@mui/material';
 import {
   DirectionsRun,
@@ -31,19 +31,25 @@ import {
   Close,
   PhotoCamera,
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { userService } from '../services/user.service';
 import { UserProfile, UserStatsSummary } from '../types/user.types';
 import { FollowButton } from '../components/FollowButton';
 import { LevelProgressBar } from '../components/LevelProgressBar';
+import { ProfileSkeleton } from '../components/skeletons';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/ErrorToast';
 import { RatingsList } from '../components/RatingsList';
+import { AvatarCropDialog } from '../components/AvatarCropDialog';
 
-const MAX_AVATAR_SIZE_KB = 500;
+const MAX_AVATAR_SIZE_KB = 5120;
 
 export const UserProfilePage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const { showToast } = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +64,9 @@ export const UserProfilePage: React.FC = () => {
   const [saveLoading, setSaveLoading] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStatsSummary | null>(null);
+  const [avatarVersion, setAvatarVersion] = useState(0);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [pendingAvatarSrc, setPendingAvatarSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = currentUser?.id === userId;
@@ -72,7 +81,7 @@ export const UserProfilePage: React.FC = () => {
       setEditDisplayName(data.displayName);
       setEditAge(data.age ?? 18);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || '無法載入使用者資料');
+      setError(err.response?.data?.error?.message || t('loadUserFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -149,8 +158,9 @@ export const UserProfilePage: React.FC = () => {
       });
       setProfile(updated);
       setIsEditing(false);
+      showToast(t('saved'), 'success');
     } catch (err: any) {
-      setSaveError(err.response?.data?.error?.message || '更新失敗');
+      setSaveError(err.response?.data?.error?.message || t('updateFailed'));
     } finally {
       setSaveLoading(false);
     }
@@ -160,49 +170,69 @@ export const UserProfilePage: React.FC = () => {
     if (isOwnProfile) fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !userId) return;
+    if (!file || !profile) return;
     if (!file.type.startsWith('image/')) {
-      setSaveError('請選擇圖片檔案 (JPG, PNG 等)');
+      setSaveError(t('selectImageFile'));
       return;
     }
     if (file.size > MAX_AVATAR_SIZE_KB * 1024) {
-      setSaveError(`圖片大小不可超過 ${MAX_AVATAR_SIZE_KB} KB`);
+      setSaveError(t('imageSizeLimit', { size: MAX_AVATAR_SIZE_KB / 1024 }));
       return;
     }
     const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = reader.result as string;
-      setSaveLoading(true);
+    reader.onload = () => {
       setSaveError(null);
-      try {
-        const updated = await userService.updateUserProfile(userId, {
-          avatarUrl: dataUrl,
-        });
-        setProfile(updated);
-      } catch (err: any) {
-        setSaveError(err.response?.data?.error?.message || '頭像更新失敗');
-      } finally {
-        setSaveLoading(false);
-      }
+      setPendingAvatarSrc(reader.result as string);
+      setCropDialogOpen(true);
     };
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  if (isLoading) {
+  const handleCropApply = async (croppedDataUrl: string) => {
+    if (!userId || !profile) return;
+    setCropDialogOpen(false);
+    setPendingAvatarSrc(null);
+    setSaveLoading(true);
+    const previousAvatar = profile.avatarUrl;
+    setProfile((prev) => (prev ? { ...prev, avatarUrl: croppedDataUrl } : null));
+    try {
+      const updated = await userService.updateUserProfile(userId, {
+        avatarUrl: croppedDataUrl,
+      });
+      setProfile(updated);
+      setAvatarVersion((v) => v + 1);
+      showToast('頭像已更新', 'success');
+    } catch (err: any) {
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: previousAvatar } : null));
+      setSaveError(err.response?.data?.error?.message || t('avatarUpdateFailed'));
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
+  const handleCropClose = () => {
+    setCropDialogOpen(false);
+    setPendingAvatarSrc(null);
+  };
+
+  if (!isLoading && (error || !profile)) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Alert severity="error">{error || t('userNotFound')}</Alert>
       </Container>
     );
   }
 
-  if (error || !profile) {
+  if (isLoading || !profile) {
     return (
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Alert severity="error">{error || '找不到使用者'}</Alert>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ mb: 2 }}>
+          <Button onClick={() => navigate(-1)}>{t('back')}</Button>
+        </Box>
+        <ProfileSkeleton />
       </Container>
     );
   }
@@ -222,6 +252,7 @@ export const UserProfilePage: React.FC = () => {
         >
           <Box sx={{ position: 'relative' }}>
             <Avatar
+              key={`avatar-${avatarVersion}-${profile.avatarUrl ? 'custom' : 'default'}`}
               src={profile.avatarUrl || undefined}
               sx={{
                 width: 120,
@@ -248,7 +279,7 @@ export const UserProfilePage: React.FC = () => {
                   }}
                   size="small"
                   onClick={handleAvatarClick}
-                  aria-label="更換頭像"
+                  aria-label={t('changeAvatar')}
                 >
                   <PhotoCamera fontSize="small" />
                 </IconButton>
@@ -259,6 +290,12 @@ export const UserProfilePage: React.FC = () => {
                   style={{ display: 'none' }}
                   onChange={handleAvatarChange}
                 />
+                <AvatarCropDialog
+                  open={cropDialogOpen}
+                  imageSrc={pendingAvatarSrc}
+                  onClose={handleCropClose}
+                  onApply={handleCropApply}
+                />
               </>
             )}
           </Box>
@@ -266,7 +303,7 @@ export const UserProfilePage: React.FC = () => {
             {isEditing ? (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TextField
-                  label="顯示名稱"
+                  label={t('displayName')}
                   value={editDisplayName}
                   onChange={(e) => setEditDisplayName(e.target.value)}
                   fullWidth
@@ -274,7 +311,7 @@ export const UserProfilePage: React.FC = () => {
                   required
                 />
                 <TextField
-                  label="年齡"
+                  label={t('age')}
                   type="number"
                   value={editAge}
                   onChange={(e) => setEditAge(parseInt(e.target.value) || 18)}
@@ -295,7 +332,7 @@ export const UserProfilePage: React.FC = () => {
                     onClick={handleSave}
                     disabled={saveLoading || !editDisplayName.trim()}
                   >
-                    {saveLoading ? '儲存中...' : '儲存'}
+                    {saveLoading ? t('saving') : t('save')}
                   </Button>
                   <Button
                     variant="outlined"
@@ -303,7 +340,7 @@ export const UserProfilePage: React.FC = () => {
                     onClick={handleCancelEdit}
                     disabled={saveLoading}
                   >
-                    取消
+                    {t('cancel')}
                   </Button>
                 </Box>
               </Box>
@@ -318,7 +355,7 @@ export const UserProfilePage: React.FC = () => {
                       startIcon={<EditIcon />}
                       onClick={handleStartEdit}
                     >
-                      編輯
+                      {t('edit')}
                     </Button>
                   )}
                   {!isOwnProfile && userId && (
@@ -330,15 +367,15 @@ export const UserProfilePage: React.FC = () => {
                   )}
                 </Box>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  加入日期：{new Date(profile.joinedDate).toLocaleDateString('zh-TW')}
+                  {t('joinedDate')}：{new Date(profile.joinedDate).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW')}
                 </Typography>
                 {isOwnProfile && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" color="text.secondary">
-                      電子郵件：{profile.email}
+                      {t('emailLabel')}：{profile.email}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      年齡：{profile.age}
+                      {t('ageLabel')}：{profile.age}
                     </Typography>
                   </Box>
                 )}
@@ -359,7 +396,7 @@ export const UserProfilePage: React.FC = () => {
                 <DirectionsRun sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
                 <Typography variant="h5">{profile.totalRuns}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  總跑步次數
+                  {t('totalRuns')}
                 </Typography>
               </CardContent>
             </Card>
@@ -370,7 +407,7 @@ export const UserProfilePage: React.FC = () => {
                 <Timeline sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
                 <Typography variant="h5">{profile.totalDistance.toFixed(1)} km</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  總距離
+                  {t('totalDistance')}
                 </Typography>
               </CardContent>
             </Card>
@@ -383,7 +420,7 @@ export const UserProfilePage: React.FC = () => {
                   {profile.averageRating > 0 ? profile.averageRating.toFixed(1) : 'N/A'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  平均評分
+                  {t('averageRating')}
                 </Typography>
               </CardContent>
             </Card>
@@ -399,7 +436,7 @@ export const UserProfilePage: React.FC = () => {
                   >
                     <Typography variant="h6">{profile.followersCount}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      追蹤者
+                      {t('followers')}
                     </Typography>
                   </Box>
                   <Divider orientation="vertical" flexItem />
@@ -409,7 +446,7 @@ export const UserProfilePage: React.FC = () => {
                   >
                     <Typography variant="h6">{profile.followingCount}</Typography>
                     <Typography variant="caption" color="text.secondary">
-                      追蹤中
+                      {t('following')}
                     </Typography>
                   </Box>
                 </Box>
@@ -421,15 +458,15 @@ export const UserProfilePage: React.FC = () => {
         {/* Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-            <Tab icon={<CalendarToday />} label="最近活動" iconPosition="start" />
-            <Tab icon={<RateReview />} label="評價" iconPosition="start" />
+            <Tab icon={<CalendarToday />} label={t('recentActivities')} iconPosition="start" />
+            <Tab icon={<RateReview />} label={t('ratings')} iconPosition="start" />
           </Tabs>
         </Box>
 
         {activeTab === 0 && (
           <Box>
             {(profile.recentActivities || []).length === 0 ? (
-              <Alert severity="info">尚無活動記錄</Alert>
+              <Alert severity="info">{t('noActivityRecords')}</Alert>
             ) : (
               <Grid container spacing={2}>
                 {(profile.recentActivities || []).map((activity) => (
@@ -444,20 +481,20 @@ export const UserProfilePage: React.FC = () => {
                         </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <Typography variant="body2" color="text.secondary">
-                            日期：{new Date(activity.scheduledDate).toLocaleDateString('zh-TW')}
+                            {t('date')}：{new Date(activity.scheduledDate).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'zh-TW')}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            距離：{activity.distance} km
+                            {t('distance')}：{activity.distance} {t('kmShort')}
                           </Typography>
                           <Chip
                             label={
                               activity.status === 'upcoming'
-                                ? '即將開始'
+                                ? t('statusUpcoming')
                                 : activity.status === 'completed'
-                                ? '已完成'
+                                ? t('statusCompleted')
                                 : activity.status === 'in-progress'
-                                ? '進行中'
-                                : '已取消'
+                                ? t('statusInProgress')
+                                : t('statusCancelled')
                             }
                             color={
                               activity.status === 'upcoming'
@@ -483,8 +520,16 @@ export const UserProfilePage: React.FC = () => {
         {activeTab === 1 && (
           <Box>
             {ratingsLoading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
+              <Box sx={{ py: 2 }}>
+                {[1, 2, 3].map((i) => (
+                  <Paper key={i} sx={{ p: 2, mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                      <Skeleton variant="circular" width={40} height={40} />
+                      <Skeleton variant="text" width={120} height={24} />
+                    </Box>
+                    <Skeleton variant="text" width="80%" />
+                  </Paper>
+                ))}
               </Box>
             ) : (
               <RatingsList

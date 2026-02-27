@@ -6,12 +6,26 @@ const API_BASE_URL = '/api';
 
 export const gpsService = {
   async createRoute(data: CreateRouteData): Promise<RouteData> {
-    const response = await axios.post<{ data: RouteData }>(
+    const { positions, activityId, startTime } = data;
+    const createPayload = {
+      activityId: activityId ?? null,
+      startTime: positions[0]?.timestamp ?? startTime,
+    };
+    const createRes = await axios.post<{ data: RouteData }>(
       `${API_BASE_URL}/routes`,
-      data,
+      createPayload,
       { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
     );
-    return response.data.data;
+    const route = createRes.data.data;
+    if (positions.length >= 2) {
+      const posRes = await axios.post<{ data: RouteData }>(
+        `${API_BASE_URL}/routes/${route.id}/positions`,
+        { positions },
+        { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+      );
+      return { ...posRes.data.data, activityId: route.activityId };
+    }
+    return { ...route, ...data };
   },
 
   async getRouteById(id: string): Promise<RouteData> {

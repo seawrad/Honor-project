@@ -3,12 +3,10 @@ import {
   Container,
   Box,
   Typography,
-  Button,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  CircularProgress,
   Alert,
   Tabs,
   Tab,
@@ -17,11 +15,14 @@ import { useNavigate } from 'react-router-dom';
 import ChatIcon from '@mui/icons-material/Chat';
 import GroupIcon from '@mui/icons-material/Group';
 import PersonIcon from '@mui/icons-material/Person';
+import { useTranslation } from 'react-i18next';
 import { activityService } from '../services/activity.service';
 import { userService } from '../services/user.service';
 import { dmService } from '../services/dm.service';
 import { useDMChat } from '../contexts/DMChatContext';
 import { Activity } from '../types/activity.types';
+import { ChatListItemSkeleton } from '../components/skeletons';
+import { EmptyState } from '../components/EmptyState';
 
 interface Friend {
   id: string;
@@ -29,6 +30,7 @@ interface Friend {
 }
 
 export const ChatListPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { openChat } = useDMChat();
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -46,7 +48,7 @@ export const ChatListPage: React.FC = () => {
         const response = await activityService.getActivities({}, 1, 50);
         setActivities(response.activities);
       } catch (err: any) {
-        setError(err.response?.data?.error?.message || '載入失敗');
+        setError(err.response?.data?.error?.message || t('loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -78,19 +80,11 @@ export const ChatListPage: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="md" sx={{ py: 4, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Container>
-    );
-  }
-
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <ChatIcon color="primary" sx={{ fontSize: 32 }} />
-        <Typography variant="h5">聊天</Typography>
+        <Typography variant="h5">{t('chatTitle')}</Typography>
       </Box>
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -99,24 +93,25 @@ export const ChatListPage: React.FC = () => {
       )}
 
       <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 2 }}>
-        <Tab icon={<GroupIcon />} iconPosition="start" label="活動聊天" />
-        <Tab icon={<PersonIcon />} iconPosition="start" label="好友聊天" />
+        <Tab icon={<GroupIcon />} iconPosition="start" label={t('activityChat')} />
+        <Tab icon={<PersonIcon />} iconPosition="start" label={t('friendChat')} />
       </Tabs>
 
       {activeTab === 0 && (
         <Box>
-          {activities.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Typography color="text.secondary" paragraph>
-                尚無加入的活動聊天室。加入活動後，即可在此查看並進入聊天。
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/activities')}
-              >
-                探索活動
-              </Button>
-            </Box>
+          {!loading && activities.length === 0 ? (
+            <EmptyState
+              variant="no-chat"
+              title={t('noActivityChats')}
+              actionLabel={t('exploreActivities')}
+              onAction={() => navigate('/activities')}
+            />
+          ) : loading ? (
+            <List disablePadding>
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <ChatListItemSkeleton key={i} />
+              ))}
+            </List>
           ) : (
             <List disablePadding>
               {activities.map((activity) => (
@@ -126,7 +121,7 @@ export const ChatListPage: React.FC = () => {
                   >
                     <ListItemText
                       primary={activity.title}
-                      secondary={`${activity.creatorName} · ${activity.currentParticipants}/${activity.maxParticipants} 人`}
+                      secondary={`${activity.creatorName} · ${activity.currentParticipants}/${activity.maxParticipants} ${t('people')}`}
                     />
                     <ChatIcon color="action" />
                   </ListItemButton>
@@ -139,22 +134,19 @@ export const ChatListPage: React.FC = () => {
 
       {activeTab === 1 && (
         <Box>
-          {friendsLoading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : friends.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Typography color="text.secondary" paragraph>
-                尚無好友。互追後即可在此與好友傳訊息。
-              </Typography>
-              <Button
-                variant="outlined"
-                onClick={() => navigate('/users/search')}
-              >
-                搜尋用戶
-              </Button>
-            </Box>
+          {!friendsLoading && friends.length === 0 ? (
+            <EmptyState
+              variant="no-friends"
+              title={t('noFriendsChat')}
+              actionLabel={t('searchUsers')}
+              onAction={() => navigate('/users/search')}
+            />
+          ) : friendsLoading ? (
+            <List disablePadding>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <ChatListItemSkeleton key={i} />
+              ))}
+            </List>
           ) : (
             <List disablePadding>
               {friends.map((friend) => (

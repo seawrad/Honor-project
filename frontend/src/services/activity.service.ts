@@ -49,6 +49,7 @@ export const activityService = {
     params.append('limit', limit.toString());
     
     if (filters) {
+      if (filters.keyword) params.append('keyword', filters.keyword);
       if (filters.dateFrom) params.append('startDate', filters.dateFrom);
       if (filters.dateTo) params.append('endDate', filters.dateTo);
       if (filters.distanceMin !== undefined) params.append('minDistance', filters.distanceMin.toString());
@@ -113,6 +114,15 @@ export const activityService = {
     const response = await axios.put<{ data: BackendActivity }>(
       `${API_BASE_URL}/activities/${id}`,
       body,
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+    return mapBackendActivity(response.data.data);
+  },
+
+  async updateActivityStatus(id: string, status: 'in-progress' | 'completed'): Promise<Activity> {
+    const response = await axios.put<{ data: BackendActivity }>(
+      `${API_BASE_URL}/activities/${id}`,
+      { status },
       { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
     );
     return mapBackendActivity(response.data.data);
@@ -183,5 +193,36 @@ export const activityService = {
       headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` },
     });
     return response.data.data;
+  },
+
+  async bookmarkActivity(id: string): Promise<void> {
+    await axios.post(
+      `${API_BASE_URL}/activities/${id}/bookmark`,
+      {},
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+  },
+
+  async unbookmarkActivity(id: string): Promise<void> {
+    await axios.delete(
+      `${API_BASE_URL}/activities/${id}/bookmark`,
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+  },
+
+  async getBookmarkedIds(): Promise<string[]> {
+    const response = await axios.get<{ data: { ids: string[] } }>(
+      `${API_BASE_URL}/activities/bookmarked/ids`,
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+    return response.data.data.ids;
+  },
+
+  async getBookmarkedActivities(): Promise<Activity[]> {
+    const response = await axios.get<{ data: BackendActivity[] }>(
+      `${API_BASE_URL}/activities/bookmarked`,
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+    return (response.data.data as BackendActivity[]).map(mapBackendActivity);
   },
 };

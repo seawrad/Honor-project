@@ -3,10 +3,12 @@ import i18n from '../i18n'
 
 export type Language = 'en' | 'zh-TW'
 export type DistanceUnit = 'km' | 'miles'
+export type ThemeMode = 'light' | 'dark' | 'system'
 
 export interface AppSettings {
   language: Language
   distanceUnit: DistanceUnit
+  themeMode: ThemeMode
   activityReminders: boolean
   chatNotifications: boolean
 }
@@ -16,6 +18,7 @@ const STORAGE_KEY = 'app-settings'
 const defaultSettings: AppSettings = {
   language: 'zh-TW',
   distanceUnit: 'km',
+  themeMode: 'system',
   activityReminders: true,
   chatNotifications: true,
 }
@@ -46,6 +49,7 @@ interface SettingsContextType {
   settings: AppSettings
   setLanguage: (lang: Language) => void
   setDistanceUnit: (unit: DistanceUnit) => void
+  setThemeMode: (mode: ThemeMode) => void
   setActivityReminders: (enabled: boolean) => void
   setChatNotifications: (enabled: boolean) => void
   updateSettings: (updates: Partial<AppSettings>) => void
@@ -71,6 +75,10 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     saveSettings(settings)
   }, [settings])
 
+  useEffect(() => {
+    i18n.changeLanguage(settings.language)
+  }, [settings.language])
+
   const setLanguage = useCallback((lang: Language) => {
     setSettingsState((s) => ({ ...s, language: lang }))
     i18n.changeLanguage(lang)
@@ -79,6 +87,10 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
 
   const setDistanceUnit = useCallback((unit: DistanceUnit) => {
     setSettingsState((s) => ({ ...s, distanceUnit: unit }))
+  }, [])
+
+  const setThemeMode = useCallback((mode: ThemeMode) => {
+    setSettingsState((s) => ({ ...s, themeMode: mode }))
   }, [])
 
   const setActivityReminders = useCallback((enabled: boolean) => {
@@ -112,6 +124,7 @@ export const SettingsProvider: React.FC<SettingsProviderProps> = ({ children }) 
     settings,
     setLanguage,
     setDistanceUnit,
+    setThemeMode,
     setActivityReminders,
     setChatNotifications,
     updateSettings,

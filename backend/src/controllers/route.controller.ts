@@ -25,12 +25,12 @@ export class RouteController {
 
       const { activityId, startTime } = req.body as CreateRouteRequest
 
-      if (!activityId || !startTime) {
+      if (!startTime) {
         res.status(400).json({
           success: false,
           error: {
             code: 'VALIDATION_REQUIRED_FIELD',
-            message: 'Activity ID and start time are required',
+            message: 'Start time is required',
           },
           timestamp: new Date().toISOString(),
         })
@@ -38,7 +38,7 @@ export class RouteController {
       }
 
       const route = await RouteService.createRoute(userId, {
-        activityId,
+        activityId: activityId || null,
         startTime: new Date(startTime),
       })
 

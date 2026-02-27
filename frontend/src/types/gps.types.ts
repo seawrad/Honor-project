@@ -7,7 +7,7 @@ export interface GPSPosition {
 
 export interface RouteData {
   id: string;
-  activityId: string;
+  activityId: string | null;
   userId: string;
   positions: GPSPosition[];
   totalDistance: number;
@@ -25,7 +25,7 @@ export interface PerformanceMetrics {
 }
 
 export interface CreateRouteData {
-  activityId: string;
+  activityId?: string | null;
   positions: GPSPosition[];
   totalDistance: number;
   averageSpeed: number;

@@ -10,11 +10,11 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
-  CircularProgress,
   Grid,
 } from '@mui/material';
-import { CalendarToday, DirectionsRun } from '@mui/icons-material';
+import { CalendarToday, DirectionsRun, EmojiEvents } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { userService } from '../services/user.service';
 import { WeatherModule } from '../components/WeatherModule';
@@ -22,11 +22,13 @@ import { UserStatsSummary } from '../components/UserStatsSummary';
 import type { RecentActivity, UserStatsSummary as UserStatsSummaryType } from '../types/user.types';
 
 export const HomePage: React.FC = () => {
+  const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [upcomingActivities, setUpcomingActivities] = useState<RecentActivity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
   const [stats, setStats] = useState<UserStatsSummaryType | null>(null);
+  const [achievementCount, setAchievementCount] = useState<number | null>(null);
 
   useEffect(() => {
     const loadUpcoming = async () => {
@@ -60,13 +62,23 @@ export const HomePage: React.FC = () => {
     loadStats();
   }, [user?.id]);
 
+  // Check for new achievements and load count on home load
+  useEffect(() => {
+    if (!user?.id) return;
+    import('../services/achievement.service').then(({ achievementService }) => {
+      achievementService.checkAchievements().catch(() => {});
+      achievementService.getUnlockedCount().then(setAchievementCount).catch(() => setAchievementCount(0));
+    });
+  }, [user?.id]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const locale = i18n.language === 'en' ? 'en-US' : 'zh-TW';
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('zh-TW', {
+    return new Date(dateString).toLocaleDateString(locale, {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
@@ -81,19 +93,19 @@ export const HomePage: React.FC = () => {
           <Grid container spacing={4}>
             <Grid item xs={12} md={7}>
               <Typography variant="h3" gutterBottom>
-                歡迎來到 RunCrew
+                {t('welcomeToRunCrew')}
               </Typography>
               
               <Typography variant="h5" color="text.secondary" sx={{ mb: 3 }}>
-                您好，{user?.displayName}！
+                {t('hello')}，{user?.displayName}！
               </Typography>
 
               <Typography variant="body1" paragraph>
-                電子郵件：{user?.email}
+                {t('emailLabel')}：{user?.email}
               </Typography>
 
               <Typography variant="body1" paragraph>
-                年齡：{user?.age}
+                {t('ageLabel')}：{user?.age}
               </Typography>
 
               <Stack 
@@ -107,7 +119,16 @@ export const HomePage: React.FC = () => {
               sx={{ width: { xs: '100%', sm: 'auto' } }}
               onClick={() => navigate('/activities')}
             >
-              探索活動
+              {t('exploreActivities')}
+            </Button>
+            <Button 
+              variant="contained" 
+              color="success" 
+              startIcon={<DirectionsRun />}
+              sx={{ width: { xs: '100%', sm: 'auto' } }}
+              onClick={() => navigate('/run-now')}
+            >
+              {t('runNow')}
             </Button>
             <Button 
               variant="outlined" 
@@ -115,7 +136,7 @@ export const HomePage: React.FC = () => {
               sx={{ width: { xs: '100%', sm: 'auto' } }}
               onClick={() => navigate('/activities/create')}
             >
-              建立活動
+              {t('createActivity')}
             </Button>
             <Button 
               variant="outlined" 
@@ -123,28 +144,40 @@ export const HomePage: React.FC = () => {
               sx={{ width: { xs: '100%', sm: 'auto' } }}
               onClick={handleLogout}
             >
-              登出
+              {t('logout')}
             </Button>
           </Stack>
             </Grid>
             <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'stretch', md: 'flex-end' }, gap: 2 }}>
               <WeatherModule />
               <UserStatsSummary stats={stats} />
+              {achievementCount !== null && (
+                <Button
+                  variant="outlined"
+                  startIcon={<EmojiEvents />}
+                  onClick={() => navigate('/achievements')}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    textTransform: 'none',
+                    borderColor: 'warning.main',
+                    color: 'warning.dark',
+                    '&:hover': { borderColor: 'warning.dark', bgcolor: 'rgba(255, 193, 7, 0.08)' },
+                  }}
+                >
+                  {t('achievementsUnlocked', { count: achievementCount })}
+                </Button>
+              )}
             </Grid>
           </Grid>
         </Paper>
 
         <Paper elevation={2} sx={{ p: { xs: 2, sm: 3 }, mt: 4 }}>
           <Typography variant="h6" gutterBottom>
-            即將參加的活動
+            {t('upcomingActivities')}
           </Typography>
-          {loadingActivities ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={32} />
-            </Box>
-          ) : upcomingActivities.length === 0 ? (
+          {!loadingActivities && upcomingActivities.length === 0 ? (
             <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
-              尚無即將參加的活動，快去探索活動吧！
+              {t('noUpcomingActivities')}
             </Typography>
           ) : (
             <List disablePadding>
@@ -161,7 +194,7 @@ export const HomePage: React.FC = () => {
                           </Box>
                           <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                             <DirectionsRun sx={{ fontSize: 14 }} />
-                            {activity.distance} 公里
+                            {activity.distance} {t('kmShort')}
                           </Box>
                         </Box>
                       }
