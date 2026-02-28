@@ -9,6 +9,9 @@ vi.mock('../../services/socket.service')
 
 describe('MessageInput', () => {
   const mockRoomId = 'room-1'
+  const getMessageInput = () =>
+    screen.getByPlaceholderText(/輸入訊息|Enter message|Type a message/i)
+  const getSendButton = () => screen.getByRole('button', { name: /send/i })
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -20,41 +23,37 @@ describe('MessageInput', () => {
 
   it('should render message input field', () => {
     render(<MessageInput roomId={mockRoomId} />)
-    expect(screen.getByPlaceholderText('Type a message...')).toBeInTheDocument()
+    expect(getMessageInput()).toBeInTheDocument()
   })
 
   it('should render send button', () => {
     render(<MessageInput roomId={mockRoomId} />)
-    const sendButton = screen.getByRole('button')
-    expect(sendButton).toBeInTheDocument()
+    expect(getSendButton()).toBeInTheDocument()
   })
 
   it('should disable send button when input is empty', () => {
     render(<MessageInput roomId={mockRoomId} />)
-    const sendButton = screen.getByRole('button')
-    expect(sendButton).toBeDisabled()
+    expect(getSendButton()).toBeDisabled()
   })
 
   it('should enable send button when input has text', async () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
+    const input = getMessageInput()
     await user.type(input, 'Hello')
 
-    const sendButton = screen.getByRole('button')
-    expect(sendButton).not.toBeDisabled()
+    expect(getSendButton()).not.toBeDisabled()
   })
 
   it('should send message when send button is clicked', async () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
+    const input = getMessageInput()
     await user.type(input, 'Hello World')
 
-    const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
+    await user.click(getSendButton())
 
     expect(socketService.sendMessage).toHaveBeenCalledWith(mockRoomId, 'Hello World')
   })
@@ -63,11 +62,10 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...') as HTMLInputElement
+    const input = getMessageInput() as HTMLTextAreaElement
     await user.type(input, 'Hello')
 
-    const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
+    await user.click(getSendButton())
 
     await waitFor(() => {
       expect(input.value).toBe('')
@@ -78,7 +76,7 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
+    const input = getMessageInput()
     await user.type(input, 'Hello{Enter}')
 
     expect(socketService.sendMessage).toHaveBeenCalledWith(mockRoomId, 'Hello')
@@ -88,12 +86,10 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, '   ')
+    await user.type(getMessageInput(), '   ')
 
-    const sendButton = screen.getByRole('button')
     // Button should be disabled for empty/whitespace-only messages
-    expect(sendButton).toBeDisabled()
+    expect(getSendButton()).toBeDisabled()
     expect(socketService.sendMessage).not.toHaveBeenCalled()
   })
 
@@ -103,14 +99,11 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'Hello')
-
-    const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
+    await user.type(getMessageInput(), 'Hello')
+    await user.click(getSendButton())
 
     await waitFor(() => {
-      expect(screen.getByText(/Not connected to chat/)).toBeInTheDocument()
+      expect(screen.getByText(/Not connected to chat|無法連線/)).toBeInTheDocument()
     })
   })
 
@@ -118,11 +111,8 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, '  Hello World  ')
-
-    const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
+    await user.type(getMessageInput(), '  Hello World  ')
+    await user.click(getSendButton())
 
     expect(socketService.sendMessage).toHaveBeenCalledWith(mockRoomId, 'Hello World')
   })
@@ -131,8 +121,7 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'H')
+    await user.type(getMessageInput(), 'H')
 
     await waitFor(() => {
       expect(socketService.emitTyping).toHaveBeenCalledWith(mockRoomId)
@@ -143,11 +132,8 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'Hello')
-
-    const sendButton = screen.getByRole('button')
-    await user.click(sendButton)
+    await user.type(getMessageInput(), 'Hello')
+    await user.click(getSendButton())
 
     await waitFor(() => {
       expect(socketService.emitStopTyping).toHaveBeenCalledWith(mockRoomId)
@@ -160,7 +146,7 @@ describe('MessageInput', () => {
     const user = userEvent.setup()
     render(<MessageInput roomId={mockRoomId} />)
 
-    const input = screen.getByPlaceholderText('Type a message...')
+    const input = getMessageInput()
     await user.type(input, 'H')
 
     // Wait a bit to ensure no typing event is emitted

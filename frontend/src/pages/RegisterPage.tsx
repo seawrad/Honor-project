@@ -62,7 +62,7 @@ export const RegisterPage: React.FC = () => {
       newErrors.displayName = t('displayNameMin');
     }
 
-    if (!formData.age) {
+    if (formData.age == null || formData.age <= 0) {
       newErrors.age = t('ageRequired');
     } else if (formData.age < 18 || formData.age > 65) {
       newErrors.age = t('ageRange');

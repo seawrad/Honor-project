@@ -19,11 +19,8 @@ vi.mock('../useAuth', () => ({
   }),
 }))
 
-// Mock Notification API
-global.Notification = {
-  permission: 'granted',
-  requestPermission: vi.fn().mockResolvedValue('granted'),
-} as any
+// Notification is mocked in setup.ts; useChatNotifications needs it to be a constructor.
+// If setup mock fails, ensure setup runs first and MockNotification is callable with `new`.
 
 describe('useChatNotifications', () => {
   let messageReceivedCallback: ((message: MessageReceivedPayload) => void) | null = null

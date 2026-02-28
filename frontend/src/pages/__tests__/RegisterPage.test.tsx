@@ -2,14 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '../../test/testUtils';
 import userEvent from '@testing-library/user-event';
 import { RegisterPage } from '../RegisterPage';
-import * as authService from '../../services/auth.service';
-
-// Mock the auth service
-vi.mock('../../services/auth.service', () => ({
-  authService: {
-    register: vi.fn(),
-  },
-}));
+import { mockAuthValue } from '../../test/setup';
 
 // Mock useNavigate
 const mockNavigate = vi.fn();
@@ -27,11 +20,14 @@ describe('RegisterPage', () => {
     vi.clearAllMocks();
   });
 
+  const getPasswordInput = () =>
+    screen.getByLabelText((content) => content.includes('密碼') && !content.includes('顯示'));
+
   it('renders registration form with all fields', () => {
     render(<RegisterPage />);
 
     expect(screen.getByLabelText(/電子郵件/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^密碼/i)).toBeInTheDocument();
+    expect(getPasswordInput()).toBeInTheDocument();
     expect(screen.getByLabelText(/顯示名稱/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/年齡/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /註冊/i })).toBeInTheDocument();
@@ -56,15 +52,18 @@ describe('RegisterPage', () => {
     const user = userEvent.setup();
     render(<RegisterPage />);
 
-    const passwordInput = screen.getByLabelText(/^密碼/i);
+    const passwordInput = getPasswordInput();
     const submitButton = screen.getByRole('button', { name: /註冊/i });
-    
+
+    // Fill email first so validation focuses on password
+    await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
+
     // Test short password
     await user.type(passwordInput, 'short');
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/密碼至少需要 8 個字元/i)).toBeInTheDocument();
+      expect(screen.getByText(/至少 8 個字元/i)).toBeInTheDocument();
     });
 
     // Clear and test password without numbers
@@ -110,7 +109,7 @@ describe('RegisterPage', () => {
     
     // Fill all fields except terms
     await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/^密碼/i), 'password123');
+    await user.type(getPasswordInput(), 'password123');
     await user.type(screen.getByLabelText(/顯示名稱/i), 'Test User');
     await user.type(screen.getByLabelText(/年齡/i), '25');
     
@@ -123,7 +122,7 @@ describe('RegisterPage', () => {
 
   it('submits form with valid data', async () => {
     const user = userEvent.setup();
-    vi.mocked(authService.authService.register).mockResolvedValue({
+    mockAuthValue.register.mockResolvedValue({
       message: 'Registration successful',
       userId: '123',
     });
@@ -132,7 +131,7 @@ describe('RegisterPage', () => {
 
     // Fill all fields with valid data
     await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/^密碼/i), 'password123');
+    await user.type(getPasswordInput(), 'password123');
     await user.type(screen.getByLabelText(/顯示名稱/i), 'Test User');
     await user.type(screen.getByLabelText(/年齡/i), '25');
     await user.click(screen.getByRole('checkbox'));
@@ -141,7 +140,7 @@ describe('RegisterPage', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(authService.authService.register).toHaveBeenCalledWith({
+      expect(mockAuthValue.register).toHaveBeenCalledWith({
         email: 'test@example.com',
         password: 'password123',
         displayName: 'Test User',
@@ -156,7 +155,7 @@ describe('RegisterPage', () => {
 
   it('displays error for duplicate email', async () => {
     const user = userEvent.setup();
-    vi.mocked(authService.authService.register).mockRejectedValue({
+    mockAuthValue.register.mockRejectedValue({
       response: {
         data: {
           error: {
@@ -171,7 +170,7 @@ describe('RegisterPage', () => {
 
     // Fill form
     await user.type(screen.getByLabelText(/電子郵件/i), 'existing@example.com');
-    await user.type(screen.getByLabelText(/^密碼/i), 'password123');
+    await user.type(getPasswordInput(), 'password123');
     await user.type(screen.getByLabelText(/顯示名稱/i), 'Test User');
     await user.type(screen.getByLabelText(/年齡/i), '25');
     await user.click(screen.getByRole('checkbox'));

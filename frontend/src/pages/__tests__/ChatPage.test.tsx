@@ -88,16 +88,19 @@ describe('ChatPage', () => {
     vi.mocked(socketService.off).mockImplementation(() => {})
   })
 
+  const getMessageInput = () =>
+    screen.getByPlaceholderText(/輸入訊息|Enter message|Type a message/i)
+
   it('should render back button', () => {
     render(<ChatPage />)
-    expect(screen.getByText('Back to Activity')).toBeInTheDocument()
+    expect(screen.getByText(/返回活動|Back to Activity/)).toBeInTheDocument()
   })
 
   it('should navigate back to activity when back button is clicked', async () => {
     const user = userEvent.setup()
     render(<ChatPage />)
 
-    const backButton = screen.getByText('Back to Activity')
+    const backButton = screen.getByText(/返回活動|Back to Activity/)
     await user.click(backButton)
 
     expect(mockNavigate).toHaveBeenCalledWith('/activities/activity-1')
@@ -129,8 +132,7 @@ describe('ChatPage', () => {
     })
 
     // Type and send a message
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'New message')
+    await user.type(getMessageInput(), 'New message')
 
     // Find send button by test ID (icon button without accessible name)
     const sendButton = screen.getByTestId('SendIcon').closest('button')
@@ -333,8 +335,7 @@ describe('ChatPage', () => {
       expect(screen.getByText('Hello!')).toBeInTheDocument()
     })
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'T')
+    await user.type(getMessageInput(), 'T')
 
     await waitFor(() => {
       expect(socketService.emitTyping).toHaveBeenCalledWith(mockRoomId)
@@ -351,8 +352,7 @@ describe('ChatPage', () => {
       expect(screen.getByText('Hello!')).toBeInTheDocument()
     })
 
-    const input = screen.getByPlaceholderText('Type a message...')
-    await user.type(input, 'Test message')
+    await user.type(getMessageInput(), 'Test message')
 
     // Find send button by test ID
     const sendButton = screen.getByTestId('SendIcon').closest('button')

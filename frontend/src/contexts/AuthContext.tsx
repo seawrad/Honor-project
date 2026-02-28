@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
-import { AuthContextType, User, LoginCredentials, RegisterData } from '../types/auth.types';
+import { AuthContextType, User, LoginCredentials, RegisterData, DEV_MODE_EMAILS } from '../types/auth.types';
 import { authService } from '../services/auth.service';
 import { tokenStorage } from '../utils/tokenStorage';
 import { RunCrewLoadingScreen } from '../components/RunCrewLoadingScreen';
@@ -15,6 +15,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    authService.logout().catch(() => {
+      // Ignore logout errors
+    });
+    setUser(null);
+    tokenStorage.clearAll();
+    delete axios.defaults.headers.common['Authorization'];
+  }, []);
+
+  const refreshToken = useCallback(async (): Promise<void> => {
+    const currentRefreshToken = tokenStorage.getRefreshToken();
+
+    if (!currentRefreshToken) {
+      throw new Error('No refresh token available');
+    }
+
+    const tokens = await authService.refreshToken(currentRefreshToken);
+    const persistent = tokenStorage.isPersistent();
+
+    tokenStorage.setAccessToken(tokens.accessToken, persistent);
+    tokenStorage.setRefreshToken(tokens.refreshToken, persistent);
+
+    axios.defaults.headers.common['Authorization'] = `Bearer ${tokens.accessToken}`;
+
+    const currentUser = await authService.getCurrentUser(tokens.accessToken);
+    setUser(currentUser);
+    tokenStorage.setUser(currentUser, persistent);
+  }, []);
+
   // Setup axios interceptor for automatic token refresh
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
@@ -22,8 +51,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       async (error) => {
         const originalRequest = error.config;
 
-        // If error is 401 and we haven't retried yet
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Only retry on token expiry, not on login failure (invalid credentials)
+        const isTokenExpired =
+          error.response?.status === 401 &&
+          error.response?.data?.error?.code === 'AUTH_TOKEN_EXPIRED';
+        if (isTokenExpired && !originalRequest._retry) {
           originalRequest._retry = true;
 
           try {
@@ -48,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => {
       axios.interceptors.response.eject(interceptor);
     };
-  }, []);
+  }, [refreshToken, logout]);
 
   // Initialize auth state from localStorage
   // Minimum 3.5s display so users can see the RunCrew loading animation
@@ -81,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     initializeAuth();
-  }, []);
+  }, [refreshToken]);
 
   const login = async (credentials: LoginCredentials, options?: { keepLoggedIn?: boolean }): Promise<void> => {
     const response = await authService.login(credentials);
@@ -100,40 +132,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // After registration, user needs to login
   };
 
-  const logout = useCallback(() => {
-    authService.logout().catch(() => {
-      // Ignore logout errors
-    });
-    
-    setUser(null);
-    tokenStorage.clearAll();
-    delete axios.defaults.headers.common['Authorization'];
-  }, []);
-
-  const refreshToken = async (): Promise<void> => {
-    const currentRefreshToken = tokenStorage.getRefreshToken();
-
-    if (!currentRefreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const tokens = await authService.refreshToken(currentRefreshToken);
-    const persistent = tokenStorage.isPersistent();
-
-    tokenStorage.setAccessToken(tokens.accessToken, persistent);
-    tokenStorage.setRefreshToken(tokens.refreshToken, persistent);
-
-    axios.defaults.headers.common['Authorization'] = `Bearer ${tokens.accessToken}`;
-
-    const currentUser = await authService.getCurrentUser(tokens.accessToken);
-    setUser(currentUser);
-    tokenStorage.setUser(currentUser, persistent);
-  };
+  const isDeveloperMode = !!user && DEV_MODE_EMAILS.includes(user.email.toLowerCase());
 
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
+    isDeveloperMode,
     login,
     register,
     logout,

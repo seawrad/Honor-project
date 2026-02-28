@@ -63,4 +63,12 @@ export const memoryCardService = {
     );
     return response.data.data;
   },
+
+  async getByRouteId(routeId: string): Promise<RunMemoryCard[]> {
+    const response = await axios.get<{ data: RunMemoryCard[] }>(
+      `${API_BASE_URL}/memory-cards/route/${routeId}`,
+      { headers: { Authorization: `Bearer ${tokenStorage.getAccessToken()}` } }
+    );
+    return response.data.data;
+  },
 };

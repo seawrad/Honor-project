@@ -10,6 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuth';
 import { useGPSTracker } from '../hooks/useGPSTracker';
 import { GPSTracker } from '../components/GPSTracker';
 import { PerformanceMetrics } from '../components/PerformanceMetrics';
@@ -18,12 +19,15 @@ import { SoloRunControls } from '../components/SoloRunControls';
 type Phase = 'countdown' | 'ready' | 'running';
 
 const COUNTDOWN_SECONDS = 5;
+const DEV_COUNTDOWN_SECONDS = 0;
 
 export const SoloRunPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isDeveloperMode } = useAuth();
+  const countdownSeconds = isDeveloperMode ? DEV_COUNTDOWN_SECONDS : COUNTDOWN_SECONDS;
   const [phase, setPhase] = useState<Phase>('ready');
-  const [countdown, setCountdown] = useState(COUNTDOWN_SECONDS);
+  const [countdown, setCountdown] = useState(countdownSeconds);
 
   const {
     isTracking,
@@ -40,8 +44,8 @@ export const SoloRunPage: React.FC = () => {
 
   const handleStartCountdown = useCallback(() => {
     setPhase('countdown');
-    setCountdown(COUNTDOWN_SECONDS);
-  }, []);
+    setCountdown(countdownSeconds);
+  }, [countdownSeconds]);
 
   const handleStartTracking = useCallback(
     async (isResume?: boolean) => {

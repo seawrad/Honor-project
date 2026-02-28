@@ -39,6 +39,7 @@ import { FriendChatButton } from './FriendChatButton';
 import { DMChatBox } from './DMChatBox';
 import { OfflineIndicator } from './OfflineIndicator';
 import { BackToTop } from './BackToTop';
+import { DevModeBanner } from './DevModeBanner';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth';
 import { useDMChat } from '../contexts/DMChatContext';
@@ -269,6 +270,8 @@ export const AppLayout: React.FC = () => {
           )}
         </Toolbar>
       </AppBar>
+
+      <DevModeBanner />
 
       {/* User menu dropdown */}
       <Menu

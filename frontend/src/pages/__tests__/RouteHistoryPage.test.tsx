@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { screen, waitFor } from '@testing-library/react';
+import { render } from '../../test/testUtils';
 import { RouteHistoryPage } from '../RouteHistoryPage';
 import { gpsService } from '../../services/gps.service';
 import { RouteData } from '../../types/gps.types';
@@ -49,26 +49,18 @@ describe('RouteHistoryPage', () => {
       () => new Promise(() => {}) // Never resolves
     );
 
-    render(
-      <BrowserRouter>
-        <RouteHistoryPage />
-      </BrowserRouter>
-    );
+    render(<RouteHistoryPage />);
 
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
   it('should display routes after loading', async () => {
     (gpsService.getUserRoutes as any).mockResolvedValue(mockRoutes);
 
-    render(
-      <BrowserRouter>
-        <RouteHistoryPage />
-      </BrowserRouter>
-    );
+    render(<RouteHistoryPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('路線歷史')).toBeInTheDocument();
+      expect(screen.getByText('路線紀錄')).toBeInTheDocument();
       expect(screen.getByText('5.50')).toBeInTheDocument();
       expect(screen.getByText(/平均速度: 11.00/)).toBeInTheDocument();
     });
@@ -77,11 +69,7 @@ describe('RouteHistoryPage', () => {
   it('should display empty state when no routes', async () => {
     (gpsService.getUserRoutes as any).mockResolvedValue([]);
 
-    render(
-      <BrowserRouter>
-        <RouteHistoryPage />
-      </BrowserRouter>
-    );
+    render(<RouteHistoryPage />);
 
     await waitFor(() => {
       expect(screen.getByText('尚無路線記錄')).toBeInTheDocument();
@@ -93,11 +81,7 @@ describe('RouteHistoryPage', () => {
       response: { data: { error: { message: 'Failed to load routes' } } },
     });
 
-    render(
-      <BrowserRouter>
-        <RouteHistoryPage />
-      </BrowserRouter>
-    );
+    render(<RouteHistoryPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed to load routes')).toBeInTheDocument();

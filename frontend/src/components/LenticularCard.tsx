@@ -43,6 +43,12 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
   };
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [usePointer, setUsePointer] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const imageUrl = data.aiImageUrl || data.groupPhotoUrl;
+
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imageUrl]);
 
   const handleDeviceOrientation = useCallback((e: DeviceOrientationEvent) => {
     if (e.beta == null || e.gamma == null) return;
@@ -130,20 +136,28 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               justifyContent: 'center',
               background: 'rgba(0,0,0,0.2)',
               transform: `translateZ(20px)`,
+              position: 'relative',
+              overflow: 'hidden',
             }}
           >
-            {data.aiImageUrl || data.groupPhotoUrl ? (
+            {imageUrl && (
               <Box
                 component="img"
-                src={data.aiImageUrl || data.groupPhotoUrl}
+                src={imageUrl}
                 alt="Run moment"
+                onLoad={() => setImageLoaded(true)}
                 sx={{
+                  position: 'absolute',
+                  inset: 0,
                   width: '100%',
                   height: '100%',
                   objectFit: 'cover',
+                  opacity: imageLoaded ? 1 : 0,
+                  transition: 'opacity 0.4s ease-out',
                 }}
               />
-            ) : (
+            )}
+            {(!imageUrl || !imageLoaded) && (
               <Box
                 sx={{
                   display: 'flex',
@@ -155,7 +169,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               >
                 <DirectionsRunIcon sx={{ fontSize: 64 }} />
                 <Typography variant="h6">
-                  {t('runnersCount', { count: Number(data.participantCount) || 0 })} · {(Number(data.totalDistance) || 0).toFixed(1)} {t('kmShort')}
+                  {t('runnersCount', { count: Number(data.participantCount) || 0 })} · {(Number(data.totalDistance) || 0).toFixed(2)} {t('kmShort')}
                 </Typography>
               </Box>
             )}
@@ -184,7 +198,7 @@ export const LenticularCard: React.FC<LenticularCardProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <DirectionsRunIcon fontSize="small" />
                 <Typography variant="body2">
-                  {(Number(data.totalDistance) || 0).toFixed(1)} {t('kmShort')} · {(Number(data.averageSpeed) || 0).toFixed(1)} km/h
+                  {(Number(data.totalDistance) || 0).toFixed(2)} {t('kmShort')} · {(Number(data.averageSpeed) || 0).toFixed(2)} km/h
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

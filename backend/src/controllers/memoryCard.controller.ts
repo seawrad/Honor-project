@@ -1,11 +1,13 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { MemoryCardService } from '../services/memoryCard.service.js'
 import { AchievementService } from '../services/achievement.service.js'
+import { generateMemoryCardImageUrl } from '../services/aiImage.service.js'
 
 export class MemoryCardController {
   static async create(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const data = req.body
       const card = await MemoryCardService.create(userId, {
         activityId: data.activityId,
@@ -21,6 +23,21 @@ export class MemoryCardController {
         messages: data.messages,
         routeSummary: data.routeSummary,
       })
+      // Generate AI image from run context (location, weather)
+      try {
+        const aiImageUrl = await generateMemoryCardImageUrl(
+          data.activityId ?? null,
+          data.routeId ?? null,
+          data.weatherDesc,
+          data.locationHint
+        )
+        if (aiImageUrl) {
+          await MemoryCardService.updateAiImageUrl(card.id, aiImageUrl)
+          ;(card as any).aiImageUrl = aiImageUrl
+        }
+      } catch (imgErr) {
+        console.warn('AI image generation skipped:', imgErr)
+      }
       // Check for new achievements (e.g. memory_card badge)
       const newlyUnlocked = await AchievementService.checkAndAwardAchievements(userId)
       res.status(201).json({
@@ -76,6 +93,24 @@ export class MemoryCardController {
       res.json({ success: true, data: cards })
     } catch (error) {
       console.error('Get memory cards by activity error:', error)
+      res.status(500).json({
+        success: false,
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to retrieve memory cards',
+        },
+        timestamp: new Date().toISOString(),
+      })
+    }
+  }
+
+  static async getByRouteId(req: Request, res: Response): Promise<void> {
+    try {
+      const { routeId } = req.params
+      const cards = await MemoryCardService.getByRouteId(routeId)
+      res.json({ success: true, data: cards })
+    } catch (error) {
+      console.error('Get memory cards by route error:', error)
       res.status(500).json({
         success: false,
         error: {

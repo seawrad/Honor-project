@@ -6,6 +6,7 @@ const router = Router()
 
 router.post('/', authenticateToken, MemoryCardController.create)
 router.get('/activity/:activityId', MemoryCardController.getByActivityId)
+router.get('/route/:routeId', authenticateToken, MemoryCardController.getByRouteId)
 router.get('/:id', MemoryCardController.getById)
 
 export default router

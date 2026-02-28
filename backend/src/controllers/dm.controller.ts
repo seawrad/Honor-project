@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { dmService } from '../services/dm.service.js'
 import { ValidationError } from '../utils/validation.js'
 
@@ -8,7 +9,7 @@ class DMController {
    */
   async getOrCreateRoom(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const otherUserId = req.body.otherUserId as string
 
       if (!otherUserId) {
@@ -59,7 +60,7 @@ class DMController {
    */
   async getRooms(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const rooms = await dmService.getDMRooms(userId)
 
       res.json({
@@ -85,7 +86,7 @@ class DMController {
   async getMessages(req: Request, res: Response): Promise<void> {
     try {
       const { roomId } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const page = parseInt(req.query.page as string) || 1
       const limit = parseInt(req.query.limit as string) || 50
 
@@ -133,7 +134,7 @@ class DMController {
   async sendMessage(req: Request, res: Response): Promise<void> {
     try {
       const { roomId } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const content = req.body.content as string
 
       if (!content || typeof content !== 'string') {

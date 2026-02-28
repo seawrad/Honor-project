@@ -16,15 +16,51 @@ const USER_IDS = {
   dave: '44444444-4444-4444-4444-444444444444',
   eva: '55555555-5555-5555-5555-555555555555',
   frank: '66666666-6666-6666-6666-666666666666',
+  dev: '77777777-7777-7777-7777-777777777777',
 }
 
 async function seed() {
   console.log('🌱 Starting seed...')
 
+  // Ensure achievements exist (migrations may have been skipped or table truncated)
+  console.log('Ensuring achievements exist...')
+  await db.query(`
+    INSERT INTO achievements (code, name, name_zh, description, description_zh, icon, condition_type, condition_value, sort_order)
+    VALUES
+      ('first_run', 'First Run', '初跑者', 'Complete your first group run', '完成第一次團體跑', '🎯', 'total_runs', 1, 1),
+      ('run_3', '3 Runs', '三跑入門', 'Complete 3 group runs', '完成 3 次團體跑', '🏅', 'total_runs', 3, 2),
+      ('run_5', '5 Runs', '五跑達人', 'Complete 5 group runs', '完成 5 次團體跑', '🏃', 'total_runs', 5, 2),
+      ('run_10', '10 Runs', '十跑健將', 'Complete 10 group runs', '完成 10 次團體跑', '💪', 'total_runs', 10, 3),
+      ('run_25', '25 Runs', '跑團常客', 'Complete 25 group runs', '完成 25 次團體跑', '⭐', 'total_runs', 25, 4),
+      ('run_50', '50 Runs', '半百跑者', 'Complete 50 group runs', '完成 50 次團體跑', '🌟', 'total_runs', 50, 5),
+      ('run_100', '100 Runs', '百跑傳奇', 'Complete 100 group runs', '完成 100 次團體跑', '💎', 'total_runs', 100, 6),
+      ('first_5k', 'First 5K', '初嘗五公里', 'Complete a 5km run', '完成一次 5 公里跑', '📏', 'single_run_km', 5, 10),
+      ('first_10k', 'First 10K', '十公里解鎖', 'Complete a 10km run', '完成一次 10 公里跑', '🏆', 'single_run_km', 10, 11),
+      ('first_half', 'Half Marathon', '半馬成就', 'Complete a 21km run', '完成一次 21 公里跑', '🎖️', 'single_run_km', 21, 12),
+      ('first_marathon', 'Marathon', '全馬成就', 'Complete a 42km run', '完成一次 42 公里全馬', '🏅', 'single_run_km', 42, 13),
+      ('total_50k', '50K Total', '累積五十公里', 'Run 50km total', '累積跑步 50 公里', '🛤️', 'total_distance_km', 50, 20),
+      ('total_100k', '100K Total', '百公里達成', 'Run 100km total', '累積跑步 100 公里', '🦁', 'total_distance_km', 100, 21),
+      ('total_250k', '250K Total', '累積兩百五十公里', 'Run 250km total', '累積跑步 250 公里', '🛤️', 'total_distance_km', 250, 23),
+      ('total_500k', '500K Total', '五百公里大師', 'Run 500km total', '累積跑步 500 公里', '👑', 'total_distance_km', 500, 22),
+      ('total_1000k', '1000K Total', '千公里大師', 'Run 1000km total', '累積跑步 1000 公里', '👑', 'total_distance_km', 1000, 24),
+      ('week_streak_3', '3-Week Streak', '連續三週', 'Run in 3 consecutive weeks', '連續三週都有跑步', '🔥', 'weekly_streak', 3, 30),
+      ('week_streak_4', '4-Week Streak', '連續四週', 'Run in 4 consecutive weeks', '連續四週都有跑步', '🔥', 'weekly_streak', 4, 31),
+      ('week_streak_7', '7-Week Streak', '連續七週', 'Run in 7 consecutive weeks', '連續七週都有跑步', '🔥', 'weekly_streak', 7, 31),
+      ('social_5', 'Social Runner', '社交跑者', 'Join 5 different activities', '參加 5 場不同活動', '👥', 'unique_activities', 5, 40),
+      ('social_10', 'Super Social', '超級社交跑者', 'Join 10 different activities', '參加 10 場不同活動', '👥', 'unique_activities', 10, 41),
+      ('early_bird', 'Early Bird', '晨跑者', 'Complete a run before 8am', '在早上 8 點前完成跑步', '🌅', 'early_run', 1, 50),
+      ('memory_card', 'Memory Keeper', '記憶收藏家', 'Create your first run memory card', '建立第一張跑步記憶卡', '🃏', 'memory_cards', 1, 60),
+      ('memory_card_5', '5 Memory Cards', '五張記憶卡', 'Create 5 run memory cards', '建立 5 張跑步記憶卡', '🃏', 'memory_cards', 5, 61),
+      ('memory_card_10', '10 Memory Cards', '記憶卡收藏家', 'Create 10 run memory cards', '建立 10 張跑步記憶卡', '🃏', 'memory_cards', 10, 62),
+      ('first_solo_run', 'Solo Runner', '獨跑初體驗', 'Complete your first solo run', '完成第一次獨跑', '🏃‍♂️', 'solo_runs', 1, 70)
+    ON CONFLICT (code) DO NOTHING
+  `)
+  console.log('✓ Achievements ensured')
+
   // Remove existing test users (CASCADE will remove their activities, etc.)
   console.log('Cleaning existing test data...')
   await db.query(
-    `DELETE FROM users WHERE email IN ('alice@test.com', 'bob@test.com', 'carol@test.com', 'dave@test.com', 'eva@test.com', 'frank@test.com')`
+    `DELETE FROM users WHERE email IN ('alice@test.com', 'bob@test.com', 'carol@test.com', 'dave@test.com', 'eva@test.com', 'frank@test.com', 'dev@test.com')`
   )
   console.log('✓ Cleaned')
 
@@ -39,6 +75,7 @@ async function seed() {
     'https://ui-avatars.com/api/?name=Dave+Lam&size=150&background=FFD34E&color=0A2640',
     'https://ui-avatars.com/api/?name=Eva+Tang&size=150&background=4DD4ED&color=0A2640',
     'https://ui-avatars.com/api/?name=Frank+Liu&size=150&background=18c9e8&color=fff',
+    'https://ui-avatars.com/api/?name=Dev+Test&size=150&background=FF5722&color=fff',
   ]
   await db.query(
     `INSERT INTO users (id, email, password_hash, display_name, age, agreed_to_terms, avatar_url)
@@ -48,11 +85,12 @@ async function seed() {
        ($4, 'carol@test.com', $2, 'Carol Lee', 24, true, $10),
        ($5, 'dave@test.com', $2, 'Dave Lam', 42, true, $11),
        ($6, 'eva@test.com', $2, 'Eva Tang', 31, true, $12),
-       ($7, 'frank@test.com', $2, 'Frank Liu', 26, true, $13)
+       ($7, 'frank@test.com', $2, 'Frank Liu', 26, true, $13),
+       ($14, 'dev@test.com', $2, 'Dev Test', 25, true, $15)
      `,
-    [USER_IDS.alice, passwordHash, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank, ...avatarUrls]
+    [USER_IDS.alice, passwordHash, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank, ...avatarUrls.slice(0, 6), USER_IDS.dev, avatarUrls[6]]
   )
-  console.log('✓ 6 users created (alice, bob, carol, dave, eva, frank) with distinct avatars')
+  console.log('✓ 7 users created (alice, bob, carol, dave, eva, frank, dev) - alice & dev have developer mode')
 
   // 2. Activities (mix of upcoming, completed, cancelled; varied edge cases)
   const now = new Date()

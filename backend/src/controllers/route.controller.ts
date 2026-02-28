@@ -141,14 +141,14 @@ export class RouteController {
   }
 
   /**
-   * Get route by ID
+   * Get route by ID (includes GPS positions for map display)
    * GET /api/routes/:id
    */
   static async getRoute(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
 
-      const route = await RouteService.getRouteById(id)
+      const route = await RouteService.getRouteWithPositions(id)
 
       if (!route) {
         res.status(404).json({

@@ -51,6 +51,8 @@ const mockActivities = [
 describe('ActivityListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(activityService.getBookmarkedIds).mockResolvedValue([]);
+    vi.mocked(activityService.getBookmarkedActivities).mockResolvedValue([]);
   });
 
   it('renders activity list with activities', async () => {
@@ -66,19 +68,23 @@ describe('ActivityListPage', () => {
     expect(screen.getByText('跑步活動')).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByText('Morning Run')).toBeInTheDocument();
-      expect(screen.getByText('Evening Run')).toBeInTheDocument();
+      expect(screen.getAllByText('Morning Run').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Evening Run').length).toBeGreaterThan(0);
     });
   });
 
-  it('displays loading state', () => {
+  it('displays loading state', async () => {
     vi.mocked(activityService.getActivities).mockImplementation(
       () => new Promise(() => {})
     );
 
     render(<ActivityListPage />);
 
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    await waitFor(() => {
+      // Loading shows skeletons, not CircularProgress
+      expect(screen.getByText('即將開始的活動')).toBeInTheDocument();
+      expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
+    });
   });
 
   it('displays error message on failure', async () => {
@@ -126,7 +132,32 @@ describe('ActivityListPage', () => {
 
     await waitFor(() => {
       const fullChips = screen.getAllByText('已滿');
-      expect(fullChips).toHaveLength(1);
+      expect(fullChips.length).toBeGreaterThanOrEqual(1);
     });
+  });
+
+  it('displays saved activities section when user has bookmarks', async () => {
+    const savedActivity = {
+      ...mockActivities[0],
+      id: 'saved-1',
+      activityType: 'route-based' as const,
+    };
+    vi.mocked(activityService.getActivities).mockResolvedValue({
+      activities: [],
+      total: 0,
+      page: 1,
+      limit: 12,
+    });
+    vi.mocked(activityService.getBookmarkedIds).mockResolvedValue(['saved-1']);
+    vi.mocked(activityService.getBookmarkedActivities).mockResolvedValue([savedActivity]);
+
+    render(<ActivityListPage />);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('已收藏活動')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 });

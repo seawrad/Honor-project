@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { authService } from '../services/auth.service.js'
 import { RegisterRequest, LoginRequest } from '../types/auth.types.js'
 import { Errors } from '../utils/errors.js'
@@ -43,7 +44,7 @@ export class AuthController {
   }
 
   async me(req: Request, res: Response): Promise<void> {
-    const userId = req.userId!
+    const userId = requireUserId(req)
     const user = await authService.getUserById(userId)
 
     if (!user) {

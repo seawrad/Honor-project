@@ -1,10 +1,11 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { GoalService } from '../services/goal.service.js'
 
 export class GoalController {
   static async getMyGoals(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const goals = await GoalService.getCurrentGoals(userId)
       res.json({ success: true, data: goals })
     } catch (error) {
@@ -18,7 +19,7 @@ export class GoalController {
 
   static async setWeeklyGoal(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const { targetKm } = req.body
       if (typeof targetKm !== 'number' || targetKm <= 0) {
         res.status(400).json({
@@ -40,7 +41,7 @@ export class GoalController {
 
   static async setMonthlyGoal(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const { targetKm } = req.body
       if (typeof targetKm !== 'number' || targetKm <= 0) {
         res.status(400).json({

@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Save, Schedule, Route } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuth';
 import { LocationPicker } from '../components/LocationPicker';
 import { RouteDrawerMap } from '../components/RouteDrawerMap';
 import { activityService } from '../services/activity.service';
@@ -54,6 +55,7 @@ interface FormErrors {
 
 export const CreateActivityPage = () => {
   const { t } = useTranslation();
+  const { isDeveloperMode } = useAuth();
   const navigate = useNavigate();
   const [activityType, setActivityType] = useState<ActivityType>('time-based');
   const [formData, setFormData] = useState<
@@ -171,7 +173,7 @@ export const CreateActivityPage = () => {
     }
     if (!formData.scheduledDate) {
       newErrors.scheduledDate = t('scheduledDateRequired');
-    } else if (new Date(formData.scheduledDate) <= new Date()) {
+    } else if (!isDeveloperMode && new Date(formData.scheduledDate) <= new Date()) {
       newErrors.scheduledDate = t('scheduledDateFuture');
     }
     if (!formData.location) {
@@ -198,7 +200,7 @@ export const CreateActivityPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm() || !formData.location) return;
+    if (!validateForm()) return;
 
     const route =
       activityType === 'route-based' && formData.route

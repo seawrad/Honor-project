@@ -1,4 +1,6 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render } from '../../test/testUtils';
 import { RouteVisualization } from '../RouteVisualization';
 import { RouteData } from '../../types/gps.types';
 
@@ -67,5 +69,49 @@ describe('RouteVisualization', () => {
 
     expect(screen.getByTestId('polyline')).toBeInTheDocument();
     expect(screen.getAllByTestId('marker')).toHaveLength(2); // start and end markers
+  });
+
+  it('should copy to clipboard when share button clicked and navigator.share is unavailable', async () => {
+    const user = userEvent.setup();
+    const writeTextMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText: writeTextMock },
+      configurable: true,
+    });
+    const originalShare = navigator.share;
+    Object.defineProperty(navigator, 'share', { value: undefined, configurable: true });
+
+    render(<RouteVisualization route={mockRoute} />);
+
+    const shareButton = screen.getByRole('button', { name: /分享/ });
+    await user.click(shareButton);
+
+    expect(writeTextMock).toHaveBeenCalled();
+    expect(writeTextMock.mock.calls[0][0]).toContain('5.5');
+    expect(writeTextMock.mock.calls[0][0]).toContain('11.0');
+
+    Object.defineProperty(navigator, 'share', { value: originalShare, configurable: true });
+  });
+
+  it('should use Web Share API when available', async () => {
+    const user = userEvent.setup();
+    const shareMock = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'share', {
+      value: shareMock,
+      configurable: true,
+    });
+
+    render(<RouteVisualization route={mockRoute} />);
+
+    const shareButton = screen.getByRole('button', { name: /分享/ });
+    await user.click(shareButton);
+
+    expect(shareMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.any(String),
+        text: expect.stringContaining('5.5'),
+        url: expect.any(String),
+      })
+    );
   });
 });

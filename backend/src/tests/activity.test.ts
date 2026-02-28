@@ -539,6 +539,99 @@ describe('Activity Service', () => {
       expect(total).toBe(3)
       expect(activities).toHaveLength(2)
     })
+
+    it('should filter by keyword in title', async () => {
+      const { activities, total } = await activityService.searchActivities({
+        keyword: 'Short',
+      })
+
+      expect(total).toBe(1)
+      expect(activities[0].title).toBe('Short Run')
+    })
+
+    it('should filter by keyword in description', async () => {
+      const shortRun = (await activityService.searchActivities({ keyword: 'Short' })).activities[0]
+      await activityService.updateActivity(shortRun.id, testUser1Id, {
+        description: 'A quick morning jog in the park',
+      })
+
+      const { activities, total } = await activityService.searchActivities({
+        keyword: 'morning',
+      })
+
+      expect(total).toBeGreaterThanOrEqual(1)
+      expect(activities.some(a => a.description?.toLowerCase().includes('morning'))).toBe(true)
+    })
+
+    it('should filter by keyword in address', async () => {
+      const { activities, total } = await activityService.searchActivities({
+        keyword: 'Los Angeles',
+      })
+
+      expect(total).toBe(1)
+      expect(activities[0].address).toContain('Los Angeles')
+    })
+  })
+
+  describe('Activity Bookmarks', () => {
+    beforeEach(async () => {
+      const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000)
+      const activity = await activityService.createActivity(testUser1Id, {
+        title: 'Bookmark Test Run',
+        scheduledDate: tomorrow.toISOString(),
+        latitude: 40.7128,
+        longitude: -74.006,
+        address: 'Central Park, New York',
+        distance: 5.0,
+        maxParticipants: 10,
+      })
+      testActivityId = activity.id
+    })
+
+    it('should bookmark an activity', async () => {
+      await activityService.bookmarkActivity(testUser2Id, testActivityId)
+
+      const ids = await activityService.getBookmarkedActivityIds(testUser2Id)
+      expect(ids).toContain(testActivityId)
+    })
+
+    it('should unbookmark an activity', async () => {
+      await activityService.bookmarkActivity(testUser2Id, testActivityId)
+      await activityService.unbookmarkActivity(testUser2Id, testActivityId)
+
+      const ids = await activityService.getBookmarkedActivityIds(testUser2Id)
+      expect(ids).not.toContain(testActivityId)
+    })
+
+    it('should throw when bookmarking non-existent activity', async () => {
+      const fakeId = '00000000-0000-0000-0000-000000000000'
+      await expect(
+        activityService.bookmarkActivity(testUser2Id, fakeId)
+      ).rejects.toThrow(ValidationError)
+      await expect(
+        activityService.bookmarkActivity(testUser2Id, fakeId)
+      ).rejects.toThrow('Activity not found')
+    })
+
+    it('should return bookmarked activities for user', async () => {
+      await activityService.bookmarkActivity(testUser2Id, testActivityId)
+
+      const activities = await activityService.getBookmarkedActivities(testUser2Id)
+      expect(activities).toHaveLength(1)
+      expect(activities[0].id).toBe(testActivityId)
+      expect(activities[0].title).toBe('Bookmark Test Run')
+    })
+
+    it('should return empty array when user has no bookmarks', async () => {
+      const ids = await activityService.getBookmarkedActivityIds(testUser2Id)
+      expect(ids).toEqual([])
+    })
+
+    it('should check isBookmarked correctly', async () => {
+      expect(await activityService.isBookmarked(testUser2Id, testActivityId)).toBe(false)
+      await activityService.bookmarkActivity(testUser2Id, testActivityId)
+      expect(await activityService.isBookmarked(testUser2Id, testActivityId)).toBe(true)
+    })
   })
 
   describe('Activity Ratings', () => {

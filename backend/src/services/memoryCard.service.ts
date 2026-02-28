@@ -116,4 +116,42 @@ export class MemoryCardService {
       messages: typeof row.messages === 'string' ? JSON.parse(row.messages) : row.messages || [],
     }))
   }
+
+  static async getByRouteId(routeId: string): Promise<RunMemoryCard[]> {
+    const query = `
+      SELECT 
+        id,
+        activity_id as "activityId",
+        route_id as "routeId",
+        created_by as "createdBy",
+        created_at as "createdAt",
+        run_date as "runDate",
+        participant_count as "participantCount",
+        total_distance as "totalDistance",
+        average_speed as "averageSpeed",
+        duration_seconds as "durationSeconds",
+        weather_temp as "weatherTemp",
+        weather_desc as "weatherDesc",
+        news_headline as "newsHeadline",
+        ai_image_url as "aiImageUrl",
+        group_photo_url as "groupPhotoUrl",
+        messages,
+        route_summary as "routeSummary"
+      FROM run_memory_cards
+      WHERE route_id = $1
+      ORDER BY created_at DESC
+    `
+    const result = await db.query(query, [routeId])
+    return result.rows.map((row: any) => ({
+      ...row,
+      messages: typeof row.messages === 'string' ? JSON.parse(row.messages) : row.messages || [],
+    }))
+  }
+
+  static async updateAiImageUrl(cardId: string, aiImageUrl: string): Promise<void> {
+    await db.query(
+      `UPDATE run_memory_cards SET ai_image_url = $1 WHERE id = $2`,
+      [aiImageUrl, cardId]
+    )
+  }
 }

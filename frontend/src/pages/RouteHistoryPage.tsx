@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -36,6 +37,7 @@ export const RouteHistoryPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedRoute, setSelectedRoute] = useState<RouteData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [routeLoading, setRouteLoading] = useState(false);
 
   useEffect(() => {
     const fetchRoutes = async () => {
@@ -57,9 +59,18 @@ export const RouteHistoryPage: React.FC = () => {
     fetchRoutes();
   }, [user]);
 
-  const handleRouteClick = (route: RouteData) => {
-    setSelectedRoute(route);
+  const handleRouteClick = async (route: RouteData) => {
     setDialogOpen(true);
+    setSelectedRoute(route);
+    setRouteLoading(true);
+    try {
+      const fullRoute = await gpsService.getRouteById(route.id);
+      setSelectedRoute(fullRoute);
+    } catch (err) {
+      console.error('Failed to load route details:', err);
+    } finally {
+      setRouteLoading(false);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -191,7 +202,13 @@ export const RouteHistoryPage: React.FC = () => {
           </Box>
         </DialogTitle>
         <DialogContent>
-          {selectedRoute && <RouteVisualization route={selectedRoute} />}
+          {routeLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            selectedRoute && <RouteVisualization route={selectedRoute} />
+          )}
         </DialogContent>
       </Dialog>
     </Container>

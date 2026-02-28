@@ -28,6 +28,15 @@ export function authenticateToken(req: Request, res: Response, next: NextFunctio
   }
 }
 
+/** Safely get userId from request; throws if not authenticated */
+export function requireUserId(req: Request): string {
+  const userId = req.userId
+  if (!userId) {
+    throw Errors.unauthorized()
+  }
+  return userId
+}
+
 export function optionalAuth(req: Request, res: Response, next: NextFunction): void {
   try {
     const authHeader = req.headers['authorization']

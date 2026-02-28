@@ -151,6 +151,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ roomId, onMessageSen
           onClick={handleSendMessage}
           disabled={!message.trim() || isSending}
           sx={{ alignSelf: 'flex-end' }}
+          aria-label="Send"
         >
           <SendIcon />
         </IconButton>

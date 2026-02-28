@@ -48,6 +48,7 @@ export const SoloRunControls: React.FC<SoloRunControlsProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -90,9 +91,9 @@ export const SoloRunControls: React.FC<SoloRunControlsProps> = ({
       const savedRoute = await gpsService.createRoute(routeData);
       setSavedRouteData({
         routeId: savedRoute.id,
-        totalDistance: metrics.distance,
-        averageSpeed: metrics.averageSpeed,
-        duration: metrics.elapsedTime,
+        totalDistance: savedRoute.totalDistance ?? metrics.distance,
+        averageSpeed: savedRoute.averageSpeed ?? metrics.averageSpeed,
+        duration: savedRoute.duration ?? metrics.elapsedTime,
         runDate: new Date(startTime).toISOString().slice(0, 10),
         pointCount: positions.length,
       });
@@ -135,8 +136,9 @@ export const SoloRunControls: React.FC<SoloRunControlsProps> = ({
       }
       handleCloseSuccessDialog();
       navigate(`/memory-cards/${card.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Create memory card failed:', err);
+      showToast(err.response?.data?.error?.message || t('loadMemoryCardFailed'), 'error');
     } finally {
       setIsCreatingCard(false);
     }

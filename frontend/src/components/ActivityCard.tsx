@@ -117,6 +117,7 @@ export const ActivityCard = ({ activity, isBookmarked = false, onBookmarkToggle 
             {onBookmarkToggle && (
               <Tooltip title={isBookmarked ? t('unbookmark') : t('bookmark')}>
                 <IconButton
+                  aria-label={isBookmarked ? t('unbookmark') : t('bookmark')}
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { userService } from '../services/user.service.js'
 import { ValidationError } from '../utils/validation.js'
 import { UpdateProfileRequest } from '../types/user.types.js'
@@ -48,7 +49,7 @@ class UserController {
   async updateProfile(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const requestingUserId = req.userId
+      const requestingUserId = requireUserId(req)
 
       // Users can only update their own profile
       if (id !== requestingUserId) {
@@ -106,7 +107,7 @@ class UserController {
   async deleteAccount(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const requestingUserId = req.userId
+      const requestingUserId = requireUserId(req)
 
       // Users can only delete their own account
       if (id !== requestingUserId) {
@@ -159,7 +160,7 @@ class UserController {
   async followUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const followerId = req.userId!
+      const followerId = requireUserId(req)
 
       await userService.followUser(followerId, id)
 
@@ -200,7 +201,7 @@ class UserController {
   async unfollowUser(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const followerId = req.userId!
+      const followerId = requireUserId(req)
 
       await userService.unfollowUser(followerId, id)
 
@@ -307,7 +308,7 @@ class UserController {
    */
   async getFriends(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const friends = await userService.getFriends(userId)
 
       res.json({

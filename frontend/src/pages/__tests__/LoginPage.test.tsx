@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '../../test/testUtils';
 import userEvent from '@testing-library/user-event';
@@ -14,14 +15,25 @@ vi.mock('../../hooks/useAuth', () => ({
   }),
 }));
 
-// Mock useNavigate
+// Mock RunCrewLoadingScreen to call onComplete immediately (avoids 4.8s wait)
+vi.mock('../../components/RunCrewLoadingScreen', () => ({
+  RunCrewLoadingScreen: ({ onComplete }: { onComplete?: () => void }) => {
+    if (onComplete) {
+      queueMicrotask(onComplete);
+    }
+    return <div data-testid="loading-screen" />;
+  },
+}));
+
+// Mock useNavigate and useLocation
 const mockNavigate = vi.fn();
+const mockUseLocation = vi.fn().mockReturnValue({ state: null });
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({ state: null }),
+    useLocation: () => mockUseLocation(),
   };
 });
 
@@ -30,11 +42,14 @@ describe('LoginPage', () => {
     vi.clearAllMocks();
   });
 
+  const getPasswordInput = () =>
+    screen.getByLabelText((content) => content.includes('密碼') && !content.includes('顯示'));
+
   it('renders login form with email and password fields', () => {
     render(<LoginPage />);
 
     expect(screen.getByLabelText(/電子郵件/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/密碼/i)).toBeInTheDocument();
+    expect(getPasswordInput()).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /登入/i })).toBeInTheDocument();
   });
 
@@ -74,14 +89,14 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/密碼/i), 'password123');
+    await user.type(getPasswordInput(), 'password123');
     await user.click(screen.getByRole('button', { name: /登入/i }));
 
     await waitFor(() => {
-      expect(mockLogin).toHaveBeenCalledWith({
-        email: 'test@example.com',
-        password: 'password123',
-      });
+      expect(mockLogin).toHaveBeenCalledWith(
+        { email: 'test@example.com', password: 'password123' },
+        { keepLoggedIn: true }
+      );
       expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
@@ -102,7 +117,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/密碼/i), 'wrongpassword');
+    await user.type(getPasswordInput(), 'wrongpassword');
     await user.click(screen.getByRole('button', { name: /登入/i }));
 
     await waitFor(() => {
@@ -120,7 +135,7 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/電子郵件/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/密碼/i), 'password123');
+    await user.type(getPasswordInput(), 'password123');
     await user.click(screen.getByRole('button', { name: /登入/i }));
 
     await waitFor(() => {
@@ -129,15 +144,8 @@ describe('LoginPage', () => {
   });
 
   it('shows success message from registration redirect', () => {
-    vi.mock('react-router-dom', async () => {
-      const actual = await vi.importActual('react-router-dom');
-      return {
-        ...actual,
-        useNavigate: () => mockNavigate,
-        useLocation: () => ({ 
-          state: { message: '註冊成功！請登入您的帳戶。' } 
-        }),
-      };
+    mockUseLocation.mockReturnValue({
+      state: { message: '註冊成功！請登入您的帳戶。' },
     });
 
     render(<LoginPage />);

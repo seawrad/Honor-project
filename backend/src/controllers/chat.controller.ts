@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { chatService } from '../services/chat.service.js'
 
 class ChatController {
@@ -9,7 +10,7 @@ class ChatController {
   async getChatRoomByActivityId(req: Request, res: Response): Promise<void> {
     try {
       const { activityId } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
 
       // Get chat room
       const room = await chatService.getChatRoomByActivityId(activityId)
@@ -66,7 +67,7 @@ class ChatController {
   async getChatMessages(req: Request, res: Response): Promise<void> {
     try {
       const { roomId } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const page = parseInt(req.query.page as string) || 1
       const limit = parseInt(req.query.limit as string) || 50
 

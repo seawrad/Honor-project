@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -20,12 +20,13 @@ import { useAuth } from '../hooks/useAuth';
 import type { Activity } from '../types/activity.types';
 
 const COUNTDOWN_SECONDS = 5;
+const DEV_COUNTDOWN_SECONDS = 0; // Skip countdown in dev mode
 
 export const GPSTrackingPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { activityId } = useParams<{ activityId: string }>();
-  const { user } = useAuth();
+  const { user, isDeveloperMode } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [phase, setPhase] = useState<'ready' | 'countdown' | 'running'>('ready');
@@ -44,31 +45,36 @@ export const GPSTrackingPage: React.FC = () => {
     clearPositions,
   } = useGPSTracker();
 
+  const cancelledRef = useRef(false);
   useEffect(() => {
     if (!activityId) return;
-    let cancelled = false;
+    cancelledRef.current = false;
     setLoading(true);
     activityService
       .getActivityById(activityId)
       .then((data) => {
-        if (!cancelled) setActivity(data);
+        if (!cancelledRef.current) setActivity(data);
       })
       .catch(() => {
-        if (!cancelled) setActivity(null);
+        if (!cancelledRef.current) setActivity(null);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelledRef.current) setLoading(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelledRef.current = true;
+    };
   }, [activityId]);
 
   const isHost = user?.id === activity?.creatorId;
   const isParticipant = activity?.participants?.some((p) => p.userId === user?.id) ?? false;
 
+  const countdownSeconds = isDeveloperMode ? DEV_COUNTDOWN_SECONDS : COUNTDOWN_SECONDS;
+
   const handleStartCountdown = useCallback(() => {
     setPhase('countdown');
-    setCountdown(COUNTDOWN_SECONDS);
-  }, []);
+    setCountdown(countdownSeconds);
+  }, [countdownSeconds]);
 
   useEffect(() => {
     if (phase !== 'countdown') return;

@@ -6,10 +6,12 @@ import { useNavigate } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 import StyleIcon from '@mui/icons-material/Style';
 import ShareIcon from '@mui/icons-material/Share';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import { useTranslation } from 'react-i18next';
 import { useToast } from './ErrorToast';
 import { RouteData } from '../types/gps.types';
 import { memoryCardService } from '../services/memoryCard.service';
+import { weatherService } from '../services/weather.service';
 import L from 'leaflet';
 
 // Fix for default marker icons
@@ -49,6 +51,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
   const { showToast } = useToast();
   const [memoryCards, setMemoryCards] = useState<{ id: string; runDate: string }[]>([]);
   const [cardsLoading, setCardsLoading] = useState(false);
+  const [isCreatingCard, setIsCreatingCard] = useState(false);
 
   const formatTimeForShare = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -86,12 +89,47 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
     }
   };
 
+  const handleCreateMemoryCard = async () => {
+    setIsCreatingCard(true);
+    try {
+      const weather = await weatherService.getCurrentWeather();
+      const runDate = route.startTime
+        ? new Date(route.startTime).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10);
+      const card = await memoryCardService.create({
+        activityId: route.activityId ?? null,
+        routeId: route.id,
+        runDate,
+        participantCount: 1,
+        totalDistance: route.totalDistance ?? 0,
+        averageSpeed: route.averageSpeed ?? 0,
+        durationSeconds: route.duration ?? 0,
+        weatherTemp: weather?.temperature,
+        weatherDesc: weather?.weatherDesc,
+        routeSummary: route.positions ? { pointCount: route.positions.length } : undefined,
+      });
+      setMemoryCards((prev) => [...prev, { id: card.id, runDate: card.runDate }]);
+      const newlyUnlocked = (card as any).newlyUnlockedAchievements as string[] | undefined;
+      if (newlyUnlocked?.length) {
+        showToast(`🎉 ${t('newAchievementsUnlocked', { count: newlyUnlocked.length })}`, 'success');
+      }
+      navigate(`/memory-cards/${card.id}`);
+    } catch (err: any) {
+      console.error('Create memory card failed:', err);
+      showToast(err.response?.data?.error?.message || t('loadMemoryCardFailed'), 'error');
+    } finally {
+      setIsCreatingCard(false);
+    }
+  };
+
   useEffect(() => {
-    if (!route.activityId) return;
+    if (!route.activityId && !route.id) return;
     let cancelled = false;
     setCardsLoading(true);
-    memoryCardService
-      .getByActivityId(route.activityId)
+    const fetchCards = route.activityId
+      ? memoryCardService.getByActivityId(route.activityId)
+      : memoryCardService.getByRouteId(route.id);
+    fetchCards
       .then((cards) => {
         if (!cancelled) {
           setMemoryCards(cards.map((c) => ({ id: c.id, runDate: c.runDate })));
@@ -104,7 +142,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
         if (!cancelled) setCardsLoading(false);
       });
     return () => { cancelled = true; };
-  }, [route.activityId]);
+  }, [route.activityId, route.id]);
 
   const positions: LatLngExpression[] = (route.positions ?? []).map((pos) => [
     pos.latitude,
@@ -145,7 +183,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
           {t('routeVisualization')}
         </Typography>
         <Tooltip title={t('share')}>
-          <IconButton onClick={handleShare} color="primary" size="small">
+          <IconButton aria-label={t('share')} onClick={handleShare} color="primary" size="small">
             <ShareIcon />
           </IconButton>
         </Tooltip>
@@ -257,7 +295,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
         </Grid>
       </Grid>
 
-      {route.activityId && (
+      {(route.activityId || route.id) && (
         <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
           <Typography variant="subtitle1" fontWeight={600} gutterBottom>
             {t('runMemoryCard')}
@@ -282,9 +320,20 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
               ))}
             </Box>
           ) : (
-            <Typography variant="body2" color="text.secondary">
-              {t('noMemoryCardsForRoute')}
-            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-start' }}>
+              <Typography variant="body2" color="text.secondary">
+                {t('noMemoryCardsForRoute')}
+              </Typography>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={isCreatingCard ? <CircularProgress size={16} color="inherit" /> : <PhotoCameraIcon />}
+                onClick={handleCreateMemoryCard}
+                disabled={isCreatingCard}
+              >
+                {isCreatingCard ? t('creating') : t('createMemoryCard')}
+              </Button>
+            </Box>
           )}
         </Box>
       )}

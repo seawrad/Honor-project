@@ -236,6 +236,7 @@ export const LoginPage: React.FC = () => {
                       onClick={() => setShowPassword((p) => !p)}
                       onMouseDown={(e) => e.preventDefault()}
                       edge="end"
+                      sx={{ color: 'rgba(0,0,0,0.7)', '&:hover': { color: 'rgba(0,0,0,0.87)' } }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>

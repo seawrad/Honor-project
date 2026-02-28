@@ -64,13 +64,21 @@ export class RouteService {
       throw new Error('Unauthorized to update this route')
     }
 
-    // Upload positions to S3
-    const s3Key = await S3Service.uploadPositions(routeId, positions)
-
-    // Calculate metrics
+    // Calculate metrics first (needed regardless of storage)
     const metrics = this.calculateMetrics(positions)
+    const endTime = positions[positions.length - 1].timestamp
 
-    // Update route with metrics and S3 key
+    // Try S3 first; always store in DB as backup (for when S3 read fails, e.g. local dev)
+    let s3Key: string | null = null
+    const positionsJson = JSON.stringify(positions)
+
+    try {
+      s3Key = await S3Service.uploadPositions(routeId, positions)
+    } catch (s3Error) {
+      console.warn('S3 upload failed, using database storage:', s3Error)
+    }
+
+    // Update route with metrics and storage key/json
     const updateQuery = `
       UPDATE routes
       SET 
@@ -78,8 +86,9 @@ export class RouteService {
         average_speed = $2,
         duration = $3,
         end_time = $4,
-        positions_s3_key = $5
-      WHERE id = $6
+        positions_s3_key = $5,
+        positions_json = $6
+      WHERE id = $7
       RETURNING 
         id,
         activity_id as "activityId",
@@ -93,13 +102,13 @@ export class RouteService {
         created_at as "createdAt"
     `
 
-    const endTime = positions[positions.length - 1].timestamp
     const values = [
       metrics.totalDistance,
       metrics.averageSpeed,
       metrics.duration,
       endTime,
       s3Key,
+      positionsJson,
       routeId,
     ]
 
@@ -139,6 +148,47 @@ export class RouteService {
       console.error('Failed to get route:', error)
       throw new Error('Failed to retrieve route')
     }
+  }
+
+  /**
+   * Get route by ID with GPS positions (for map display)
+   */
+  static async getRouteWithPositions(routeId: string): Promise<(Route & { positions: GPSPosition[] }) | null> {
+    const route = await this.getRouteById(routeId)
+    if (!route) return null
+    const positions = await this.getRoutePositions(routeId)
+    return { ...route, positions }
+  }
+
+  /**
+   * Get GPS positions for a route (from S3 or DB fallback)
+   */
+  static async getRoutePositions(routeId: string): Promise<GPSPosition[]> {
+    const query = `
+      SELECT positions_s3_key as "positionsS3Key", positions_json
+      FROM routes WHERE id = $1
+    `
+    const result = await db.query(query, [routeId])
+    if (result.rows.length === 0) return []
+
+    const row = result.rows[0] as { positionsS3Key?: string; positions_json?: string }
+    // Prefer positions_json (DB) - more reliable when S3 unavailable
+    if (row.positions_json) {
+      try {
+        const parsed = JSON.parse(row.positions_json) as GPSPosition[]
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      } catch {
+        // fall through to S3
+      }
+    }
+    if (row.positionsS3Key) {
+      try {
+        return await S3Service.getPositions(row.positionsS3Key)
+      } catch {
+        return []
+      }
+    }
+    return []
   }
 
   /**

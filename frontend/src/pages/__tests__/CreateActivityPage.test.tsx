@@ -13,6 +13,25 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock RouteDrawerMap to avoid loading Leaflet (causes hang in jsdom)
+vi.mock('../../components/RouteDrawerMap', () => ({
+  RouteDrawerMap: () => null,
+}));
+
+// Mock LocationPicker to provide location so validation can focus on date
+// Use empty deps to avoid infinite loop (onChange changes on parent re-render)
+vi.mock('../../components/LocationPicker', () => {
+  const React = require('react');
+  return {
+    LocationPicker: ({ onChange }: { onChange: (loc: { address: string; latitude: number; longitude: number }) => void }) => {
+      React.useEffect(() => {
+        onChange({ address: 'Test Location', latitude: 25, longitude: 121 });
+      }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      return React.createElement('div', { 'data-testid': 'location-picker' }, 'LocationPicker');
+    },
+  };
+});
+
 describe('CreateActivityPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,21 +70,19 @@ describe('CreateActivityPage', () => {
     const titleInput = screen.getByLabelText(/活動標題/);
     const descInput = screen.getByLabelText(/活動描述/);
     const dateInput = screen.getByLabelText(/活動時間/);
-    const distanceInput = screen.getByLabelText(/距離/);
     const routeInput = screen.getByLabelText(/路線說明/);
 
     await user.type(titleInput, 'Test Activity');
     await user.type(descInput, 'Test Description');
     await user.type(dateInput, '2020-01-01T10:00');
-    await user.clear(distanceInput);
-    await user.type(distanceInput, '5');
+    // Distance is auto-calculated for time-based; route is optional
     await user.type(routeInput, 'Test Route');
 
     const submitButton = screen.getByRole('button', { name: /建立活動/ });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText('活動時間必須在未來')).toBeInTheDocument();
+      expect(screen.getByText(/活動時間必須在未來/)).toBeInTheDocument();
     });
   });
 

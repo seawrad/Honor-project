@@ -104,9 +104,9 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
       setSavedRouteData({
         activityId,
         routeId: savedRoute.id,
-        totalDistance: metrics.distance,
-        averageSpeed: metrics.averageSpeed,
-        duration: metrics.elapsedTime,
+        totalDistance: savedRoute.totalDistance ?? metrics.distance,
+        averageSpeed: savedRoute.averageSpeed ?? metrics.averageSpeed,
+        duration: savedRoute.duration ?? metrics.elapsedTime,
         runDate: new Date(startTime).toISOString().slice(0, 10),
         pointCount: positions.length,
       });
@@ -149,8 +149,9 @@ export const RouteRecordingControls: React.FC<RouteRecordingControlsProps> = ({
       }
       handleCloseSuccessDialog();
       navigate(`/memory-cards/${card.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Create memory card failed:', err);
+      showToast(err.response?.data?.error?.message || t('loadMemoryCardFailed'), 'error');
     } finally {
       setIsCreatingCard(false);
     }

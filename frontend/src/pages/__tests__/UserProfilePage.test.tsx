@@ -73,7 +73,7 @@ describe('UserProfilePage', () => {
 
     render(<UserProfilePage />);
 
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(document.querySelector('.MuiSkeleton-root')).toBeInTheDocument();
   });
 
   it('displays user profile information', async () => {

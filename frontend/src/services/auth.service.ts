@@ -24,12 +24,16 @@ export const authService = {
   },
 
   async register(data: RegisterData): Promise<RegisterResponse> {
-    const response = await axios.post<{ data: Record<string, unknown> }>(
+    const response = await axios.post<{ data?: Record<string, unknown> }>(
       `${API_BASE_URL}/auth/register`,
       data
     );
-    const d = response.data.data as { userId?: string; user?: { id: string } };
-    return { message: 'Registered', userId: d?.userId ?? d?.user?.id ?? '' };
+    const d = response.data?.data;
+    const userId =
+      d && typeof d === 'object'
+        ? (d.userId as string | undefined) ?? (d.user as { id?: string } | undefined)?.id ?? ''
+        : '';
+    return { message: 'Registered', userId };
   },
 
   async refreshToken(refreshToken: string): Promise<AuthTokens> {

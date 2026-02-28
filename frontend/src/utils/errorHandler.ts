@@ -1,5 +1,8 @@
 // Centralized error handling utility for frontend
 
+import { tokenStorage } from './tokenStorage'
+import { frontendMonitoring } from './monitoring'
+
 export interface ApiError {
   code: string
   message: string
@@ -129,10 +132,8 @@ export class ErrorHandler {
 
   // Redirect to login page
   private static redirectToLogin(): void {
-    // Clear auth data
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    localStorage.removeItem('user')
+    // Clear auth data using tokenStorage for consistency
+    tokenStorage.clearAll()
 
     // Redirect after a short delay
     setTimeout(() => {
@@ -146,7 +147,6 @@ export class ErrorHandler {
 
     // Send to monitoring service
     try {
-      const { frontendMonitoring } = require('./monitoring')
       frontendMonitoring.captureException(error)
     } catch (e) {
       console.error('Failed to log error to monitoring service:', e)

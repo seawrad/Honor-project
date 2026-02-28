@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import { ErrorHandler } from './errorHandler'
+import { tokenStorage } from './tokenStorage'
 
 // Create axios instance with default config
 const apiClient: AxiosInstance = axios.create({
@@ -13,7 +14,7 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken')
+    const token = tokenStorage.getAccessToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -38,15 +39,16 @@ apiClient.interceptors.response.use(
         originalRequest._retry = true
 
         try {
-          const refreshToken = localStorage.getItem('refreshToken')
+          const refreshToken = tokenStorage.getRefreshToken()
           if (refreshToken) {
+            const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
             const response = await axios.post(
-              `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/refresh-token`,
+              `${baseURL}/api/auth/refresh-token`,
               { refreshToken }
             )
 
             const { accessToken } = response.data.data
-            localStorage.setItem('accessToken', accessToken)
+            tokenStorage.setAccessToken(accessToken, tokenStorage.isPersistent())
 
             // Retry original request with new token
             originalRequest.headers.Authorization = `Bearer ${accessToken}`

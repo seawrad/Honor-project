@@ -3,6 +3,7 @@ import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../components/ErrorToast';
 
 const theme = createTheme({
   palette: {
@@ -24,7 +25,9 @@ const AllProviders: React.FC<AllProvidersProps> = ({ children }) => {
   return (
     <ThemeProvider theme={theme}>
       <BrowserRouter>
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </AuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   );

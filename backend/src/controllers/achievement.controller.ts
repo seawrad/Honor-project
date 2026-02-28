@@ -1,10 +1,11 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { AchievementService } from '../services/achievement.service.js'
 
 export class AchievementController {
   static async getMyAchievements(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const rows = await AchievementService.getAchievementsForUser(userId)
       const achievements = rows.map((r: any) => ({
         id: r.id,
@@ -32,7 +33,7 @@ export class AchievementController {
 
   static async getUnlockedCount(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const count = await AchievementService.getUnlockedCount(userId)
       res.json({ success: true, data: { count } })
     } catch (error) {
@@ -46,7 +47,7 @@ export class AchievementController {
 
   static async checkAchievements(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const newlyUnlocked = await AchievementService.checkAndAwardAchievements(userId)
       res.json({ success: true, data: { newlyUnlocked } })
     } catch (error) {

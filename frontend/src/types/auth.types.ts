@@ -28,10 +28,14 @@ export interface LoginOptions {
   keepLoggedIn?: boolean;
 }
 
+/** Emails that get developer mode (skip countdown, allow past activity times, etc.) */
+export const DEV_MODE_EMAILS = ['alice@test.com', 'dev@test.com'];
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isDeveloperMode: boolean;
   login: (credentials: LoginCredentials, options?: LoginOptions) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;

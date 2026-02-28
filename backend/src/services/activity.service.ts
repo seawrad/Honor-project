@@ -84,7 +84,8 @@ class ActivityService {
         throw new ValidationError('Invalid date format', 'VALIDATION_INVALID_FORMAT')
       }
 
-      if (scheduledDate <= new Date()) {
+      const allowPast = process.env.ALLOW_PAST_ACTIVITIES === '1' || process.env.ALLOW_PAST_ACTIVITIES === 'true'
+      if (!allowPast && scheduledDate <= new Date()) {
         throw new ValidationError(
           'Scheduled date must be in the future',
           'VALIDATION_INVALID_FORMAT'
@@ -135,8 +136,12 @@ class ActivityService {
         'SELECT display_name FROM users WHERE id = $1',
         [creatorId]
       )
+      const creator = creatorResult.rows[0]
+      if (!creator) {
+        throw new Error('Creator not found')
+      }
 
-      return mapActivityRow(activity, creatorResult.rows[0].display_name, 0)
+      return mapActivityRow(activity, creator.display_name, 0)
     } catch (error) {
       if (error instanceof ValidationError) {
         throw error
@@ -232,9 +237,11 @@ class ActivityService {
         )
       }
 
-      // Check 1-hour edit deadline (skip for status-only updates)
+      const allowPast = process.env.ALLOW_PAST_ACTIVITIES === '1' || process.env.ALLOW_PAST_ACTIVITIES === 'true'
+
+      // Check 1-hour edit deadline (skip for status-only updates or when allowPast)
       const isStatusOnlyUpdate = Object.keys(updates).length === 1 && updates.status !== undefined
-      if (!isStatusOnlyUpdate) {
+      if (!allowPast && !isStatusOnlyUpdate) {
         const scheduledDate = new Date(activity.scheduled_date)
         const oneHourBeforeStart = new Date(scheduledDate.getTime() - 60 * 60 * 1000)
 
@@ -252,7 +259,7 @@ class ActivityService {
         if (isNaN(newScheduledDate.getTime())) {
           throw new ValidationError('Invalid date format', 'VALIDATION_INVALID_FORMAT')
         }
-        if (newScheduledDate <= new Date()) {
+        if (!allowPast && newScheduledDate <= new Date()) {
           throw new ValidationError(
             'Scheduled date must be in the future',
             'VALIDATION_INVALID_FORMAT'
@@ -484,7 +491,10 @@ class ActivityService {
       }
 
       // Check capacity
-      const currentParticipants = parseInt(activity.current_participants)
+      const currentParticipants =
+        typeof activity.current_participants === 'number'
+          ? activity.current_participants
+          : parseInt(String(activity.current_participants), 10)
       if (currentParticipants >= activity.max_participants) {
         throw new ValidationError('Activity is full', 'ACTIVITY_FULL')
       }
@@ -635,7 +645,9 @@ class ActivityService {
     }
 
     try {
-      const { conditions, values, paramCount, offset } = runSearch(false)
+      const runResult = runSearch(false)
+      const { conditions, values, offset } = runResult
+      let paramCount = runResult.paramCount
 
       // Build base query
       let query = `
@@ -711,10 +723,10 @@ class ActivityService {
       const countValues = values.slice(0, -2) // Exclude limit and offset
 
       const countResult = await db.query(countQuery, countValues)
-      const total = parseInt(countResult.rows[0].count)
+      const total = parseInt(String(countResult.rows[0].count), 10)
 
       const activities: Activity[] = result.rows.map(row =>
-        mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+        mapActivityRow(row, row.creator_name, parseInt(String(row.current_participants), 10))
       )
       return { activities, total }
     } catch (error) {
@@ -753,7 +765,7 @@ class ActivityService {
       )
       const total = parseInt(countResult.rows[0].count)
       const activities: Activity[] = result.rows.map(row =>
-        mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+        mapActivityRow(row, row.creator_name, parseInt(String(row.current_participants), 10))
       )
       return { activities, total }
     } catch (error) {
@@ -988,7 +1000,7 @@ class ActivityService {
       [userId]
     )
     return result.rows.map((row) =>
-      mapActivityRow(row, row.creator_name, parseInt(row.current_participants))
+      mapActivityRow(row, row.creator_name, parseInt(String(row.current_participants), 10))
     )
   }
 

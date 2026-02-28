@@ -1,0 +1,24 @@
+---
+description: Testing rule - pair every new function with a test
+globs: ["**/*.ts", "**/*.tsx"]
+---
+
+# Testing Rule
+
+**When adding or modifying functions, always create or update the corresponding test.**
+
+## Backend
+- Add unit/integration tests in `backend/src/tests/` or `backend/src/__tests__/`
+- Test service methods, controllers, and routes
+- Use Vitest and real DB for integration tests (see `activity.test.ts`)
+
+## Frontend
+- Add component tests in `__tests__` folders next to the component (e.g. `components/__tests__/Foo.test.tsx`)
+- Add service tests in `services/__tests__/` or `test/`
+- Use Vitest, @testing-library/react, and testUtils for rendering with providers
+
+## Checklist for new functions
+1. [ ] Create or update the paired test file
+2. [ ] Cover happy path and error cases
+3. [ ] Mock external dependencies (API, auth) in frontend tests
+4. [ ] Run `npm run test` in both frontend and backend before committing

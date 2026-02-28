@@ -1,4 +1,5 @@
 import { Request, Response } from 'express'
+import { requireUserId } from '../middleware/auth.middleware.js'
 import { activityService } from '../services/activity.service.js'
 import { ValidationError } from '../utils/validation.js'
 import { CreateActivityRequest, UpdateActivityRequest, ActivitySearchFilters, CreateRatingRequest } from '../types/activity.types.js'
@@ -9,7 +10,7 @@ class ActivityController {
    */
   async createActivity(req: Request, res: Response): Promise<void> {
     try {
-      const creatorId = req.userId!
+      const creatorId = requireUserId(req)
       const data: CreateActivityRequest = {
         title: req.body.title,
         description: req.body.description,
@@ -99,7 +100,7 @@ class ActivityController {
   async updateActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const updates: UpdateActivityRequest = {
         title: req.body.title,
         description: req.body.description,
@@ -158,7 +159,7 @@ class ActivityController {
   async cancelActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
 
       await activityService.cancelActivity(id, userId)
 
@@ -205,7 +206,7 @@ class ActivityController {
   async joinActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
 
       await activityService.joinActivity(id, userId)
 
@@ -252,7 +253,7 @@ class ActivityController {
   async leaveActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
 
       await activityService.leaveActivity(id, userId)
 
@@ -298,7 +299,7 @@ class ActivityController {
    */
   async getFeed(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const page = parseInt(req.query.page as string) || 1
       const limit = parseInt(req.query.limit as string) || 20
       const { activities, total } = await activityService.getFeedForUser(userId, page, limit)
@@ -377,7 +378,7 @@ class ActivityController {
   async createRating(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const data: CreateRatingRequest = {
         rating: req.body.rating,
         feedback: req.body.feedback,
@@ -462,7 +463,7 @@ class ActivityController {
   async bookmarkActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       await activityService.bookmarkActivity(userId, id)
       res.json({ success: true })
     } catch (error) {
@@ -489,7 +490,7 @@ class ActivityController {
   async unbookmarkActivity(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params
-      const userId = req.userId!
+      const userId = requireUserId(req)
       await activityService.unbookmarkActivity(userId, id)
       res.json({ success: true })
     } catch (error) {
@@ -507,7 +508,7 @@ class ActivityController {
    */
   async getBookmarkedActivities(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const activities = await activityService.getBookmarkedActivities(userId)
       res.json({ success: true, data: activities })
     } catch (error) {
@@ -525,7 +526,7 @@ class ActivityController {
    */
   async getBookmarkedIds(req: Request, res: Response): Promise<void> {
     try {
-      const userId = req.userId!
+      const userId = requireUserId(req)
       const ids = await activityService.getBookmarkedActivityIds(userId)
       res.json({ success: true, data: { ids } })
     } catch (error) {

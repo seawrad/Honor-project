@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { ArrowBack, Save } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../hooks/useAuth';
 import { LocationPicker } from '../components/LocationPicker';
 import { activityService } from '../services/activity.service';
 import { UpdateActivityData } from '../types/activity.types';
@@ -30,6 +31,7 @@ export const EditActivityPage = () => {
   const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isDeveloperMode } = useAuth();
   const [formData, setFormData] = useState<Partial<UpdateActivityData>>({});
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -44,9 +46,9 @@ export const EditActivityPage = () => {
         setLoading(true);
         const activity = await activityService.getActivityById(id);
         
-        // Check if editing is allowed (1 hour before start)
+        // Check if editing is allowed (1 hour before start) - skip in dev mode
         const timeUntilStart = new Date(activity.scheduledDate).getTime() - Date.now();
-        if (timeUntilStart < 3600000) {
+        if (!isDeveloperMode && timeUntilStart < 3600000) {
           setSubmitError(t('cannotEditWithinHour'));
         }
 
@@ -71,7 +73,7 @@ export const EditActivityPage = () => {
     };
 
     loadActivity();
-  }, [id]);
+  }, [id, isDeveloperMode, t]);
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -84,7 +86,7 @@ export const EditActivityPage = () => {
       newErrors.description = t('descriptionRequired');
     }
 
-    if (formData.scheduledDate) {
+    if (formData.scheduledDate && !isDeveloperMode) {
       const scheduledTime = new Date(formData.scheduledDate).getTime();
       if (scheduledTime <= Date.now()) {
         newErrors.scheduledDate = t('scheduledDateFuture');

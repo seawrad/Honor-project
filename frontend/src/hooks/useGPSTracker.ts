@@ -30,6 +30,8 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
   const watchIdRef = useRef<number | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   const intervalIdRef = useRef<number | null>(null);
+  const positionsRef = useRef<GPSPosition[]>([]);
+  positionsRef.current = positions;
 
   // Calculate distance between two GPS positions using Haversine formula
   const calculateDistance = useCallback((pos1: GPSPosition, pos2: GPSPosition): number => {
@@ -56,17 +58,18 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
     return totalDistance;
   }, [calculateDistance]);
 
-  // Update metrics
+  // Update metrics (use positionsRef to avoid stale closure in interval)
   const updateMetrics = useCallback(() => {
-    if (!startTimeRef.current || positions.length === 0) return;
+    if (!startTimeRef.current) return;
 
+    const currentPositions = positionsRef.current;
     const elapsedTime = (Date.now() - startTimeRef.current.getTime()) / 1000; // in seconds
-    const totalDistance = calculateTotalDistance(positions);
+    const totalDistance = calculateTotalDistance(currentPositions);
     const averageSpeed = elapsedTime > 0 ? (totalDistance / elapsedTime) * 3600 : 0; // km/h
 
     let currentSpeed = 0;
-    if (positions.length >= 2) {
-      const lastTwo = positions.slice(-2);
+    if (currentPositions.length >= 2) {
+      const lastTwo = currentPositions.slice(-2);
       const distance = calculateDistance(lastTwo[0], lastTwo[1]);
       const timeDiff = (lastTwo[1].timestamp.getTime() - lastTwo[0].timestamp.getTime()) / 1000;
       currentSpeed = timeDiff > 0 ? (distance / timeDiff) * 3600 : 0; // km/h
@@ -78,7 +81,7 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
       distance: totalDistance,
       elapsedTime,
     });
-  }, [positions, calculateTotalDistance, calculateDistance]);
+  }, [calculateTotalDistance, calculateDistance]);
 
   // Start GPS tracking
   const startTracking = useCallback(async (isResume = false) => {

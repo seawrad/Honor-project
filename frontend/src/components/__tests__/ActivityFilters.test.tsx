@@ -72,4 +72,27 @@ describe('ActivityFilters', () => {
     expect(mockOnFiltersChange).toHaveBeenCalledWith({});
     expect(dateFromInput).toHaveValue('');
   });
+
+  it('applies keyword filter when Enter is pressed in search field', async () => {
+    const user = userEvent.setup();
+    const mockOnFiltersChange = vi.fn();
+    render(<ActivityFilters onFiltersChange={mockOnFiltersChange} />);
+
+    const searchInput = screen.getByPlaceholderText(/搜尋活動標題、地點或描述/);
+    await user.type(searchInput, 'morning run');
+    await user.keyboard('{Enter}');
+
+    expect(mockOnFiltersChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        keyword: 'morning run',
+      })
+    );
+  });
+
+  it('renders search placeholder', () => {
+    const mockOnFiltersChange = vi.fn();
+    render(<ActivityFilters onFiltersChange={mockOnFiltersChange} />);
+
+    expect(screen.getByPlaceholderText(/搜尋活動標題、地點或描述/)).toBeInTheDocument();
+  });
 });

@@ -46,7 +46,7 @@ export const ActivityDetailPage = () => {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDeveloperMode } = useAuth();
   const { showToast } = useToast();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
@@ -181,7 +181,8 @@ export const ActivityDetailPage = () => {
   const isFull = activity.currentParticipants >= activity.maxParticipants;
   const isCreator = user?.id === activity.creatorId;
   const isParticipant = activity.participants.some(p => p.userId === user?.id);
-  const canEdit = isCreator && new Date(activity.scheduledDate).getTime() - Date.now() > 3600000;
+  const timeUntilStart = new Date(activity.scheduledDate).getTime() - Date.now();
+  const canEdit = isCreator && (isDeveloperMode || timeUntilStart > 3600000);
 
   const getStatusColor = (status: Activity['status']) => {
     switch (status) {

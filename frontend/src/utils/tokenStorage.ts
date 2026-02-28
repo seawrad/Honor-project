@@ -37,7 +37,12 @@ export const tokenStorage = {
 
   getUser(): any | null {
     const userStr = localStorage.getItem(USER_KEY) ?? sessionStorage.getItem(USER_KEY);
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr) return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
   },
 
   setUser(user: any, persistent = true): void {
