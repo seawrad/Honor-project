@@ -36,6 +36,7 @@ export class AuthController {
           displayName: user.displayName,
           age: user.age,
           createdAt: user.createdAt.toISOString(),
+          avatarUrl: (user as { avatarUrl?: string | null }).avatarUrl ?? null,
         },
         accessToken,
         refreshToken,
@@ -60,6 +61,7 @@ export class AuthController {
           displayName: user.displayName,
           age: user.age,
           createdAt: user.createdAt.toISOString(),
+          avatarUrl: (user as { avatarUrl?: string | null }).avatarUrl ?? null,
         },
       },
     })

@@ -4,6 +4,7 @@ export interface User {
   displayName: string;
   age: number;
   createdAt: string;
+  avatarUrl?: string | null;
 }
 
 export interface AuthTokens {

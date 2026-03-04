@@ -150,7 +150,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
   ]);
 
   const center: LatLngExpression =
-    positions.length > 0 ? positions[Math.floor(positions.length / 2)] : [25.0330, 121.5654];
+    positions.length > 0 ? positions[Math.floor(positions.length / 2)] : [22.3193, 114.1694]; // Hong Kong
 
   const startPosition = positions[0];
   const endPosition = positions[positions.length - 1];
@@ -189,7 +189,7 @@ export const RouteVisualization: React.FC<RouteVisualizationProps> = ({ route })
         </Tooltip>
       </Box>
 
-      <Box sx={{ height: 400, width: '100%', mb: 3 }}>
+      <Box sx={{ height: { xs: 'min(400px, 45vh)', sm: 400 }, minHeight: 280, width: '100%', mb: 3 }}>
         {positions.length === 0 && (
           <Box
             sx={{

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import { Box, Paper, Typography, Alert } from '@mui/material';
+import { Link } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { Box, Paper, Typography, Alert, Button } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
+import { Icon } from 'leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import type { Activity } from '../types/activity.types';
 
 // Fix for default marker icons in React-Leaflet
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: () => void })._getIconUrl;
@@ -14,25 +17,44 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+const activityMarkerIcon = new Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
 function MapUpdater({
   position,
+  activities,
 }: {
   position: { latitude: number; longitude: number } | null;
+  activities: Activity[];
 }) {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      map.setView([position.latitude, position.longitude], map.getZoom());
+    const points: [number, number][] = [];
+    if (position) points.push([position.latitude, position.longitude]);
+    activities
+      .filter((a) => a.location?.latitude != null && a.location?.longitude != null)
+      .forEach((a) => points.push([a.location!.latitude, a.location!.longitude]));
+    if (points.length === 1) {
+      map.setView(points[0], map.getZoom());
+    } else if (points.length > 1) {
+      map.fitBounds(points as [number, number][], { padding: [30, 30], maxZoom: 14 });
     }
-  }, [position, map]);
+  }, [position, activities, map]);
   return null;
 }
 
 interface UserLocationMapProps {
   height?: number | string;
+  /** Activities to show on the map (e.g. today's activities). Must have location with lat/lng. */
+  activities?: Activity[];
 }
 
-export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
+export const UserLocationMap = ({ height = 280, activities = [] }: UserLocationMapProps) => {
   const { t } = useTranslation();
   const [position, setPosition] = useState<{
     latitude: number;
@@ -106,7 +128,7 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
         </Alert>
       )}
 
-      <Box sx={{ height, width: '100%', position: 'relative' }}>
+      <Box sx={{ height, minHeight: 280, width: '100%', position: 'relative' }}>
         <MapContainer
           center={center}
           zoom={position ? 15 : 12}
@@ -117,8 +139,49 @@ export const UserLocationMap = ({ height = 280 }: UserLocationMapProps) => {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          <MapUpdater position={position} />
+          <MapUpdater position={position} activities={activities} />
           {position && <Marker position={[position.latitude, position.longitude]} />}
+          {activities
+            .filter((a) => a.location?.latitude != null && a.location?.longitude != null)
+            .map((activity) => (
+              <Marker
+                key={activity.id}
+                position={[activity.location!.latitude, activity.location!.longitude]}
+                icon={activityMarkerIcon}
+              >
+                <Popup>
+                  <Box sx={{ minWidth: 180 }}>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {activity.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(activity.scheduledDate).toLocaleString(undefined, {
+                        dateStyle: 'short',
+                        timeStyle: 'short',
+                      })}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {activity.distance} km · {activity.currentParticipants}/{activity.maxParticipants} {t('participants')}
+                    </Typography>
+                    {activity.location?.address && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        {activity.location.address}
+                      </Typography>
+                    )}
+                    <Button
+                      component={Link}
+                      to={`/activities/${activity.id}`}
+                      variant="contained"
+                      size="small"
+                      fullWidth
+                      sx={{ mt: 1 }}
+                    >
+                      {t('viewDetails')}
+                    </Button>
+                  </Box>
+                </Popup>
+              </Marker>
+            ))}
         </MapContainer>
         {loading && (
           <Box

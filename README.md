@@ -124,6 +124,10 @@ npm run format
 - [設計文件](.kiro/specs/group-running-app/design.md)
 - [任務清單](.kiro/specs/group-running-app/tasks.md)
 
+## 部署到網際網路 (Deployment)
+
+請參考 [DEPLOYMENT.md](DEPLOYMENT.md) 取得完整的部署指南。
+
 ## 授權
 
 Private

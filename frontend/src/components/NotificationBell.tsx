@@ -53,6 +53,7 @@ export const NotificationBell: React.FC = () => {
         PaperProps={{
           sx: {
             width: 400,
+            maxWidth: 'min(400px, calc(100vw - 32px))',
             maxHeight: 600,
             overflow: 'hidden',
           },

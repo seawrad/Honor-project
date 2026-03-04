@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Paper,
@@ -14,27 +14,51 @@ import { useTranslation } from 'react-i18next';
 import { userService } from '../services/user.service';
 import { UserSearchResult } from '../types/user.types';
 import { UserCard } from '../components/UserCard';
+import { useAuth } from '../hooks/useAuth';
 
 export const UserSearchPage: React.FC = () => {
   const { t } = useTranslation();
+  const { isDeveloperMode } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const loadAllUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    setHasSearched(true);
+    try {
+      const results = await userService.searchUsers('', 1, 200);
+      setSearchResults(results);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      setError(msg || t('searchFailed'));
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => {
+    if (isDeveloperMode && !searchQuery.trim()) {
+      loadAllUsers();
+    }
+  }, [isDeveloperMode, searchQuery, loadAllUsers]);
+
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchQuery.trim()) {
         handleSearch();
-      } else {
+      } else if (!isDeveloperMode) {
         setSearchResults([]);
         setHasSearched(false);
       }
     }, 500);
 
     return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
+  }, [searchQuery, isDeveloperMode]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
@@ -89,6 +113,12 @@ export const UserSearchPage: React.FC = () => {
           <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
+        )}
+
+        {isDeveloperMode && !searchQuery.trim() && hasSearched && (
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            {t('devModeAllUsers')}
+          </Typography>
         )}
 
         {!isLoading && hasSearched && searchResults.length === 0 && (

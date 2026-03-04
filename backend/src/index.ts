@@ -1,15 +1,22 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import { existsSync } from 'fs'
 import { createServer } from 'http'
 import { Server } from 'socket.io'
 import { db } from './database/db.js'
 import { runMigrations } from './database/migrate.js'
 import { socketAuthMiddleware } from './middleware/socket.middleware.js'
 import { setupChatHandlers } from './socket/chat.handler.js'
+import { setupActivityTrackingHandlers } from './socket/activityTracking.handler.js'
 import { monitoring } from './utils/monitoring.js'
 import { cloudwatch } from './utils/cloudwatch.js'
 import { corsOptions, socketCorsOptions } from './config/cors.config.js'
+import swaggerUi from 'swagger-ui-express'
+import { openApiSpec } from './swagger.js'
 
 // Load environment variables
 dotenv.config()
@@ -29,12 +36,14 @@ io.use(socketAuthMiddleware)
 
 // Setup chat event handlers
 setupChatHandlers(io)
+setupActivityTrackingHandlers(io)
 
 // Import middleware
 import { errorHandler, notFoundHandler, requestLogger } from './middleware/error.middleware.js'
 import { apiLimiter } from './middleware/rateLimiter.middleware.js'
 
 // Middleware
+app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled for API; enable if serving HTML
 app.use(cors(corsOptions))
 app.use(express.json({ limit: '10mb' })) // Limit request body size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -49,6 +58,9 @@ app.use('/api', apiLimiter)
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
+
+// API documentation (Swagger UI)
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec))
 
 // Import routes
 import authRoutes from './routes/auth.routes.js'
@@ -96,6 +108,17 @@ app.use('/api/chat', chatRoutes)
 
 // Notification routes
 app.use('/api/notifications', notificationRoutes)
+
+// Serve frontend static files in production (when public folder exists)
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const publicPath = path.join(path.dirname(__dirname), 'public')
+if (existsSync(publicPath)) {
+  app.use(express.static(publicPath))
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next()
+    res.sendFile(path.join(publicPath, 'index.html'))
+  })
+}
 
 // 404 handler - must be after all routes
 app.use(notFoundHandler)

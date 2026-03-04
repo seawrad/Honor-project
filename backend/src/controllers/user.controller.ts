@@ -3,6 +3,9 @@ import { requireUserId } from '../middleware/auth.middleware.js'
 import { userService } from '../services/user.service.js'
 import { ValidationError } from '../utils/validation.js'
 import { UpdateProfileRequest } from '../types/user.types.js'
+import { db } from '../database/db.js'
+
+const DEV_MODE_EMAILS = ['alice@test.com', 'dev@test.com']
 
 class UserController {
   /**
@@ -333,25 +336,43 @@ class UserController {
    */
   async searchUsers(req: Request, res: Response): Promise<void> {
     try {
-      const query = req.query.q as string
-      const page = parseInt(req.query.page as string) || 1
-      const limit = parseInt(req.query.limit as string) || 20
+      const query = (req.query.q as string) || ''
+      let page = parseInt(req.query.page as string) || 1
+      let limit = parseInt(req.query.limit as string) || 20
       const requestingUserId = req.userId
 
-      if (!query || query.trim().length === 0) {
-        res.status(400).json({
-          success: false,
-          error: {
-            code: 'VALIDATION_REQUIRED_FIELD',
-            message: 'Search query is required',
-          },
-          timestamp: new Date().toISOString(),
-        })
-        return
+      // Empty query: only allow for developer accounts (show all users)
+      if (!query.trim()) {
+        if (!requestingUserId) {
+          res.status(401).json({
+            success: false,
+            error: {
+              code: 'AUTH_REQUIRED',
+              message: 'Authentication required',
+            },
+            timestamp: new Date().toISOString(),
+          })
+          return
+        }
+        const userRow = await db.query('SELECT email FROM users WHERE id = $1', [requestingUserId])
+        const email = userRow.rows[0]?.email?.toLowerCase()
+        if (!email || !DEV_MODE_EMAILS.includes(email)) {
+          res.status(400).json({
+            success: false,
+            error: {
+              code: 'VALIDATION_REQUIRED_FIELD',
+              message: 'Search query is required',
+            },
+            timestamp: new Date().toISOString(),
+          })
+          return
+        }
+        // For "all users" view, use higher limit
+        limit = Math.min(parseInt(req.query.limit as string) || 200, 200)
       }
 
       const { users, total } = await userService.searchUsers(
-        query,
+        query.trim() || '',
         requestingUserId,
         page,
         limit

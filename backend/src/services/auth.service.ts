@@ -67,7 +67,7 @@ export class AuthService {
 
     // Find user by email
     const result = await db.query(
-      `SELECT id, email, password_hash, display_name as "displayName", age, created_at as "createdAt", updated_at as "updatedAt"
+      `SELECT id, email, password_hash, display_name as "displayName", age, created_at as "createdAt", updated_at as "updatedAt", avatar_url as "avatarUrl"
        FROM users
        WHERE email = $1`,
       [email.toLowerCase()]
@@ -132,9 +132,9 @@ export class AuthService {
     }
   }
 
-  async getUserById(userId: string): Promise<User | null> {
+  async getUserById(userId: string): Promise<(User & { avatarUrl?: string | null }) | null> {
     const result = await db.query(
-      `SELECT id, email, display_name as "displayName", age, created_at as "createdAt", updated_at as "updatedAt"
+      `SELECT id, email, display_name as "displayName", age, created_at as "createdAt", updated_at as "updatedAt", avatar_url as "avatarUrl"
        FROM users
        WHERE id = $1`,
       [userId]

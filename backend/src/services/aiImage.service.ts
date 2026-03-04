@@ -46,20 +46,39 @@ async function getLocationFromRoute(routeId: string): Promise<string | null> {
   return reverseGeocode(pos.latitude, pos.longitude)
 }
 
-function buildImagePrompt(location: string, weatherDesc?: string): string {
+function buildImagePrompt(location: string, weatherDesc?: string, runDate?: string): string {
   const weather = weatherDesc ? `, ${weatherDesc} weather` : ''
-  return `scenic running path view at ${location}${weather}, beautiful landscape photography, photorealistic`
+  const dateStr = runDate
+    ? `, ${new Date(runDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+    : ''
+  return `scenic running path view at ${location}${weather}${dateStr}, beautiful landscape photography, photorealistic`
+}
+
+/**
+ * Deterministic seed for placeholdr (1-3) from run context so each card gets a different image.
+ */
+function getSeedFromContext(routeId: string | null, runDate: string, cardId: string): number {
+  const str = `${routeId || ''}-${runDate}-${cardId}`
+  let hash = 0
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i)
+    hash |= 0
+  }
+  return (Math.abs(hash) % 3) + 1
 }
 
 /**
  * Generate AI image URL for a memory card based on run context.
  * Uses placeholdr.dev - free, no API key required.
+ * Adds runDate + seed to make each card's image unique.
  */
 export async function generateMemoryCardImageUrl(
   activityId: string | null,
   routeId: string | null,
   weatherDesc?: string,
-  locationHint?: string
+  locationHint?: string,
+  runDate?: string,
+  cardId?: string
 ): Promise<string | null> {
   let location: string | null = locationHint || null
 
@@ -73,8 +92,9 @@ export async function generateMemoryCardImageUrl(
     location = 'a scenic park'
   }
 
-  const prompt = buildImagePrompt(location, weatherDesc)
+  const prompt = buildImagePrompt(location, weatherDesc, runDate)
   const safePrompt = prompt.slice(0, 150)
   const encoded = encodeURIComponent(safePrompt)
-  return `${PLACEHOLDR_BASE}/600x400/${encoded}?style=photographic`
+  const seed = runDate && cardId ? getSeedFromContext(routeId, runDate, cardId) : 1
+  return `${PLACEHOLDR_BASE}/600x400/${encoded}?style=photographic&seed=${seed}`
 }

@@ -326,7 +326,7 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
   const center: [number, number] =
     waypoints.length > 0
       ? waypoints[Math.floor(waypoints.length / 2)]
-      : [25.033, 121.5654];
+      : [22.3193, 114.1694]; // Hong Kong
 
   return (
     <Box>
@@ -362,7 +362,7 @@ export const RouteDrawerMap: React.FC<RouteDrawerMapProps> = ({
           </Typography>
         )}
       </Box>
-      <Box sx={{ height: 400, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+      <Box sx={{ height: { xs: 'min(400px, 45vh)', sm: 400 }, minHeight: 280, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
         <MapContainer
           center={center}
           zoom={14}

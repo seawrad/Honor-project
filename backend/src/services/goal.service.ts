@@ -33,8 +33,8 @@ function getMonthBounds(): { start: Date; end: Date } {
 
 export class GoalService {
   static async getCurrentGoals(userId: string): Promise<UserGoal[]> {
-    const { start: weekStart, end: weekEnd } = getWeekBounds()
-    const { start: monthStart, end: monthEnd } = getMonthBounds()
+    const { end: weekEnd } = getWeekBounds()
+    const { end: monthEnd } = getMonthBounds()
 
     const goalsResult = await db.query(
       `SELECT id, user_id, goal_type, target_value, period_start, period_end

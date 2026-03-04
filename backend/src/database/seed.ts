@@ -58,9 +58,17 @@ async function seed() {
   console.log('✓ Achievements ensured')
 
   // Remove existing test users (CASCADE will remove their activities, etc.)
+  // Also remove mock users so re-seed produces consistent state
   console.log('Cleaning existing test data...')
+  const mockEmails = Array.from({ length: 100 }, (_, i) => `mock${i + 1}@test.com`)
+  const allTestEmails = [
+    'alice@test.com', 'bob@test.com', 'carol@test.com', 'dave@test.com',
+    'eva@test.com', 'frank@test.com', 'dev@test.com',
+    ...mockEmails,
+  ]
   await db.query(
-    `DELETE FROM users WHERE email IN ('alice@test.com', 'bob@test.com', 'carol@test.com', 'dave@test.com', 'eva@test.com', 'frank@test.com', 'dev@test.com')`
+    `DELETE FROM users WHERE email = ANY($1::text[])`,
+    [allTestEmails]
   )
   console.log('✓ Cleaned')
 
@@ -91,6 +99,35 @@ async function seed() {
     [USER_IDS.alice, passwordHash, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank, ...avatarUrls.slice(0, 6), USER_IDS.dev, avatarUrls[6]]
   )
   console.log('✓ 7 users created (alice, bob, carol, dave, eva, frank, dev) - alice & dev have developer mode')
+
+  // 1b. Add 100 mock users for demo/testing (password: Test1234!)
+  const MOCK_NAMES = [
+    '陳大明', '王美玲', '李志強', '張雅婷', '劉俊傑', '黃曉雯', '林志偉', '吳淑芬', '陳家豪', '楊雅惠',
+    '周志明', '鄭美華', '孫建國', '馬麗娟', '朱志偉', '胡雅琪', '郭志豪', '何美玲', '高志強', '羅雅婷',
+    '梁俊傑', '宋曉雯', '唐志偉', '韓淑芬', '馮家豪', '于雅惠', '董志明', '蕭美華', '曹建國', '袁麗娟',
+    '鄧志偉', '彭雅琪', '呂志豪', '蘇美玲', '盧志強', '蔣雅婷', '蔡俊傑', '賈曉雯', '丁志偉', '魏淑芬',
+    '薛家豪', '葉雅惠', '閻志明', '潘美華', '戴建國', '鍾麗娟', '汪志偉', '田雅琪', '任志豪', '杜美玲',
+    'Amy Wong', 'Ben Chan', 'Cindy Lee', 'David Ng', 'Emma Cheung', 'Frank Ho', 'Grace Lau', 'Henry Tsang',
+    'Ivy Mok', 'Jack Tam', 'Kelly Yip', 'Leo Fong', 'Mary Ko', 'Nick Hui', 'Olivia Au', 'Peter Lam',
+    'Queenie Cheung', 'Raymond Wong', 'Sandy Chan', 'Tony Lee', 'Una Ng', 'Victor Ho', 'Wendy Lau',
+    'Xavier Tsang', 'Yuki Mok', 'Zoe Tam', 'Alex Yip', 'Betty Fong', 'Chris Ko', 'Diana Hui', 'Eric Au',
+    'Fiona Lam', 'George Cheung', 'Helen Wong', 'Ivan Chan', 'Joyce Lee', 'Kevin Ng', 'Lisa Ho',
+    'Mike Lau', 'Nancy Tsang', 'Oscar Mok', 'Pauline Tam', 'Quincy Yip', 'Rita Fong', 'Steve Ko',
+  ]
+  const avatarColors = ['00B8D4', '0097A7', '6EE0FF', 'FFD34E', '4DD4ED', '18c9e8', 'FF5722', '7B1FA2', '388E3C', 'F57C00']
+  for (let i = 0; i < 100; i++) {
+    const name = MOCK_NAMES[i % MOCK_NAMES.length]
+    const displayName = i < MOCK_NAMES.length ? name : `${name} ${i + 1}`
+    const email = `mock${i + 1}@test.com`
+    const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&size=150&background=${avatarColors[i % avatarColors.length]}&color=fff`
+    const age = 18 + (i % 48) // 18-65
+    await db.query(
+      `INSERT INTO users (email, password_hash, display_name, age, agreed_to_terms, avatar_url)
+       VALUES ($1, $2, $3, $4, true, $5)`,
+      [email, passwordHash, displayName, age, avatarUrl]
+    )
+  }
+  console.log('✓ 100 mock users created (mock1@test.com ... mock100@test.com, password: Test1234!)')
 
   // 2. Activities (mix of upcoming, completed, cancelled; varied edge cases)
   const now = new Date()
@@ -142,6 +179,68 @@ async function seed() {
 
   console.log('✓ 10 activities created (6 upcoming, 3 completed, 1 cancelled)')
 
+  // 2b. Add 100 more activities (mix of upcoming, completed, cancelled)
+  const mockUsersResult = await db.query(
+    `SELECT id FROM users WHERE email LIKE 'mock%@test.com' ORDER BY email`
+  )
+  const mockUserIds = mockUsersResult.rows.map((r: { id: string }) => r.id)
+  const allCreatorIds = [
+    USER_IDS.alice, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave,
+    USER_IDS.eva, USER_IDS.frank, ...mockUserIds,
+  ]
+
+  const EXTRA_ACTIVITY_TEMPLATES = [
+    { title: 'Lung Fu Shan Morning Run', desc: '5K hill run with city views', lat: 22.2815, lng: 114.1382, addr: 'Lung Fu Shan, Mid-Levels', dist: 5, max: 8 },
+    { title: 'Aberdeen Reservoir Trail', desc: '8K scenic reservoir loop', lat: 22.2567, lng: 114.1456, addr: 'Aberdeen Reservoir', dist: 8, max: 10 },
+    { title: 'Pok Fu Lam Country Park', desc: '6K trail run', lat: 22.2612, lng: 114.1323, addr: 'Pok Fu Lam', dist: 6, max: 6 },
+    { title: 'Cyberport Waterfront', desc: '4K flat waterfront run', lat: 22.2618, lng: 114.1298, addr: 'Cyberport', dist: 4, max: 12 },
+    { title: 'Lamma Island Coastal', desc: '10K island trail', lat: 22.2105, lng: 114.1123, addr: 'Lamma Island', dist: 10, max: 15 },
+    { title: 'Cheung Chau Beach Run', desc: '7K beach and village', lat: 22.2067, lng: 114.0289, addr: 'Cheung Chau', dist: 7, max: 10 },
+    { title: 'Tuen Mun Riverside', desc: '9K riverside path', lat: 22.3923, lng: 113.9767, addr: 'Tuen Mun', dist: 9, max: 12 },
+    { title: 'Yuen Long Park Loop', desc: '5K park run', lat: 22.4456, lng: 114.0312, addr: 'Yuen Long', dist: 5, max: 8 },
+    { title: 'Tai Po Waterfront', desc: '8K harbour run', lat: 22.4523, lng: 114.1678, addr: 'Tai Po', dist: 8, max: 10 },
+    { title: 'Ma On Shan Trail', desc: '12K mountain trail', lat: 22.4234, lng: 114.2345, addr: 'Ma On Shan', dist: 12, max: 8 },
+    { title: 'Clear Water Bay Run', desc: '6K coastal path', lat: 22.2678, lng: 114.2891, addr: 'Clear Water Bay', dist: 6, max: 10 },
+    { title: 'Sai Kung Town Run', desc: '5K town and pier', lat: 22.3812, lng: 114.2712, addr: 'Sai Kung', dist: 5, max: 12 },
+    { title: 'Kwun Tong Promenade', desc: '4K harbour run', lat: 22.3123, lng: 114.2234, addr: 'Kwun Tong', dist: 4, max: 15 },
+    { title: 'Mong Kok Night Run', desc: '3K urban run', lat: 22.3198, lng: 114.1698, addr: 'Mong Kok', dist: 3, max: 20 },
+    { title: 'Wong Tai Sin Temple Run', desc: '5K temple area', lat: 22.3423, lng: 114.2067, addr: 'Wong Tai Sin', dist: 5, max: 8 },
+    { title: 'Diamond Hill Run', desc: '6K park and hill', lat: 22.3456, lng: 114.2012, addr: 'Diamond Hill', dist: 6, max: 10 },
+    { title: 'Lok Fu Park Jog', desc: '4K easy jog', lat: 22.3345, lng: 114.1876, addr: 'Lok Fu', dist: 4, max: 12 },
+    { title: 'Kowloon City Run', desc: '5K neighbourhood', lat: 22.3289, lng: 114.1923, addr: 'Kowloon City', dist: 5, max: 8 },
+    { title: 'Hung Hom Promenade', desc: '6K harbour views', lat: 22.3045, lng: 114.1789, addr: 'Hung Hom', dist: 6, max: 10 },
+  ]
+
+  const extraActivities: { id: string; creator_id: string; status: string }[] = []
+  for (let i = 0; i < 100; i++) {
+    const tpl = EXTRA_ACTIVITY_TEMPLATES[i % EXTRA_ACTIVITY_TEMPLATES.length]
+    const creatorId = allCreatorIds[i % allCreatorIds.length]
+    const statusRoll = i % 10
+    const status = statusRoll < 4 ? 'upcoming' : statusRoll < 9 ? 'completed' : 'cancelled'
+    let scheduledDate: Date
+    if (status === 'upcoming') {
+      const d = new Date(now)
+      d.setDate(d.getDate() + (i % 30) + 1)
+      d.setHours(9 + (i % 3), 0, 0, 0)
+      scheduledDate = d
+    } else if (status === 'completed') {
+      const d = new Date(now)
+      d.setDate(d.getDate() - (i % 21) - 1)
+      d.setHours(7 + (i % 2), 0, 0, 0)
+      scheduledDate = d
+    } else {
+      scheduledDate = new Date(now.getTime() - (i + 1) * 86400000)
+    }
+    const result = await db.query(
+      `INSERT INTO activities (creator_id, title, description, scheduled_date, latitude, longitude, address, route, distance, max_participants, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10)
+       RETURNING id, creator_id, status`,
+      [creatorId, `${tpl.title} ${i > 19 ? (Math.floor(i / 20) + 1) : ''}`.trim(), tpl.desc, scheduledDate, tpl.lat, tpl.lng, tpl.addr, tpl.dist, tpl.max, status]
+    )
+    extraActivities.push(result.rows[0])
+  }
+  console.log('✓ 100 extra activities created (40 upcoming, 55 completed, 5 cancelled)')
+
   // 3. Activity participants
   console.log('Creating activity participants...')
   await db.query(
@@ -167,6 +266,32 @@ async function seed() {
       completed1.id, completed2.id, completed3.id, cancelled1.id,
     ]
   )
+  // Add participants for extra activities (completed ones: 2-4 participants each)
+  const completedExtra = extraActivities.filter((a) => a.status === 'completed')
+  const allUserIds = [USER_IDS.alice, USER_IDS.bob, USER_IDS.carol, USER_IDS.dave, USER_IDS.eva, USER_IDS.frank, ...mockUserIds]
+  for (const act of completedExtra) {
+    const numParticipants = 2 + (act.id.charCodeAt(0) % 3)
+    for (let p = 0; p < numParticipants; p++) {
+      const userId = allUserIds[(act.id.charCodeAt(0) + p * 7) % allUserIds.length]
+      await db.query(
+        'INSERT INTO activity_participants (activity_id, user_id) VALUES ($1, $2) ON CONFLICT (activity_id, user_id) DO NOTHING',
+        [act.id, userId]
+      )
+    }
+  }
+  // Add some participants to upcoming extra activities
+  const upcomingExtra = extraActivities.filter((a) => a.status === 'upcoming')
+  for (let i = 0; i < Math.min(30, upcomingExtra.length); i++) {
+    const act = upcomingExtra[i]
+    const numParticipants = 1 + (i % 3)
+    for (let p = 0; p < numParticipants; p++) {
+      const userId = allUserIds[(i * 11 + p) % allUserIds.length]
+      await db.query(
+        'INSERT INTO activity_participants (activity_id, user_id) VALUES ($1, $2) ON CONFLICT (activity_id, user_id) DO NOTHING',
+        [act.id, userId]
+      )
+    }
+  }
   console.log('✓ Activity participants assigned')
 
   // 4. Social connections (follow relationships)
@@ -336,7 +461,36 @@ async function seed() {
       completed3.id, completed3Start, completed3End, USER_IDS.eva, USER_IDS.frank,
     ]
   )
-  console.log('✓ Route records created (metrics only, no GPS track for local testing)')
+
+  // 8b. Add routes for leaderboard (start_time in current week & month)
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - now.getDay())
+  weekStart.setHours(0, 0, 0, 0)
+  const distances = [3, 4, 5, 5.5, 6, 7, 8, 9, 10, 12, 15, 21]
+  let routeCount = 0
+  for (const act of completedExtra) {
+    const participantsResult = await db.query(
+      'SELECT user_id FROM activity_participants WHERE activity_id = $1',
+      [act.id]
+    )
+    const dayOffset = routeCount % Math.max(1, now.getDay() + 1)
+    const dist = distances[routeCount % distances.length]
+    const duration = Math.round((dist / 10) * 3600)
+    const startTime = new Date(weekStart)
+    startTime.setDate(weekStart.getDate() + dayOffset)
+    startTime.setHours(7 + (routeCount % 3), 0, 0, 0)
+    const endTime = new Date(startTime.getTime() + duration * 1000)
+    for (const row of participantsResult.rows) {
+      const speed = 8 + (routeCount % 3)
+      await db.query(
+        `INSERT INTO routes (activity_id, user_id, total_distance, average_speed, duration, start_time, end_time, positions_s3_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)`,
+        [act.id, row.user_id, dist, speed, duration, startTime, endTime]
+      )
+      routeCount++
+    }
+  }
+  console.log(`✓ Route records created (7 original + ${routeCount} for leaderboard, no GPS track for local testing)`)
 
   // 9. Run Memory Cards (Lenticular-style post-run summary)
   // 1-3 cards per activity, generated right after run date, topic relevant to route/view

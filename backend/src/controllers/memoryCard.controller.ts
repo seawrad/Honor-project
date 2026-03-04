@@ -29,7 +29,9 @@ export class MemoryCardController {
           data.activityId ?? null,
           data.routeId ?? null,
           data.weatherDesc,
-          data.locationHint
+          data.locationHint,
+          data.runDate,
+          card.id
         )
         if (aiImageUrl) {
           await MemoryCardService.updateAiImageUrl(card.id, aiImageUrl)

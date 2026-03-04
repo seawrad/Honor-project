@@ -39,7 +39,7 @@ export const LocationPicker = ({ value, onChange, error, helperText }: LocationP
   const { t } = useTranslation();
   const [address, setAddress] = useState(value?.address || '');
   const [position, setPosition] = useState<[number, number]>(
-    value ? [value.latitude, value.longitude] : [25.0330, 121.5654] // Default to Taipei
+    value ? [value.latitude, value.longitude] : [22.3193, 114.1694] // Default to Hong Kong
   );
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export const LocationPicker = ({ value, onChange, error, helperText }: LocationP
       >
         {t('useCurrentLocation')}
       </Button>
-      <Box sx={{ height: 400, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
+      <Box sx={{ height: { xs: 'min(400px, 45vh)', sm: 400 }, minHeight: 280, width: '100%', borderRadius: 1, overflow: 'hidden' }}>
         <MapContainer
           center={position}
           zoom={15}

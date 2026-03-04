@@ -70,3 +70,10 @@ img {
     font-size: 16px !important;
   }
 }
+
+/* Host marker: remove default Leaflet divIcon background */
+.leaflet-marker-icon.host-marker,
+.leaflet-marker-icon.my-host-marker {
+  background: transparent !important;
+  border: none !important;
+}

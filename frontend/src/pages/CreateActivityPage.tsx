@@ -213,7 +213,7 @@ export const CreateActivityPage = () => {
       title: formData.title!,
       description: formData.description!,
       scheduledDate: formData.scheduledDate!,
-      location: formData.location,
+      location: formData.location!,
       route,
       distance: formData.distance!,
       maxParticipants: formData.maxParticipants!,

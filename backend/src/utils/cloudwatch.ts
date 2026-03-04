@@ -102,9 +102,9 @@ class CloudWatchService {
   // Create CloudWatch alarm
   async createAlarm(
     alarmName: string,
-    metricName: string,
-    threshold: number,
-    comparisonOperator: string = 'GreaterThanThreshold'
+    _metricName: string,
+    _threshold: number,
+    _comparisonOperator: string = 'GreaterThanThreshold'
   ): Promise<void> {
     if (!this.config.enabled) {
       return

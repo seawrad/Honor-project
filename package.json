@@ -12,6 +12,7 @@
     "dev:backend": "npm run dev --workspace=backend",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
+    "test:coverage": "npm run test:coverage --workspace=frontend",
     "test:frontend": "npm run test --workspace=frontend",
     "test:backend": "npm run test --workspace=backend",
     "lint": "npm run lint --workspaces",

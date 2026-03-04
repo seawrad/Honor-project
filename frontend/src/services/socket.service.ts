@@ -250,6 +250,33 @@ class SocketService {
     if (!this.socket) return
     this.socket.off(event, callback)
   }
+
+  // --- Activity tracking (participant location sharing) ---
+
+  joinActivityTracking(activityId: string): void {
+    if (!this.socket?.connected) return
+    this.socket.emit('join_activity_tracking', { activityId })
+  }
+
+  leaveActivityTracking(activityId: string): void {
+    if (!this.socket?.connected) return
+    this.socket.emit('leave_activity_tracking', { activityId })
+  }
+
+  emitLocationUpdate(activityId: string, latitude: number, longitude: number, speedKmh?: number): void {
+    if (!this.socket?.connected) return
+    this.socket.emit('location_update', { activityId, latitude, longitude, speedKmh })
+  }
+
+  onLocationReceived(callback: (data: { userId: string; displayName: string; isHost: boolean; latitude: number; longitude: number; avatarUrl?: string | null; speedKmh?: number }) => void): void {
+    if (!this.socket) return
+    this.socket.on('location_received', callback)
+  }
+
+  onJoinedActivityTracking(callback: (data: { activityId: string }) => void): void {
+    if (!this.socket) return
+    this.socket.on('joined_activity_tracking', callback)
+  }
 }
 
 // Export singleton instance

@@ -61,7 +61,6 @@ export const SoloRunControls: React.FC<SoloRunControlsProps> = ({
     pointCount: number;
   } | null>(null);
   const [isCreatingCard, setIsCreatingCard] = useState(false);
-  const { showToast } = useToast();
 
   const handleEndRun = () => {
     onStopTracking();

@@ -107,6 +107,22 @@ export const ActivityListPage = () => {
   const hasAnyActivities = upcomingActivities.length > 0 || postActivities.length > 0;
   const hasActiveFilters = Object.keys(filters).length > 0;
 
+  const today = new Date();
+  const isToday = (d: string) => {
+    const a = new Date(d);
+    return a.getFullYear() === today.getFullYear() && a.getMonth() === today.getMonth() && a.getDate() === today.getDate();
+  };
+  const isWithinNext7Days = (d: string) => {
+    const a = new Date(d);
+    return a >= today && a <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  };
+  const mapActivities = useMemo(() => {
+    const all = [...upcomingActivities, ...savedActivities.filter((a) => !upcomingActivities.some((u) => u.id === a.id))];
+    const withLocation = all.filter((a) => a.location?.latitude != null && a.location?.longitude != null);
+    const todayOnly = withLocation.filter((a) => isToday(a.scheduledDate));
+    return todayOnly.length > 0 ? todayOnly : withLocation.filter((a) => isWithinNext7Days(a.scheduledDate));
+  }, [upcomingActivities, savedActivities]);
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -124,7 +140,7 @@ export const ActivityListPage = () => {
 
       <ActivityFiltersComponent onFiltersChange={handleFiltersChange} />
 
-      <UserLocationMap height={280} />
+      <UserLocationMap height="min(420px, 45vh)" activities={mapActivities} />
 
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>

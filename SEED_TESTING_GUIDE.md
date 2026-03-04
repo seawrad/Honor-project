@@ -32,6 +32,21 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 
 **All 6 accounts use the same password: `Test1234!`**
 
+### 100 Mock Users (for demo & testing)
+
+| Email | Password | Display Name |
+|-------|----------|--------------|
+| mock1@test.com | Test1234! | 陳大明 |
+| mock2@test.com | Test1234! | 王美玲 |
+| ... | Test1234! | ... |
+| mock100@test.com | Test1234! | (varied) |
+
+**All 100 mock users use the same password: `Test1234!`**
+
+- Use **User Search** (`/users/search`) to find and follow mock users
+- Mix of Chinese and English display names
+- Ages 18–65, with avatar URLs from ui-avatars.com
+
 ---
 
 ## What Data Tests What Feature
@@ -43,7 +58,7 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
 
 ### 2. Activity List & Discovery
 - **Use:** Any logged-in account
-- **Test:** `/activities` — Should show 10 activities (6 upcoming, 3 completed, 1 cancelled)
+- **Test:** `/activities` — Should show 110 activities (46 upcoming, 58 completed, 6 cancelled)
   - Morning Jog - Victoria Park (upcoming, 3 participants)
   - Evening Run - Kowloon Park (upcoming)
   - Weekend Long Run - Stanley (upcoming)
@@ -55,6 +70,11 @@ This will **replace** existing test users (alice, bob, carol, dave) and all thei
   - Sha Tin Riverside Run (completed)
   - Rain Cancelled - Repo Bay (**cancelled**)
 - **Test:** Search, filters, sort by date/location
+
+### 2b. Leaderboard
+- **Use:** Any logged-in account
+- **Test:** `/leaderboard` — Shows weekly/monthly rankings by distance (km) and run count
+- **Note:** Seed includes ~145 route records with varied distances (3–21 km) for leaderboard display
 
 ### 3. Activity Detail & Join/Leave
 - **Use:** carol@test.com (already in some, not in others)
@@ -143,7 +163,7 @@ To get a clean set of mock data again:
 npm run seed --workspace=backend
 ```
 
-This removes the 6 test users and all their related data, then re-inserts fresh mock data.
+This removes the 7 test users + 100 mock users and all their related data, then re-inserts fresh mock data (7 + 100 = 107 users total).
 
 ---
 

@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GPSPosition, PerformanceMetrics } from '../types/gps.types';
 
+export interface PersistedTrackingSession {
+  positions: Array<{ latitude: number; longitude: number; timestamp: string; accuracy: number }>;
+  startTime: string;
+  elapsedTime: number;
+  distance: number;
+  averageSpeed: number;
+}
+
 interface UseGPSTrackerReturn {
   isTracking: boolean;
   isPaused: boolean;
@@ -12,6 +20,10 @@ interface UseGPSTrackerReturn {
   pauseTracking: () => void;
   stopTracking: () => void;
   clearPositions: () => void;
+  /** Restore from persisted session (e.g. after refresh). Sets positions, metrics; leaves paused. */
+  restoreSession: (data: PersistedTrackingSession) => void;
+  /** Get current session for persistence (positions, startTime, metrics) */
+  getSessionForPersistence: () => PersistedTrackingSession | null;
 }
 
 export const useGPSTracker = (): UseGPSTrackerReturn => {
@@ -190,6 +202,45 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
     startTimeRef.current = null;
   }, []);
 
+  // Restore from persisted session (after refresh)
+  const restoreSession = useCallback((data: PersistedTrackingSession) => {
+    const positions: GPSPosition[] = data.positions.map((p) => ({
+      latitude: p.latitude,
+      longitude: p.longitude,
+      timestamp: new Date(p.timestamp),
+      accuracy: p.accuracy,
+    }));
+    setPositions(positions);
+    const lastPos = positions[positions.length - 1];
+    setCurrentPosition(lastPos ? { ...lastPos } : null);
+    startTimeRef.current = new Date(data.startTime);
+    setMetrics({
+      currentSpeed: 0,
+      averageSpeed: data.averageSpeed,
+      distance: data.distance,
+      elapsedTime: data.elapsedTime,
+    });
+    setIsTracking(false);
+    setIsPaused(true);
+  }, []);
+
+  // Get session data for persistence
+  const getSessionForPersistence = useCallback((): PersistedTrackingSession | null => {
+    if (positions.length < 2 || !startTimeRef.current) return null;
+    return {
+      positions: positions.map((p) => ({
+        latitude: p.latitude,
+        longitude: p.longitude,
+        timestamp: p.timestamp.toISOString(),
+        accuracy: p.accuracy,
+      })),
+      startTime: startTimeRef.current.toISOString(),
+      elapsedTime: metrics.elapsedTime,
+      distance: metrics.distance,
+      averageSpeed: metrics.averageSpeed,
+    };
+  }, [positions, metrics.elapsedTime, metrics.distance, metrics.averageSpeed]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -208,5 +259,7 @@ export const useGPSTracker = (): UseGPSTrackerReturn => {
     pauseTracking,
     stopTracking,
     clearPositions,
+    restoreSession,
+    getSessionForPersistence,
   };
 };
