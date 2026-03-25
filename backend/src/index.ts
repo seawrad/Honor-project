@@ -15,6 +15,7 @@ import { setupActivityTrackingHandlers } from './socket/activityTracking.handler
 import { monitoring } from './utils/monitoring.js'
 import { cloudwatch } from './utils/cloudwatch.js'
 import { corsOptions, socketCorsOptions } from './config/cors.config.js'
+import { seedDatabase } from './database/seed.js'
 import swaggerUi from 'swagger-ui-express'
 import { openApiSpec } from './swagger.js'
 
@@ -144,6 +145,12 @@ async function startServer() {
     // Run pending migrations before starting (set SKIP_AUTO_MIGRATE=1 to disable)
     if (process.env.SKIP_AUTO_MIGRATE !== '1') {
       await runMigrations()
+    }
+
+    // Optional: run seed on startup for Railway/demo environment
+    if (process.env.SEED_ON_START === '1') {
+      console.log('SEED_ON_START=1 -> running seedDatabase()...')
+      await seedDatabase()
     }
 
     // Start HTTP server

@@ -19,7 +19,7 @@ const USER_IDS = {
   dev: '77777777-7777-7777-7777-777777777777',
 }
 
-async function seed() {
+export async function seedDatabase() {
   console.log('🌱 Starting seed...')
 
   // Ensure achievements exist (migrations may have been skipped or table truncated)
@@ -608,7 +608,10 @@ async function seed() {
   console.log('See SEED_TESTING_GUIDE.md for login credentials and testing instructions.')
 }
 
-seed().catch((err) => {
-  console.error('Seed failed:', err)
-  process.exit(1)
-})
+// Allow running as a standalone script: `node dist/database/seed.js`
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedDatabase().catch((err) => {
+    console.error('Seed failed:', err)
+    process.exit(1)
+  })
+}
