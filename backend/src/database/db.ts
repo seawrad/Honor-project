@@ -17,7 +17,19 @@ const dbConfig = {
 }
 
 // Create connection pool
-const pool = new Pool(dbConfig)
+const connectionString = process.env.DATABASE_URL
+const pool = new Pool(
+  connectionString
+    ? {
+        connectionString,
+        max: dbConfig.max,
+        idleTimeoutMillis: dbConfig.idleTimeoutMillis,
+        connectionTimeoutMillis: dbConfig.connectionTimeoutMillis,
+        // Keep timezone config for consistent timestamps
+        options: dbConfig.options,
+      }
+    : dbConfig
+)
 
 // Pool error handling
 pool.on('error', (err) => {
