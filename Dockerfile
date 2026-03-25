@@ -21,6 +21,10 @@ RUN npm install --legacy-peer-deps
 
 COPY backend/ ./
 RUN npm run build
+ 
+# Ensure SQL migrations are available in the compiled `dist/` folder.
+# `tsc` only compiles TypeScript; it does not copy `.sql` assets.
+RUN mkdir -p dist/database/migrations && cp -r src/database/migrations/* dist/database/migrations/
 
 # Stage 3: Production image
 FROM node:20-alpine
