@@ -5,21 +5,27 @@ import { CorsOptions } from 'cors'
  * Allows only trusted origins and configures credentials handling
  */
 
+function normalizeOrigin(value: string): string {
+  // Browser `Origin` header never includes a trailing slash.
+  // Normalize both env vars and incoming origin to avoid subtle mismatches.
+  return value.trim().replace(/\/$/, '')
+}
+
 // List of allowed origins
 const allowedOrigins = [
-  process.env.CORS_ORIGIN || 'http://localhost:3000',
+  normalizeOrigin(process.env.CORS_ORIGIN || 'http://localhost:3000'),
   'http://localhost:5173', // Vite dev server
   'http://localhost:4173', // Vite preview server
 ]
 
 // Add production origins if specified
 if (process.env.PRODUCTION_ORIGIN) {
-  allowedOrigins.push(process.env.PRODUCTION_ORIGIN)
+  allowedOrigins.push(normalizeOrigin(process.env.PRODUCTION_ORIGIN))
 }
 
 // Add staging origins if specified
 if (process.env.STAGING_ORIGIN) {
-  allowedOrigins.push(process.env.STAGING_ORIGIN)
+  allowedOrigins.push(normalizeOrigin(process.env.STAGING_ORIGIN))
 }
 
 /**
@@ -32,8 +38,10 @@ export const corsOptions: CorsOptions = {
       return callback(null, true)
     }
 
+    const normalizedOrigin = normalizeOrigin(origin)
+
     // Check if the origin is in the allowed list
-    if (allowedOrigins.includes(origin)) {
+    if (allowedOrigins.includes(normalizedOrigin)) {
       callback(null, true)
     } else {
       console.warn(`CORS blocked request from origin: ${origin}`)
