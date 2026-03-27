@@ -32,6 +32,10 @@ const io = new Server(httpServer, {
   cors: socketCorsOptions,
 })
 
+// Railway/Render sit behind a reverse proxy and set X-Forwarded-* headers.
+// express-rate-limit expects trust proxy to be enabled in that setup.
+app.set('trust proxy', 1)
+
 // Apply Socket.io authentication middleware
 io.use(socketAuthMiddleware)
 
