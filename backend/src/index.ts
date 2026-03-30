@@ -50,6 +50,7 @@ import { apiLimiter } from './middleware/rateLimiter.middleware.js'
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false })) // CSP disabled for API; enable if serving HTML
 app.use(cors(corsOptions))
+app.options('*', cors(corsOptions))
 app.use(express.json({ limit: '10mb' })) // Limit request body size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
