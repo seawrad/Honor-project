@@ -35,6 +35,15 @@ describe('CORS Configuration', () => {
       expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173')
     })
 
+    it('should allow requests from Expo web dev server (localhost:8081)', async () => {
+      const response = await request(app)
+        .get('/test')
+        .set('Origin', 'http://localhost:8081')
+
+      expect(response.status).toBe(200)
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:8081')
+    })
+
     it('should allow requests from Vite preview server (localhost:4173)', async () => {
       const response = await request(app)
         .get('/test')
@@ -42,6 +51,24 @@ describe('CORS Configuration', () => {
 
       expect(response.status).toBe(200)
       expect(response.headers['access-control-allow-origin']).toBe('http://localhost:4173')
+    })
+
+    it('should allow requests from any localhost dev port', async () => {
+      const response = await request(app)
+        .get('/test')
+        .set('Origin', 'http://localhost:8083')
+
+      expect(response.status).toBe(200)
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:8083')
+    })
+
+    it('should allow requests from 127.0.0.1 dev origins', async () => {
+      const response = await request(app)
+        .get('/test')
+        .set('Origin', 'http://127.0.0.1:19006')
+
+      expect(response.status).toBe(200)
+      expect(response.headers['access-control-allow-origin']).toBe('http://127.0.0.1:19006')
     })
 
     it('should allow requests with no origin', async () => {
@@ -112,6 +139,7 @@ describe('CORS Configuration', () => {
       
       expect(origins).toBeInstanceOf(Array)
       expect(origins.length).toBeGreaterThan(0)
+      expect(origins).toContain('http://localhost:8081')
       expect(origins).toContain('http://localhost:5173')
       expect(origins).toContain('http://localhost:4173')
     })
