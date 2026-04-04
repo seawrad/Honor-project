@@ -1,6 +1,6 @@
 # Seed Data Testing Guide
 
-This guide explains how to use the mock data to test the Group Running App.
+This guide explains how to use the mock data to test RunCrew.
 
 ## Prerequisites
 

@@ -1,6 +1,6 @@
 {
-  "name": "Group Running App",
-  "short_name": "Running App",
+  "name": "RunCrew",
+  "short_name": "RunCrew",
   "description": "Connect with runners and join group activities",
   "start_url": "/",
   "display": "standalone",

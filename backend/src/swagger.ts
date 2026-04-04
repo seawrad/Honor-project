@@ -1,12 +1,12 @@
 /**
- * OpenAPI/Swagger documentation for Group Running App API
+ * OpenAPI/Swagger documentation for RunCrew API
  */
 export const openApiSpec = {
   openapi: '3.0.3',
   info: {
-    title: 'Group Running App API',
+    title: 'RunCrew API',
     version: '1.0.0',
-    description: 'REST API for the Group Running App - connect with runners and join group activities',
+    description: 'REST API for RunCrew — connect with runners and join group activities',
   },
   servers: [
     { url: '/api', description: 'API base path' },

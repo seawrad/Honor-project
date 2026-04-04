@@ -1,4 +1,4 @@
-# Railway 部署教學 - Group Running App
+# Railway 部署教學 - RunCrew
 
 用 Railway 部署整個 App（前端 + 後端 + 資料庫），一個平台搞定。
 

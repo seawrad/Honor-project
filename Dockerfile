@@ -1,4 +1,4 @@
-# Multi-stage build for Group Running App (frontend + backend)
+# Multi-stage build for RunCrew (frontend + backend)
 
 # Stage 1: Build frontend
 FROM node:20-alpine AS frontend-builder

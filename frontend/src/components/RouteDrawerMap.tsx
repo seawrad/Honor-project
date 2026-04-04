@@ -81,7 +81,7 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
       {
         headers: {
           Accept: 'application/json',
-          'User-Agent': 'RunCrew-GroupRunningApp/1.0',
+          'User-Agent': 'RunCrew/1.0',
         },
       }
     );

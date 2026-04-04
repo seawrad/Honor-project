@@ -1,4 +1,4 @@
--- Group Running App - Initial Database Schema
+-- RunCrew - Initial Database Schema
 -- Migration: 001_initial_schema.sql
 
 -- Enable UUID extension

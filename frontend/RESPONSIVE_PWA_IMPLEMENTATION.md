@@ -1,7 +1,7 @@
 # Responsive Design and PWA Implementation Summary
 
 ## Overview
-This document summarizes the implementation of responsive design and Progressive Web App (PWA) features for the Group Running App.
+This document summarizes the implementation of responsive design and Progressive Web App (PWA) features for RunCrew.
 
 ## Completed Tasks
 

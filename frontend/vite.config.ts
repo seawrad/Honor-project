@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'icon-192x192.png', 'icon-512x512.png'],
       manifest: {
-        name: 'Group Running App',
-        short_name: 'Running App',
-        description: 'Connect with runners and join group activities',
+        name: 'RunCrew',
+        short_name: 'RunCrew',
+        description: 'RunCrew — connect with runners and join group activities',
         theme_color: '#1976d2',
         background_color: '#ffffff',
         display: 'standalone',

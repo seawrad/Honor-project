@@ -267,9 +267,8 @@ export const RegisterPage: React.FC = () => {
                   <Link
                     component={RouterLink}
                     to="/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     underline="always"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {t('terms')}
                   </Link>
@@ -277,9 +276,8 @@ export const RegisterPage: React.FC = () => {
                   <Link
                     component={RouterLink}
                     to="/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
                     underline="always"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {t('privacyPolicy')}
                   </Link>

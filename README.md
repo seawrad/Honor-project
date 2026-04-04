@@ -1,13 +1,13 @@
-# Group Running App
+# RunCrew
 
-一個團體跑步應用程式，讓跑者可以建立、加入和追蹤團體跑步活動。
+一個團體跑步應用程式（RunCrew），讓跑者可以建立、加入和追蹤團體跑步活動。
 
 ## 專案結構
 
 這是一個 monorepo 專案，包含前端和後端：
 
 ```
-group-running-app/
+RunCrew repo/
 ├── frontend/          # React + TypeScript + Vite 前端應用
 ├── backend/           # Node.js + Express + TypeScript 後端 API
 ├── docker-compose.yml # 本地開發環境 (PostgreSQL + Redis)

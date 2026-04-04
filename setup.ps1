@@ -1,7 +1,7 @@
-# Group Running App - Setup Script
+# RunCrew - Setup Script
 # Run this script to start Docker, migrate, seed, and launch the app
 
-Write-Host "=== Group Running App Setup ===" -ForegroundColor Cyan
+Write-Host "=== RunCrew Setup ===" -ForegroundColor Cyan
 
 # 1. Start Docker containers
 Write-Host "`n[1/4] Starting Docker (PostgreSQL, Redis)..." -ForegroundColor Yellow

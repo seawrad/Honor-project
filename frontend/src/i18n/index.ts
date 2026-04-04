@@ -46,7 +46,7 @@ const resources = {
       // Register
       register: 'Register',
       registerTitle: 'Register',
-      registerWelcome: 'Join Group Running App to start your running journey',
+      registerWelcome: 'Join RunCrew to start your running journey',
       displayName: 'Display name',
       age: 'Age',
       passwordMinLength: 'At least 8 characters, letters and numbers',
@@ -67,6 +67,61 @@ const resources = {
       haveAccount: 'Already have an account? Sign in',
       showPassword: 'Show password',
       hidePassword: 'Hide password',
+      backToRegister: 'Back to registration',
+      legalLastUpdated: 'Last updated: {{date}}',
+      legalTermsTitle: 'Terms of Service',
+      legalTermsH2_about: 'About this service',
+      legalTermsAbout:
+        'RunCrew (the "Service") is developed as a final-year project by Cheng Tsz Wang (鄭梓宏), a Year 4 student in the Department of Health and Social Well-being at Hong Kong Baptist University (HKBU). The Service is designed to promote physical activity and social engagement through organised group running. The Service is provided for educational and demonstration purposes and may be modified or discontinued without notice.',
+      legalTermsH2_acceptance: '1. Acceptance',
+      legalTermsAcceptance:
+        'By registering an account or using the Service, you confirm that you have read and agree to these Terms of Service and our Privacy Policy. If you do not agree, you must not use the Service.',
+      legalTermsH2_account: '2. Accounts and eligibility',
+      legalTermsAccount:
+        'You must provide accurate registration information. The Service is intended for users aged 18 to 65. You are responsible for safeguarding your password and for all activity under your account. Notify us promptly if you suspect unauthorised use.',
+      legalTermsH2_conduct: '3. Acceptable use',
+      legalTermsConduct:
+        'You agree not to use the Service for unlawful, harmful, or harassing behaviour, including hate speech, impersonation, spam, or attempts to compromise security. Content you share must not infringe others\' rights. We may suspend or remove accounts that violate these rules.',
+      legalTermsH2_location: '4. Location and GPS features',
+      legalTermsLocation:
+        'Optional location and GPS features support activity planning, live tracking, and maps when you choose to use them. You grant permission for the Service to process such data as described in the Privacy Policy. You may stop sharing location through your device or browser settings.',
+      legalTermsH2_disclaimer: '5. Health and fitness disclaimer',
+      legalTermsDisclaimer:
+        'Running and other physical activities involve risk. The Service does not provide medical advice. Consult a qualified professional before starting a new exercise programme. You participate in activities at your own risk. Developer Cheng Tsz Wang (鄭梓宏) and HKBU accept no liability for injury, loss, or damage arising from use of the Service beyond what is permitted by applicable law.',
+      legalTermsH2_changes: '6. Changes',
+      legalTermsChanges:
+        'These terms may be updated from time to time. Continued use of the Service after changes are posted means you accept the updated terms.',
+      legalTermsH2_contact: '7. Contact',
+      legalTermsContact:
+        'This is a student final-year project by Cheng Tsz Wang (鄭梓宏). For questions about these terms, email 22239480@life.hkbu.edu.hk or follow guidance from your course supervisor.',
+      legalPrivacyTitle: 'Privacy Policy',
+      legalPrivacyH2_about: 'About this notice',
+      legalPrivacyAbout:
+        'This Privacy Policy explains how RunCrew (the "Service"), developed as a final-year project by Cheng Tsz Wang (鄭梓宏) in Health and Social Well-being at Hong Kong Baptist University, handles personal data. It applies when you use the Service.',
+      legalPrivacyH2_collect: '1. Data we collect',
+      legalPrivacyCollect:
+        'We may collect: account details (such as email, display name, and age band), authentication data, activity information (activities you create or join, messages you send in chats, optional ratings), technical data (browser, device type, approximate logs), and, when you enable it, location or route data for maps and tracking.',
+      legalPrivacyH2_use: '2. How we use data',
+      legalPrivacyUse:
+        'We use data to run the Service (accounts, matching runners to activities, chat, notifications, leaderboards, and related features), to maintain safety and integrity, to improve the project within academic scope, and to comply with legal obligations where applicable.',
+      legalPrivacyH2_location: '3. Location and routes',
+      legalPrivacyLocation:
+        'Location is used only when you choose features that require it (for example group run tracking or route drawing). You can withdraw location access in your device settings.',
+      legalPrivacyH2_retention: '4. Retention',
+      legalPrivacyRetention:
+        'Data is kept only as long as needed for the Service or the academic project, unless a longer period is required by law or university policy. Demo deployments may use reset or seeded databases periodically.',
+      legalPrivacyH2_security: '5. Security',
+      legalPrivacySecurity:
+        'We apply reasonable technical and organisational measures suitable for an educational project. No online service is completely secure; please use a unique password and protect your credentials.',
+      legalPrivacyH2_rights: '6. Your choices',
+      legalPrivacyRights:
+        'Depending on circumstances and applicable law, you may request access to or correction of your personal data, or object to certain processing. Because this is a student project, requests may be handled through the project supervisor. You may delete your account where the Service provides that option.',
+      legalPrivacyH2_changes: '7. Changes',
+      legalPrivacyChanges:
+        'We may update this Privacy Policy; the "last updated" date will change accordingly. Please review this page periodically.',
+      legalPrivacyH2_contact: '8. Contact',
+      legalPrivacyContact:
+        'For privacy enquiries related to this student project, contact Cheng Tsz Wang at 22239480@life.hkbu.edu.hk, or follow the academic contact instructions from your institution.',
       welcome: 'Welcome',
       // App layout & Home
       menu: 'Menu',
@@ -569,7 +624,7 @@ const resources = {
       // Register
       register: '註冊',
       registerTitle: '註冊',
-      registerWelcome: '加入 Group Running App 開始您的跑步之旅',
+      registerWelcome: '加入 RunCrew，開始您的跑步之旅',
       displayName: '顯示名稱',
       age: '年齡',
       passwordMinLength: '至少 8 個字元，包含字母和數字',
@@ -590,6 +645,61 @@ const resources = {
       haveAccount: '已有帳戶？登入',
       showPassword: '顯示密碼',
       hidePassword: '隱藏密碼',
+      backToRegister: '返回註冊',
+      legalLastUpdated: '最後更新：{{date}}',
+      legalTermsTitle: '服務條款',
+      legalTermsH2_about: '關於本服務',
+      legalTermsAbout:
+        '「RunCrew」（以下簡稱「本服務」）由香港浸會大學（HKBU）健康與社會福祉學系四年級學生鄭梓宏（Cheng Tsz Wang）作為畢業專題（Final Year Project）開發。本服務旨在透過團體跑步促進體能活動與社交參與。本服務僅供教學與演示用途，得隨時修改或中止，恕不另行公告。',
+      legalTermsH2_acceptance: '1. 條款之接受',
+      legalTermsAcceptance:
+        '當您註冊帳戶或使用本服務，即表示您已閱讀並同意本《服務條款》及《隱私政策》。若您不同意，請勿使用本服務。',
+      legalTermsH2_account: '2. 帳戶與資格',
+      legalTermsAccount:
+        '您須提供真實、準確之註冊資料。本服務適用對象為年滿 18 歲至 65 歲之使用者。您須妥善保管密碼，並對帳戶下之一切活動負責。若懷疑帳戶遭未經授權使用，請儘速通知我們。',
+      legalTermsH2_conduct: '3. 可接受使用行為',
+      legalTermsConduct:
+        '您同意不得利用本服務從事違法、有害或騷擾行為，包括仇恨言論、假冒身分、垃圾訊息或破壞安全等。您所分享之內容不得侵害他人權利。若違反本規定，我們得暫停或移除帳戶。',
+      legalTermsH2_location: '4. 定位與 GPS 功能',
+      legalTermsLocation:
+        '當您選擇使用相關功能時，可選用之定位與 GPS 功能可用於活動規劃、即時追蹤與地圖顯示。您同意本服務依《隱私政策》處理相關資料。您可隨時透過裝置或瀏覽器設定停止分享位置資訊。',
+      legalTermsH2_disclaimer: '5. 健康與運動免責聲明',
+      legalTermsDisclaimer:
+        '跑步及其他體能活動具有風險。本服務不提供醫療建議。開始新的運動計畫前，請諮詢合格專業人員。您參與活動之風險由您自行承擔。在法律允許範圍內，開發者鄭梓宏（Cheng Tsz Wang）與香港浸會大學不就因使用本服務所致之受傷、損失或損害負責。',
+      legalTermsH2_changes: '6. 條款變更',
+      legalTermsChanges:
+        '我們得不時更新本條款。若您於變更公告後仍繼續使用本服務，即視為接受更新後之條款。',
+      legalTermsH2_contact: '7. 聯絡方式',
+      legalTermsContact:
+        '本專題由鄭梓宏（Cheng Tsz Wang）開發。若對本條款有疑問，請電郵 22239480@life.hkbu.edu.hk，或依課程導師指示聯絡。',
+      legalPrivacyTitle: '隱私政策',
+      legalPrivacyH2_about: '關於本聲明',
+      legalPrivacyAbout:
+        '本《隱私政策》說明「RunCrew」（本服務）如何處理個人資料。本服務由香港浸會大學健康與社會福祉學系四年級學生鄭梓宏（Cheng Tsz Wang）以畢業專題形式開發，適用於您使用本服務之情形。',
+      legalPrivacyH2_collect: '1. 我們收集的資料',
+      legalPrivacyCollect:
+        '我們可能收集：帳戶資料（例如電子郵件、顯示名稱、年齡區間）、驗證相關資料、活動資訊（您建立或參與的活動、聊天訊息、選填之評分）、技術資料（瀏覽器、裝置類型、約略紀錄），以及當您啟用時，為地圖與追蹤功能所需之位置或路線資料。',
+      legalPrivacyH2_use: '2. 我們如何使用資料',
+      legalPrivacyUse:
+        '我們使用上述資料以營運本服務（帳戶、活動配對、聊天、通知、排行榜及相關功能）、維護安全與完整性、於學術範圍內改進專題，以及於適用時遵守法律義務。',
+      legalPrivacyH2_location: '3. 位置與路線',
+      legalPrivacyLocation:
+        '僅在您選擇需要位置之功能（例如團跑追蹤或路線繪製）時，我們才會使用位置資訊。您可於裝置設定中撤回定位權限。',
+      legalPrivacyH2_retention: '4. 保存期間',
+      legalPrivacyRetention:
+        '資料僅於營運本服務或學術專題所需期間內保存，另有法規或校方內部政策要求者除外。示範環境之資料庫可能定期重設或使用測試種子資料。',
+      legalPrivacyH2_security: '5. 安全性',
+      legalPrivacySecurity:
+        '我們採取與教學專題規模相稱之合理技術與管理措施。網路服務無法保證絕對安全，請使用專用密碼並保護您的登入資料。',
+      legalPrivacyH2_rights: '6. 您的選擇與權利',
+      legalPrivacyRights:
+        '在情況與適用法令允許下，您得請求查閱、更正個人資料，或對特定處理方式提出異議。本專題為學生專題，相關請求得透過專題導師協助處理。若本服務提供刪除帳戶功能，您亦得依指示刪除帳戶。',
+      legalPrivacyH2_changes: '7. 政策變更',
+      legalPrivacyChanges:
+        '我們得更新本《隱私政策》，「最後更新」日期將隨之調整。請您不定期查閱本頁。',
+      legalPrivacyH2_contact: '8. 聯絡方式',
+      legalPrivacyContact:
+        '與本學生專題相關之隱私疑問，請電郵 22239480@life.hkbu.edu.hk 聯絡鄭梓宏（Cheng Tsz Wang），或依就讀機構所提供之學術聯絡方式辦理。',
       welcome: '歡迎',
       // App layout & Home
       menu: '選單',

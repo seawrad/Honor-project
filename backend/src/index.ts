@@ -82,7 +82,7 @@ import notificationRoutes from './routes/notification.routes.js'
 
 // API routes
 app.get('/api', (_req, res) => {
-  res.json({ message: 'Group Running App API' })
+  res.json({ message: 'RunCrew API' })
 })
 
 // Auth routes

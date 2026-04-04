@@ -1,6 +1,6 @@
 # PWA Testing Guide
 
-This document provides instructions for testing Progressive Web App (PWA) features of the Group Running App.
+This document provides instructions for testing Progressive Web App (PWA) features of RunCrew.
 
 ## Prerequisites
 
@@ -95,8 +95,8 @@ This document provides instructions for testing Progressive Web App (PWA) featur
 3. Review manifest properties
 
 **Expected Result:**
-- Name: "Group Running App"
-- Short name: "Running App"
+- Name: "RunCrew"
+- Short name: "RunCrew"
 - Theme color: #1976d2
 - Display: standalone
 - Icons: 192x192 and 512x512 present

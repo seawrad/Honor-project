@@ -1,6 +1,6 @@
-# Deployment Guide - Group Running App
+# Deployment Guide - RunCrew
 
-This guide explains how to deploy the Group Running App to the internet.
+This guide explains how to deploy RunCrew to the internet.
 
 ## What Has Been Prepared
 
