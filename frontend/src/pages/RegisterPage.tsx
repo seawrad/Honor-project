@@ -262,13 +262,25 @@ export const RegisterPage: React.FC = () => {
                 />
               }
               label={
-                <Typography variant="body2">
+                <Typography variant="body2" component="span">
                   {t('agreeTermsPrefix')}
-                  <Link href="/terms" target="_blank">
+                  <Link
+                    component={RouterLink}
+                    to="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="always"
+                  >
                     {t('terms')}
                   </Link>
                   {t('agreeTermsMiddle')}
-                  <Link href="/privacy" target="_blank">
+                  <Link
+                    component={RouterLink}
+                    to="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="always"
+                  >
                     {t('privacyPolicy')}
                   </Link>
                 </Typography>
