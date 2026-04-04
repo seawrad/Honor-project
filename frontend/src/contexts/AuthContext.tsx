@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AuthContextType, User, LoginCredentials, RegisterData, DEV_MODE_EMAILS } from '../types/auth.types';
 import { authService } from '../services/auth.service';
 import { tokenStorage } from '../utils/tokenStorage';
@@ -11,7 +12,11 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
+/** Legal pages: show content immediately instead of the global RunCrew loading screen. */
+const PATHS_SKIP_AUTH_LOADING_SCREEN = new Set(['/terms', '/privacy']);
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -145,9 +150,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshToken,
   };
 
+  const skipLoadingScreen = PATHS_SKIP_AUTH_LOADING_SCREEN.has(location.pathname);
+  const showAuthLoadingScreen = isLoading && !skipLoadingScreen;
+
   return (
     <AuthContext.Provider value={value}>
-      {isLoading ? <RunCrewLoadingScreen /> : children}
+      {showAuthLoadingScreen ? <RunCrewLoadingScreen /> : children}
     </AuthContext.Provider>
   );
 };
