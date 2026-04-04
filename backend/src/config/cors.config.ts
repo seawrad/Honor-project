@@ -11,9 +11,27 @@ function normalizeOrigin(value: string): string {
   return value.trim().replace(/\/$/, '')
 }
 
+function isLocalDevOrigin(origin: string): boolean {
+  if (process.env.NODE_ENV === 'production') {
+    return false
+  }
+
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)
+}
+
+function isAllowedOrigin(origin?: string): boolean {
+  if (!origin) {
+    return true
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin)
+  return allowedOrigins.includes(normalizedOrigin) || isLocalDevOrigin(normalizedOrigin)
+}
+
 // List of allowed origins
 const allowedOrigins = [
   normalizeOrigin(process.env.CORS_ORIGIN || 'http://localhost:3000'),
+  'http://localhost:8081', // Expo web dev server
   'http://localhost:5173', // Vite dev server
   'http://localhost:4173', // Vite preview server
 ]
@@ -33,15 +51,7 @@ if (process.env.STAGING_ORIGIN) {
  */
 export const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true)
-    }
-
-    const normalizedOrigin = normalizeOrigin(origin)
-
-    // Check if the origin is in the allowed list
-    if (allowedOrigins.includes(normalizedOrigin)) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true)
     } else {
       console.warn(`CORS blocked request from origin: ${origin}`)
@@ -70,7 +80,15 @@ export const corsOptions: CorsOptions = {
  * CORS options for Socket.io
  */
 export const socketCorsOptions = {
-  origin: allowedOrigins,
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true)
+      return
+    }
+
+    console.warn(`Socket CORS blocked request from origin: ${origin}`)
+    callback(new Error('Not allowed by CORS'))
+  },
   credentials: true,
   methods: ['GET', 'POST'],
 }
